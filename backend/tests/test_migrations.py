@@ -19,8 +19,11 @@ def test_alembic_configuration_and_revisions():
     script_dir = ScriptDirectory.from_config(config)
     revisions = list(script_dir.walk_revisions())
     
-    assert len(revisions) >= 2, "Expected at least 2 revisions (001_baseline and 002_identity_org)."
+    assert len(revisions) >= 5, "Expected at least 5 revisions."
     
     rev_ids = [r.revision for r in revisions]
     assert "001_baseline" in rev_ids
     assert "002_identity_org" in rev_ids
+    assert "003_doc_rev_equip" in rev_ids
+    assert "004_doc_elements" in rev_ids
+    assert "005_ingestion_jobs" in rev_ids

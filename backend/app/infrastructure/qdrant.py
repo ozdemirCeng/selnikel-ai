@@ -93,6 +93,13 @@ class QdrantVectorRepository:
                     match=rest_models.MatchValue(value=filter_spec.department),
                 )
             )
+        if filter_spec.allowed_departments:
+            must_conditions.append(
+                rest_models.FieldCondition(
+                    key="department",
+                    match=rest_models.MatchAny(any=filter_spec.allowed_departments),
+                )
+            )
         if filter_spec.document_type:
             must_conditions.append(
                 rest_models.FieldCondition(
@@ -105,6 +112,13 @@ class QdrantVectorRepository:
                 rest_models.FieldCondition(
                     key="document_id",
                     match=rest_models.MatchValue(value=filter_spec.document_id),
+                )
+            )
+        if filter_spec.equipment_ids:
+            must_conditions.append(
+                rest_models.FieldCondition(
+                    key="equipment_ids",
+                    match=rest_models.MatchAny(any=filter_spec.equipment_ids),
                 )
             )
         if filter_spec.language:

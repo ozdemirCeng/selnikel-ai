@@ -13,6 +13,10 @@ from app.db.models.identity import (
     DepartmentMembershipModel,
     AuditEventModel,
 )
+from app.db.models.equipment import EquipmentModel, DocumentEquipmentModel
+from app.db.models.revision import DocumentRevisionModel, DocumentACLModel
+from app.db.models.element import DocumentElementModel
+from app.db.models.ingestion import IngestionJobModel
 
 __all__ = [
     "DocumentModel",
@@ -26,4 +30,10 @@ __all__ = [
     "UserRoleModel",
     "DepartmentMembershipModel",
     "AuditEventModel",
+    "EquipmentModel",
+    "DocumentEquipmentModel",
+    "DocumentRevisionModel",
+    "DocumentACLModel",
+    "DocumentElementModel",
+    "IngestionJobModel",
 ]

@@ -14,8 +14,13 @@ class Citation(BaseModel):
 
 class RetrievalFilter(BaseModel):
     department: Optional[str] = None
+    department_ids: Optional[List[str]] = None
+    allowed_departments: Optional[List[str]] = None
     document_type: Optional[str] = None
     document_id: Optional[str] = None
+    equipment_ids: Optional[List[str]] = None
+    approval_status: Optional[str] = "approved"
+    revision_policy: Optional[str] = "approved_latest"
     language: Optional[str] = None
 
 
