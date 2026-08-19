@@ -51,7 +51,11 @@ def reset_jwks_and_settings():
     # Provide mock DB returning empty to avoid live connection
     mock_db = AsyncMock()
     mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None), all=MagicMock(return_value=[])))))
-    app.dependency_overrides[get_db] = lambda: mock_db
+    
+    async def mock_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = mock_get_db
 
     yield
 
@@ -95,6 +99,40 @@ async def test_rs256_jwks_signature_verification(rsa_keypair):
     mock_signing_key.key = pem_public
     mock_client = MagicMock()
     mock_client.get_signing_key_from_jwt = MagicMock(return_value=mock_signing_key)
+
+    # Mock DB returning mapped user with document.read permission
+    mock_db = AsyncMock()
+    mock_user = MagicMock()
+    mock_user.id = "usr-rs256-001"
+    mock_user.email = "engineer@selnikel.com.tr"
+    mock_user.display_name = "Kazan Tasarım Mühendisi"
+    mock_user.status = "active"
+
+    mock_ext = MagicMock()
+    mock_ext.user_id = "usr-rs256-001"
+
+    async def mock_execute(stmt, *args, **kwargs):
+        stmt_str = str(stmt).lower()
+        if "user_external_identities" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_ext), all=MagicMock(return_value=[mock_ext]))))
+        elif "role_permissions" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["document.read"]))))
+        elif "user_roles" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["engineer"]))))
+        elif "department_memberships" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["dept-engineering"]))))
+        elif "from users" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_user), all=MagicMock(return_value=[mock_user]))))
+        elif "count" in stmt_str:
+            return MagicMock(scalar=MagicMock(return_value=0))
+        else:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None), all=MagicMock(return_value=[]))))
+
+    mock_db.execute = AsyncMock(side_effect=mock_execute)
+    
+    async def mock_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = mock_get_db
 
     with patch.object(ProcessLevelJWKSManager, "get_client", return_value=mock_client):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

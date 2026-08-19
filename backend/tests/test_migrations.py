@@ -23,7 +23,8 @@ EXPECTED_TABLES = [
     "equipment",
     "document_revisions",
     "document_elements",
-    "ingestion_jobs"
+    "ingestion_jobs",
+    "user_external_identities",
 ]
 
 def test_alembic_configuration_and_revisions():
@@ -38,7 +39,7 @@ def test_alembic_configuration_and_revisions():
     script_dir = ScriptDirectory.from_config(config)
     revisions = list(script_dir.walk_revisions())
     
-    assert len(revisions) >= 5, "Expected 5 revisions."
+    assert len(revisions) >= 6, f"Expected 6 revisions, found {len(revisions)}."
     
     rev_ids = [r.revision for r in revisions]
     assert "001_baseline" in rev_ids
@@ -46,6 +47,7 @@ def test_alembic_configuration_and_revisions():
     assert "003_doc_rev_equip" in rev_ids
     assert "004_doc_elements" in rev_ids
     assert "005_ingestion_jobs" in rev_ids
+    assert "006_ext_id_queue_hardening" in rev_ids
 
 
 def test_sqlite_upgrade_downgrade_cycle(tmp_path):

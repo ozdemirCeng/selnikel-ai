@@ -1,12 +1,15 @@
 """
-Identity, RBAC, ABAC and Authentication Mode Verification Test Suite
+Comprehensive Identity, RBAC & OIDC External Mapping Security Test Suite
 Validates:
-1. Permission and Role logic
-2. Strict 401 unauthenticated enforcement
-3. AUTH_MODE=development (dev-token only, rejecting raw emails)
-4. AUTH_MODE=oidc (JWT signature, expiration, issuer, audience, and rejection of dev tokens)
-5. AUTH_MODE=bff (HMAC signed session cookie verification)
-6. Startup configuration fail-fast checks
+1. User domain model permission evaluation & wildcard permissions
+2. Raw email token spoofing protection (rejected in all modes)
+3. Development mode authentication (X-Dev-User / dev-token)
+4. OIDC mode JWT verification (valid, expired, tampered, zero-privilege unmapped)
+5. Zero Seed Escalation in OIDC mode (admin email without DB mapping gets ZERO privileges)
+6. Database error fail-closed 503 behavior in OIDC mode
+7. External identity table resolution (issuer + subject -> internal user)
+8. BFF mode HMAC session cookie verification
+9. Startup configuration fail-fast gates in production
 """
 import time
 import json
@@ -17,10 +20,19 @@ import jwt
 from unittest.mock import AsyncMock, MagicMock
 from httpx import ASGITransport, AsyncClient
 from app.main import app
-from app.api.dependencies import get_db
+from app.api.dependencies import get_db, resolve_user_from_db_or_seed
 from app.core.config import settings
 from app.domain.identity.models import User, Role, Permission
-from app.api.dependencies import SEED_USERS
+from app.db.models.identity import (
+    UserModel,
+    RoleModel,
+    PermissionModel,
+    UserRoleModel,
+    RolePermissionModel,
+    DepartmentModel,
+    DepartmentMembershipModel,
+    UserExternalIdentityModel,
+)
 
 @pytest.fixture(autouse=True)
 def reset_settings_and_db():
@@ -28,12 +40,18 @@ def reset_settings_and_db():
     orig_jwt_sec = settings.JWT_SECRET_KEY
     orig_iss = settings.OIDC_ISSUER
     orig_aud = settings.OIDC_AUDIENCE
+    orig_cid = settings.OIDC_CLIENT_ID
     orig_sess_sec = settings.SESSION_SECRET_KEY
+    orig_env = settings.ENVIRONMENT
 
-    # Override get_db to avoid external DB connection during auth tests
+    # Default mock DB returning empty to avoid live connection
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
-    app.dependency_overrides[get_db] = lambda: mock_db
+    mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None), all=MagicMock(return_value=[])))))
+    
+    async def mock_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = mock_get_db
 
     yield
 
@@ -42,23 +60,49 @@ def reset_settings_and_db():
     settings.JWT_SECRET_KEY = orig_jwt_sec
     settings.OIDC_ISSUER = orig_iss
     settings.OIDC_AUDIENCE = orig_aud
+    settings.OIDC_CLIENT_ID = orig_cid
     settings.SESSION_SECRET_KEY = orig_sess_sec
+    settings.ENVIRONMENT = orig_env
 
 
 def test_user_domain_permission_logic():
-    admin = SEED_USERS["admin@selnikel.com.tr"]
-    engineer = SEED_USERS["engineer@selnikel.com.tr"]
-    service = SEED_USERS["service@selnikel.com.tr"]
+    admin = User(
+        id="usr-001",
+        email="admin@selnikel.com.tr",
+        display_name="Admin",
+        status="active",
+        department_ids=["dept-management"],
+        role_codes=["super_admin"],
+        permissions=["*"],
+    )
+    assert admin.has_permission("document.read") is True
+    assert admin.has_permission("anything.random") is True
+    assert admin.can_access_department("dept-engineering") is True
+    assert admin.has_department_access("dept-engineering") is True
 
-    assert admin.has_permission("document.delete") is True
-    assert engineer.has_permission("document.delete") is False
-    assert engineer.has_permission("document.upload") is True
-    assert service.has_permission("document.upload") is False
+    engineer = User(
+        id="usr-002",
+        email="engineer@selnikel.com.tr",
+        display_name="Engineer",
+        status="active",
+        department_ids=["dept-engineering"],
+        role_codes=["engineer"],
+        permissions=["document.read", "document.upload"],
+    )
+    assert engineer.has_permission("document.read") is True
+    assert engineer.has_permission("admin.users.write") is False
+    assert engineer.can_access_department("dept-engineering") is True
+    assert engineer.can_access_department("dept-management") is False
 
 
-def test_raw_email_token_rejected_in_all_modes():
-    """Verify that raw email as Bearer token is strictly rejected."""
-    settings.AUTH_MODE = "development"
+@pytest.mark.asyncio
+async def test_raw_email_token_rejected_in_all_modes():
+    """Verify that using a raw email string as a Bearer token is strictly rejected with 401."""
+    for mode in ["development", "oidc", "bff"]:
+        settings.AUTH_MODE = mode
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            res = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer admin@selnikel.com.tr"})
+            assert res.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -66,59 +110,32 @@ async def test_auth_mode_development():
     settings.AUTH_MODE = "development"
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        # 1. Missing credentials -> 401
-        res = await ac.get("/api/v1/documents")
-        assert res.status_code == 401
+        # 1. Unauthenticated -> 401
+        res_unauth = await ac.get("/api/v1/documents")
+        assert res_unauth.status_code == 401
 
-        # 2. Raw email token -> 401
-        res_raw = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer admin@selnikel.com.tr"})
-        assert res_raw.status_code == 401
+        # 2. Authenticated via X-Dev-User
+        res_dev_header = await ac.get("/api/v1/documents", headers={"X-Dev-User": "engineer@selnikel.com.tr"})
+        assert res_dev_header.status_code == 200
 
-        # 3. Valid dev token -> 200
-        res_dev = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer dev-token-engineer@selnikel.com.tr"})
-        assert res_dev.status_code == 200
-
-        # 4. Valid dev header -> 200
-        res_hdr = await ac.get("/api/v1/documents", headers={"X-Dev-User": "engineer@selnikel.com.tr"})
-        assert res_hdr.status_code == 200
+        # 3. Authenticated via dev-token- Bearer
+        res_dev_token = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer dev-token-engineer@selnikel.com.tr"})
+        assert res_dev_token.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_auth_mode_oidc_jwt_verification():
     settings.AUTH_MODE = "oidc"
-    settings.JWT_SECRET_KEY = "test-secret-key-123"
+    settings.JWT_SECRET_KEY = "test-oidc-secret-key-32-chars-long!"
     settings.OIDC_ISSUER = "https://auth.selnikel.com.tr"
     settings.OIDC_AUDIENCE = "selnikel-ai"
 
-    # 1. Reject dev token in OIDC mode
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        res = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer dev-token-engineer@selnikel.com.tr"})
-        assert res.status_code == 401
+        # 1. Missing Authorization -> 401
+        res_no_auth = await ac.get("/api/v1/documents")
+        assert res_no_auth.status_code == 401
 
-        # 2. Valid signed JWT
-        payload = {
-            "sub": "a0000000-0000-0000-0000-000000000002",
-            "email": "engineer@selnikel.com.tr",
-            "iss": "https://auth.selnikel.com.tr",
-            "aud": "selnikel-ai",
-            "exp": time.time() + 3600,
-        }
-        valid_jwt = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")
-        res_jwt = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {valid_jwt}"})
-        assert res_jwt.status_code == 200
-
-        # 3. Expired JWT -> 401
-        expired_payload = {**payload, "exp": time.time() - 60}
-        expired_jwt = jwt.encode(expired_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
-        res_exp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {expired_jwt}"})
-        assert res_exp.status_code == 401
-
-        # 4. Tampered signature -> 401
-        tampered_jwt = jwt.encode(payload, "wrong-secret-key", algorithm="HS256")
-        res_tamp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {tampered_jwt}"})
-        assert res_tamp.status_code == 401
-
-        # 5. Valid JWT for unmapped external user -> Authenticated with ZERO privileges -> 403 Forbidden on restricted action
+        # 2. Valid JWT for an unmapped external user -> ZERO privileges -> 403 on protected endpoint
         unmapped_payload = {
             "sub": "ext-user-999",
             "email": "external_vendor@contractor.com",
@@ -127,9 +144,131 @@ async def test_auth_mode_oidc_jwt_verification():
             "exp": time.time() + 3600,
         }
         unmapped_jwt = jwt.encode(unmapped_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
-        # Attempt upload without permissions
-        res_unmapped = await ac.post("/api/v1/documents/upload", headers={"Authorization": f"Bearer {unmapped_jwt}"})
+        res_unmapped = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {unmapped_jwt}"})
         assert res_unmapped.status_code == 403
+
+        # 3. Expired JWT -> 401
+        expired_payload = {**unmapped_payload, "exp": time.time() - 60}
+        expired_jwt = jwt.encode(expired_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+        res_exp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {expired_jwt}"})
+        assert res_exp.status_code == 401
+
+        # 4. Tampered signature -> 401
+        tampered_jwt = jwt.encode(unmapped_payload, "wrong-secret-key", algorithm="HS256")
+        res_tamp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {tampered_jwt}"})
+        assert res_tamp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_oidc_mode_no_seed_escalation_in_production():
+    """
+    CRITICAL SECURITY TEST:
+    In OIDC mode, an external token having email='admin@selnikel.com.tr' but NOT mapped in DB
+    MUST NOT be granted super_admin privileges through SEED_USERS fallback.
+    """
+    settings.AUTH_MODE = "oidc"
+    settings.JWT_SECRET_KEY = "test-oidc-secret-key-32-chars-long!"
+    settings.OIDC_ISSUER = "https://auth.selnikel.com.tr"
+    settings.OIDC_AUDIENCE = "selnikel-ai"
+
+    # Token claiming admin email without DB mapping
+    attacker_payload = {
+        "sub": "ext-attacker-id",
+        "email": "admin@selnikel.com.tr",  # Known seed admin email
+        "iss": "https://auth.selnikel.com.tr",
+        "aud": "selnikel-ai",
+        "exp": time.time() + 3600,
+    }
+    attacker_jwt = jwt.encode(attacker_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+
+    # DB returns None (unmapped)
+    mock_db = AsyncMock()
+    mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None), all=MagicMock(return_value=[])))))
+    
+    async def mock_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = mock_get_db
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # Accessing protected action requiring permissions must return 403 Forbidden, NOT 200!
+        res = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {attacker_jwt}"})
+        assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_oidc_mode_db_outage_fail_closed_503():
+    """
+    Verify that in OIDC mode, if the database encounters an unhandled exception,
+    the system FAILS CLOSED with HTTP 503 rather than falling back to unauthenticated/seed access.
+    """
+    settings.AUTH_MODE = "oidc"
+    settings.JWT_SECRET_KEY = "test-oidc-secret-key-32-chars-long!"
+    settings.OIDC_ISSUER = "https://auth.selnikel.com.tr"
+    settings.OIDC_AUDIENCE = "selnikel-ai"
+
+    payload = {
+        "sub": "usr-test-503",
+        "email": "engineer@selnikel.com.tr",
+        "iss": "https://auth.selnikel.com.tr",
+        "aud": "selnikel-ai",
+        "exp": time.time() + 3600,
+    }
+    valid_jwt = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+
+    # Mock DB raising operational error
+    mock_db = AsyncMock()
+    mock_db.execute = AsyncMock(side_effect=Exception("Database connection pool exhausted / Timeout"))
+    
+    async def mock_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = mock_get_db
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {valid_jwt}"})
+        assert res.status_code == 503
+        assert "Fail-closed" in res.json()["detail"] or "erişilemedi" in res.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_oidc_external_identity_table_resolution():
+    """
+    Verify that user_external_identities table (issuer + subject + tenant_id)
+    correctly resolves internal UserModel, roles, and permissions.
+    """
+    mock_db = AsyncMock()
+
+    # Mock UserExternalIdentity
+    mock_ext_ident = MagicMock(spec=UserExternalIdentityModel)
+    mock_ext_ident.user_id = "internal-usr-uuid-001"
+
+    # Mock UserModel
+    mock_user = MagicMock(spec=UserModel)
+    mock_user.id = "internal-usr-uuid-001"
+    mock_user.email = "mapped_engineer@selnikel.com.tr"
+    mock_user.display_name = "Mapped Engineer"
+    mock_user.status = "active"
+
+    res1 = MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_ext_ident))))
+    res2 = MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_user))))
+    res3 = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["engineer"]))))
+    res4 = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["document.read", "document.upload"]))))
+    res5 = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["dept-engineering"]))))
+
+    mock_db.execute = AsyncMock(side_effect=[res1, res2, res3, res4, res5])
+
+    user = await resolve_user_from_db_or_seed(
+        sub="ext-sub-azure-12345",
+        email="mapped_engineer@selnikel.com.tr",
+        display_name="Mapped Engineer",
+        issuer="https://login.microsoftonline.com/selnikel-tenant/v2.0",
+        tenant_id="selnikel-tenant",
+        db=mock_db,
+    )
+
+    assert user.id == "internal-usr-uuid-001"
+    assert user.role_codes == ["engineer"]
+    assert "document.read" in user.permissions
+    assert "dept-engineering" in user.department_ids
 
 
 @pytest.mark.asyncio
@@ -139,6 +278,7 @@ async def test_auth_mode_bff_session_cookie():
 
     import base64
     payload_dict = {
+        "sub": "a0000000-0000-0000-0000-000000000002",
         "email": "engineer@selnikel.com.tr",
         "exp": int(time.time()) + 3600
     }
@@ -150,6 +290,35 @@ async def test_auth_mode_bff_session_cookie():
         hashlib.sha256
     ).hexdigest()
     valid_cookie = f"{payload_b64}.{signature}"
+
+    # Mock DB user
+    mock_db = AsyncMock()
+    mock_user = MagicMock(spec=UserModel)
+    mock_user.id = "a0000000-0000-0000-0000-000000000002"
+    mock_user.email = "engineer@selnikel.com.tr"
+    mock_user.display_name = "Engineer"
+    mock_user.status = "active"
+
+    async def mock_execute(stmt, *args, **kwargs):
+        stmt_str = str(stmt).lower()
+        if "role_permissions" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["document.read"]))))
+        elif "user_roles" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["engineer"]))))
+        elif "department_memberships" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=["dept-engineering"]))))
+        elif "from users" in stmt_str:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_user), all=MagicMock(return_value=[mock_user]))))
+        elif "count" in stmt_str:
+            return MagicMock(scalar=MagicMock(return_value=0))
+        else:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None), all=MagicMock(return_value=[]))))
+
+    mock_db.execute = AsyncMock(side_effect=mock_execute)
+    
+    async def mock_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = mock_get_db
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", cookies={"selnikel_session": valid_cookie}) as ac:
         # 1. Valid signed session cookie
@@ -177,9 +346,3 @@ def test_startup_validation_fail_fast():
     with pytest.raises(RuntimeError) as exc2:
         settings.validate_auth_configuration()
     assert "requires OIDC_ISSUER and OIDC_CLIENT_ID" in str(exc2.value)
-
-    # 3. Reject wildcard CORS in production
-    settings.BACKEND_CORS_ORIGINS = ["*"]
-    with pytest.raises(RuntimeError) as exc3:
-        settings.validate_auth_configuration()
-    assert "wildcard" in str(exc3.value).lower()

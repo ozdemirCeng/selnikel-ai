@@ -17,13 +17,22 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.logging import logger
 from app.db.session import get_db
-from app.db.models.identity import UserModel, RoleModel, PermissionModel, UserRoleModel, RolePermissionModel, DepartmentMembershipModel, DepartmentModel
+from app.db.models.identity import (
+    UserModel,
+    RoleModel,
+    PermissionModel,
+    UserRoleModel,
+    RolePermissionModel,
+    DepartmentMembershipModel,
+    DepartmentModel,
+    UserExternalIdentityModel,
+)
 from app.domain.identity.models import User
 
 security = HTTPBearer(auto_error=False)
@@ -185,20 +194,47 @@ def _verify_oidc_jwt_claims(token: str) -> Dict[str, Any]:
 
 async def resolve_user_from_db_or_seed(
     sub: str,
-    email: Optional[str],
-    display_name: Optional[str],
+    email: Optional[str] = None,
+    display_name: Optional[str] = None,
+    issuer: Optional[str] = None,
+    tenant_id: Optional[str] = None,
     db: Optional[AsyncSession] = None,
 ) -> User:
     """
-    Resolves authorization permissions from PostgreSQL/SQLite UserModel -> Roles -> Permissions -> Departments.
-    Enforces strict zero-privilege fallback for unmapped external identities.
+    Resolves authorization permissions for an identity.
+    In OIDC/BFF mode:
+      1. Resolves external identity from user_external_identities table (issuer + subject + optional tenant_id).
+      2. If mapped, loads internal UserModel -> Roles -> Permissions -> Departments.
+      3. If DB is unavailable, fails closed by raising 503 Service Unavailable.
+      4. If unmapped in DB, strictly returns Zero-Privilege User (0 roles, 0 permissions, 0 departments).
+    In Development mode ONLY:
+      Falls back to SEED_USERS dictionary for local testing without DB.
     """
-    # 1. Check Database if session available
+    # 1. Database Lookup (Mandatory in OIDC / BFF modes)
     if db is not None:
         try:
-            query = select(UserModel).where((UserModel.id == sub) | (UserModel.email == email))
-            result = await db.execute(query)
-            user_model = result.scalars().first()
+            user_model = None
+
+            # 1a. Check UserExternalIdentityModel mapping (issuer + subject + tenant)
+            if issuer:
+                ext_query = select(UserExternalIdentityModel).where(
+                    and_(
+                        UserExternalIdentityModel.subject == sub,
+                        UserExternalIdentityModel.issuer == issuer,
+                    )
+                )
+                if tenant_id:
+                    ext_query = ext_query.where(UserExternalIdentityModel.tenant_id == tenant_id)
+                ext_res = await db.execute(ext_query)
+                ext_identity = ext_res.scalars().first()
+                if ext_identity:
+                    user_res = await db.execute(select(UserModel).where(UserModel.id == ext_identity.user_id))
+                    user_model = user_res.scalars().first()
+
+            # 1b. Fallback to direct internal user id
+            if user_model is None:
+                user_res = await db.execute(select(UserModel).where(UserModel.id == sub))
+                user_model = user_res.scalars().first()
 
             if (
                 user_model is not None
@@ -244,16 +280,23 @@ async def resolve_user_from_db_or_seed(
                     permissions=[str(p) for p in permissions],
                 )
         except Exception as db_err:
-            logger.debug(f"Database user resolution bypassed/error: {db_err}")
+            logger.error(f"Database user resolution error: {db_err}")
+            if settings.AUTH_MODE != "development":
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Kimlik ve yetkilendirme veri tabanına erişilemedi. Güvenlik gereği istek durduruldu (Fail-closed).",
+                )
 
-    # 2. Check SEED_USERS if known test identity
-    if email and email in SEED_USERS:
-        return SEED_USERS[email]
-    if sub in SEED_USERS:
-        return SEED_USERS[sub]
+    # 2. SEED_USERS check ONLY IN DEVELOPMENT MODE
+    if settings.AUTH_MODE == "development":
+        if email and email in SEED_USERS:
+            return SEED_USERS[email]
+        if sub in SEED_USERS:
+            return SEED_USERS[sub]
 
-    # 3. Fail-Closed / Zero-Privilege Model:
+    # 3. Fail-Closed / Zero-Privilege Model in Production/OIDC/BFF:
     # Unmapped external users receive ZERO permissions, ZERO roles, and ZERO department access.
+    logger.warning(f"Unmapped external identity '{sub}' (issuer: {issuer}) assigned ZERO privileges.")
     return User(
         id=sub,
         email=email or "unknown@selnikel.com.tr",
@@ -298,10 +341,19 @@ async def get_current_user(
         if auth_header and len(auth_header.credentials.split(".")) == 3:
             try:
                 payload = _verify_oidc_jwt_claims(auth_header.credentials)
-                sub = payload.get("sub", payload.get("oid", f"usr-{int(time.time())}"))
+                sub = str(payload.get("sub") or payload.get("oid") or f"usr-{int(time.time())}")
                 email = payload.get("email") or payload.get("preferred_username") or payload.get("upn")
                 name = payload.get("name", "OIDC User")
-                user = await resolve_user_from_db_or_seed(sub, email, name, db)
+                issuer = payload.get("iss")
+                tenant_id = payload.get("tid")
+                user = await resolve_user_from_db_or_seed(
+                    sub=sub,
+                    email=email,
+                    display_name=name,
+                    issuer=issuer,
+                    tenant_id=tenant_id,
+                    db=db,
+                )
                 request.state.user = user
                 return user
             except HTTPException:
@@ -322,10 +374,19 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         payload = _verify_oidc_jwt_claims(auth_header.credentials)
-        sub = payload.get("sub", payload.get("oid", f"usr-{int(time.time())}"))
+        sub = str(payload.get("sub") or payload.get("oid") or f"usr-{int(time.time())}")
         email = payload.get("email") or payload.get("preferred_username") or payload.get("upn")
         name = payload.get("name", "OIDC User")
-        user = await resolve_user_from_db_or_seed(sub, email, name, db)
+        issuer = payload.get("iss")
+        tenant_id = payload.get("tid")
+        user = await resolve_user_from_db_or_seed(
+            sub=sub,
+            email=email,
+            display_name=name,
+            issuer=issuer,
+            tenant_id=tenant_id,
+            db=db,
+        )
         request.state.user = user
         return user
 
@@ -345,10 +406,15 @@ async def get_current_user(
                 detail="Geçersiz veya süresi dolmuş BFF oturum çerezi.",
                 headers={"WWW-Authenticate": "Cookie"},
             )
-        sub = payload.get("sub", f"usr-{int(time.time())}")
+        sub = str(payload.get("sub") or f"usr-{int(time.time())}")
         email = payload.get("email")
         name = payload.get("name", "BFF User")
-        user = await resolve_user_from_db_or_seed(sub, email, name, db)
+        user = await resolve_user_from_db_or_seed(
+            sub=sub,
+            email=email,
+            display_name=name,
+            db=db,
+        )
         request.state.user = user
         return user
 

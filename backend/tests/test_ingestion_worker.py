@@ -6,14 +6,22 @@ Validates:
 3. Worker lease ownership enforcement
 4. Exponential backoff retry and dead-letter queue transitions
 5. IngestionWorkerDaemon lifecycle & graceful shutdown
+6. End-to-end pipeline execution (parse -> chunk -> embed -> index -> complete)
+7. Qdrant outage fail-fast behavior (no silent data loss)
+8. Missing file hard error rejection (no fake substitution)
+9. Background heartbeat renewal task
 """
 import io
+import os
+import tempfile
 import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone, timedelta
 from app.services.ingestion.worker import FileValidator, IngestionWorkerDaemon
 from app.domain.ingestion.models import IngestionJob, JobState, InvalidStateTransitionError
+from app.infrastructure.ingestion_queue import PostgresIngestionQueue
+from app.infrastructure.qdrant import qdrant_repo
 
 def test_file_validator_valid_pdf():
     pdf_bytes = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
@@ -148,3 +156,124 @@ async def test_worker_daemon_lifecycle_and_graceful_shutdown():
     worker.stop()
     await task
     assert worker.is_running is False
+
+
+@pytest.mark.asyncio
+async def test_worker_pipeline_end_to_end():
+    """Verify real file execution through entire worker pipeline (validate -> parse -> chunk -> embed -> index)."""
+    # Create real temporary file
+    sample_content = "# Selnikel Kazan Bakım Kılavuzu\n\nStandart çalışma basıncı 16 bar'dır.\n\n| Parametre | Değer |\n| Basınç | 16 bar |\n"
+    with tempfile.NamedTemporaryFile(suffix="_test_doc.md", delete=False, mode="w", encoding="utf-8") as tmp:
+        tmp.write(sample_content)
+        tmp_file_path = tmp.name
+
+    try:
+        mock_queue = MagicMock(spec=PostgresIngestionQueue)
+        mock_queue.update_progress = AsyncMock()
+        mock_queue.complete_job = AsyncMock()
+        mock_queue.fail_job = AsyncMock()
+
+        worker = IngestionWorkerDaemon(worker_id="worker-test-pipeline", queue=mock_queue)
+
+        mock_job = MagicMock()
+        mock_job.id = "job-e2e-001"
+        mock_job.document_id = "doc-e2e-001"
+        mock_job.revision_id = "rev-e2e-001"
+        mock_job.file_path = tmp_file_path
+        mock_job.filename = "test_doc.md"
+        mock_job.department_id = "dept-engineering"
+        mock_job.equipment_id = "EQ-100"
+        mock_job.classification = "internal"
+
+        mock_session = AsyncMock()
+
+        # Mock Qdrant healthy and successful upsert
+        with patch.object(qdrant_repo, "check_health", new_callable=AsyncMock, return_value=True), \
+             patch.object(qdrant_repo, "upsert_chunks", new_callable=AsyncMock, return_value=True):
+            total_chunks = await worker.execute_pipeline(mock_session, mock_job)
+
+            assert total_chunks >= 1
+            mock_queue.complete_job.assert_awaited_once_with(mock_session, "job-e2e-001", "worker-test-pipeline", chunks_count=total_chunks)
+    finally:
+        if os.path.exists(tmp_file_path):
+            os.remove(tmp_file_path)
+
+
+@pytest.mark.asyncio
+async def test_worker_pipeline_qdrant_outage_fails_fast():
+    """Verify that Qdrant outage fails the pipeline immediately and prevents silent data loss."""
+    with tempfile.NamedTemporaryFile(suffix="_test_doc.txt", delete=False, mode="w", encoding="utf-8") as tmp:
+        tmp.write("Test content for failure test")
+        tmp_file_path = tmp.name
+
+    try:
+        mock_queue = MagicMock(spec=PostgresIngestionQueue)
+        mock_queue.update_progress = AsyncMock()
+        mock_queue.complete_job = AsyncMock()
+        mock_queue.fail_job = AsyncMock()
+
+        worker = IngestionWorkerDaemon(worker_id="worker-fail-test", queue=mock_queue)
+
+        mock_job = MagicMock()
+        mock_job.id = "job-fail-001"
+        mock_job.document_id = "doc-fail-001"
+        mock_job.revision_id = "rev-fail-001"
+        mock_job.file_path = tmp_file_path
+        mock_job.filename = "test_doc.txt"
+        mock_job.department_id = "dept-service"
+
+        mock_session = AsyncMock()
+
+        # Mock Qdrant offline
+        with patch.object(qdrant_repo, "check_health", new_callable=AsyncMock, return_value=False):
+            with pytest.raises(RuntimeError) as exc_info:
+                await worker.execute_pipeline(mock_session, mock_job)
+            assert "Qdrant" in str(exc_info.value)
+            mock_queue.complete_job.assert_not_awaited()
+    finally:
+        if os.path.exists(tmp_file_path):
+            os.remove(tmp_file_path)
+
+
+@pytest.mark.asyncio
+async def test_worker_pipeline_missing_file_hard_error():
+    """Verify that a missing file raises FileNotFoundError immediately and is not replaced with fake data."""
+    mock_queue = MagicMock(spec=PostgresIngestionQueue)
+    mock_queue.update_progress = AsyncMock()
+    mock_queue.complete_job = AsyncMock()
+
+    worker = IngestionWorkerDaemon(worker_id="worker-missing-test", queue=mock_queue)
+
+    mock_job = MagicMock()
+    mock_job.id = "job-missing-001"
+    mock_job.file_path = "/non/existent/path/document.pdf"
+    mock_job.filename = "document.pdf"
+
+    mock_session = AsyncMock()
+
+    with pytest.raises(FileNotFoundError):
+        await worker.execute_pipeline(mock_session, mock_job)
+    mock_queue.complete_job.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_worker_heartbeat_loop():
+    """Verify background lease heartbeat loop renews lease periodically."""
+    mock_queue = MagicMock(spec=PostgresIngestionQueue)
+    mock_queue.heartbeat = AsyncMock(return_value=True)
+
+    worker = IngestionWorkerDaemon(worker_id="worker-hb-01", queue=mock_queue, heartbeat_interval_seconds=0.05)
+
+    mock_session = AsyncMock()
+    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+
+    # Run heartbeat loop for brief duration
+    hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-hb-100"))
+    await asyncio.sleep(0.12)
+    hb_task.cancel()
+    try:
+        await hb_task
+    except asyncio.CancelledError:
+        pass
+
+    assert mock_queue.heartbeat.await_count >= 1

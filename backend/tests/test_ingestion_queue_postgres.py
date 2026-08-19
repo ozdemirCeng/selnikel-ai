@@ -5,8 +5,10 @@ Validates:
 2. Worker lease ownership enforcement (worker B cannot hijack worker A's job)
 3. Exponential backoff scheduling (next_attempt_at > now is not claimed)
 4. Dead-letter queue isolation on max attempts
-5. Concurrent worker claim isolation (no double execution)
+5. Concurrent worker claim isolation (FOR UPDATE SKIP LOCKED / concurrency contention)
 """
+import os
+import asyncio
 import pytest
 from datetime import datetime, timezone, timedelta
 from contextlib import asynccontextmanager
@@ -17,14 +19,20 @@ from app.infrastructure.ingestion_queue import PostgresIngestionQueue
 from app.db.models.ingestion import IngestionJobModel
 from app.db.base import Base
 
-@asynccontextmanager
-async def get_test_session():
-    engine = create_async_engine(
+def get_engine():
+    pg_url = os.getenv("TEST_DATABASE_URL")
+    if pg_url:
+        return create_async_engine(pg_url, echo=False)
+    return create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+
+@asynccontextmanager
+async def get_test_session():
+    engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -161,3 +169,59 @@ async def test_queue_exponential_backoff_and_dead_letter():
         assert failed2.state == "failed"
         assert failed2.attempt == 2
         assert failed2.dead_letter is True  # Moved to Dead-Letter Queue
+
+
+@pytest.mark.asyncio
+async def test_queue_concurrent_workers_claim_isolation():
+    """
+    Simulate two concurrent workers attempting to claim the single available job simultaneously.
+    Verifies that exactly ONE worker gets the claim, and the other receives None.
+    """
+    engine = get_engine()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    queue = PostgresIngestionQueue()
+
+    # Step 1: Enqueue a single job
+    async with session_maker() as setup_session:
+        job = await queue.enqueue_job(
+            session=setup_session,
+            document_id="doc-concurrent-01",
+            revision_id="rev-concurrent-01",
+            filename="Kazan_Sertifika.pdf",
+            file_path="/tmp/Kazan_Sertifika.pdf",
+            department_id="dept-quality",
+            file_size_bytes=8192,
+            mime_type="application/pdf",
+            sha256_hash="hash-concurrent",
+        )
+        await setup_session.commit()
+        job_id = job.id
+
+    # Step 2: Concurrently claim using two separate sessions
+    async def worker_claim(worker_id: str):
+        async with session_maker() as session:
+            claimed = await queue.claim_next_job(session, worker_id=worker_id)
+            await session.commit()
+            return worker_id, claimed
+
+    pg_url = os.getenv("TEST_DATABASE_URL")
+    if pg_url:
+        res1, res2 = await asyncio.gather(
+            worker_claim("worker-1"),
+            worker_claim("worker-2"),
+        )
+    else:
+        res1 = await worker_claim("worker-1")
+        res2 = await worker_claim("worker-2")
+
+    claims = [res for res in [res1, res2] if res[1] is not None]
+    nones = [res for res in [res1, res2] if res[1] is None]
+
+    assert len(claims) == 1, "Exactly one worker must claim the single job"
+    assert len(nones) == 1, "The competing worker must receive None"
+    assert claims[0][1].id == job_id
+
+    await engine.dispose()

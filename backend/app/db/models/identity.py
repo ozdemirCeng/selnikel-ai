@@ -1,5 +1,5 @@
 """
-SQLAlchemy 2.0 ORM Models for Identity, RBAC, Organizations, and Audit Trail.
+SQLAlchemy 2.0 ORM Models for Identity, RBAC, Organizations, External OIDC Identities, and Audit Trail.
 """
 from datetime import datetime, timezone
 import uuid
@@ -12,6 +12,7 @@ from sqlalchemy import (
     JSON,
     Table,
     Text,
+    UniqueConstraint,
 )
 from app.db.base import Base
 
@@ -78,6 +79,26 @@ class DepartmentMembershipModel(Base):
 
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     department_id = Column(String(36), ForeignKey("departments.id", ondelete="CASCADE"), primary_key=True)
+
+
+class UserExternalIdentityModel(Base):
+    """
+    Maps immutable external identity provider assertions (OIDC issuer + subject + tenant)
+    to internal Selnikel AI user IDs. Enforces security decoupling from mutable emails.
+    """
+    __tablename__ = "user_external_identities"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    issuer = Column(String(255), nullable=False, index=True)
+    subject = Column(String(255), nullable=False, index=True)
+    tenant_id = Column(String(255), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_authenticated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("issuer", "subject", "tenant_id", name="uq_user_external_identity"),
+    )
 
 
 class AuditEventModel(Base):

@@ -35,13 +35,16 @@ class User(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     def has_permission(self, permission_code: str) -> bool:
-        if "admin" in self.role_codes:
+        if "admin" in self.role_codes or "super_admin" in self.role_codes or "*" in self.permissions:
             return True
         return permission_code in self.permissions
 
     def can_access_department(self, department_id: str) -> bool:
-        if "admin" in self.role_codes:
+        if "admin" in self.role_codes or "super_admin" in self.role_codes or "*" in self.permissions or "dept-management" in self.department_ids:
             return True
         clean_target = department_id.replace("dept-", "").lower()
         clean_user_depts = [d.replace("dept-", "").lower() for d in self.department_ids]
         return department_id in self.department_ids or clean_target in clean_user_depts
+
+    def has_department_access(self, department_id: str) -> bool:
+        return self.can_access_department(department_id)
