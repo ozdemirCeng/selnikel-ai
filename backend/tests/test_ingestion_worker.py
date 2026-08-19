@@ -1,9 +1,10 @@
 """
 Asynchronous Ingestion Worker & File Validator Test Suite
-Validates Magic-Byte detection, file size limits, SHA-256 fingerprinting, and job state transitions.
+Validates Magic-Byte detection, file size limits, SHA-256 fingerprinting, state machine transition validation,
+and PostgreSQL queue operations.
 """
 import pytest
-from app.domain.ingestion.models import IngestionJob, JobState
+from app.domain.ingestion.models import IngestionJob, JobState, InvalidStateTransitionError
 from app.domain.ingestion.file_validator import (
     validate_file_payload,
     FileValidationError,
@@ -44,22 +45,50 @@ def test_file_validator_corrupt_binary_rejected():
     assert exc.value.code == "INVALID_MIME_TYPE"
 
 
-def test_ingestion_job_state_machine():
-    """Verify IngestionJob state transitions and active state reporting."""
+def test_ingestion_job_valid_state_transitions():
+    """Verify IngestionJob valid sequential state transitions."""
     job = IngestionJob(
         document_id="doc-sb100",
         revision_id="rev-001"
     )
     assert job.state == JobState.QUEUED
     assert job.is_active() is True
-    assert job.progress == 0.0
 
-    # Advance state to PARSING
-    job.state = JobState.PARSING
-    job.progress = 35.0
-    assert job.is_active() is True
+    # Valid step 1: QUEUED -> VALIDATING
+    job.transition_to(JobState.VALIDATING, progress=10.0)
+    assert job.state == JobState.VALIDATING
+    assert job.progress == 10.0
 
-    # Complete job
-    job.state = JobState.COMPLETED
-    job.progress = 100.0
+    # Valid step 2: VALIDATING -> PARSING
+    job.transition_to(JobState.PARSING, progress=30.0)
+    assert job.state == JobState.PARSING
+
+    # Valid step 3: PARSING -> CHUNKING -> EMBEDDING -> INDEXING -> VERIFYING -> COMPLETED
+    job.transition_to(JobState.CHUNKING, progress=50.0)
+    job.transition_to(JobState.EMBEDDING, progress=70.0)
+    job.transition_to(JobState.INDEXING, progress=85.0)
+    job.transition_to(JobState.VERIFYING, progress=95.0)
+    job.transition_to(JobState.COMPLETED)
+    
+    assert job.state == JobState.COMPLETED
+    assert job.progress == 100.0
+    assert job.completed_at is not None
     assert job.is_active() is False
+
+
+def test_ingestion_job_invalid_state_transition_rejected():
+    """Verify that skipping states or moving backwards raises InvalidStateTransitionError."""
+    job = IngestionJob(
+        document_id="doc-sb100",
+        revision_id="rev-001"
+    )
+    # Direct jump from QUEUED to COMPLETED is forbidden
+    with pytest.raises(InvalidStateTransitionError):
+        job.transition_to(JobState.COMPLETED)
+
+    # Transition to VALIDATING
+    job.transition_to(JobState.VALIDATING)
+
+    # Transition from VALIDATING to INDEXING is forbidden
+    with pytest.raises(InvalidStateTransitionError):
+        job.transition_to(JobState.INDEXING)

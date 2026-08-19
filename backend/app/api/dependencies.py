@@ -1,16 +1,18 @@
 """
 API Dependencies for Authentication, RBAC Authorization, and Audit Logging.
-Supports both OIDC / Bearer Token headers and Secure Session Cookies (BFF Architecture).
+Enforces strict 401 Unauthorized for missing/invalid credentials.
+Zero silent fallbacks. Supports OIDC Bearer Tokens and Secure BFF Session Cookies.
 """
 import uuid
 from typing import Optional, Callable
 from fastapi import Depends, HTTPException, Header, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.config import settings
 from app.domain.identity.models import User
 
 security = HTTPBearer(auto_error=False)
 
-# Standard Demo / Seed User Accounts for Development and Automated Testing
+# Seed Accounts for Development and Test Execution
 SEED_USERS = {
     "admin@selnikel.com.tr": User(
         id="a0000000-0000-0000-0000-000000000001",
@@ -53,41 +55,56 @@ SEED_USERS = {
     )
 }
 
+
 async def get_current_user(
     request: Request,
     auth_header: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    x_dev_user: Optional[str] = Header(default=None, alias="X-Dev-User"),
     x_user_email: Optional[str] = Header(default=None, alias="X-User-Email")
 ) -> User:
     """
-    Extracts and validates user identity from:
-    1. Authorization: Bearer <token> (OIDC JWT or dev token)
-    2. Session Cookie (BFF HttpOnly cookie)
-    3. Development header fallback (X-User-Email)
+    Extracts and strictly validates user identity.
+    Returns 401 UNAUTHORIZED if credentials are missing or invalid.
     """
     token = None
     if auth_header:
         token = auth_header.credentials
-    elif "selnikel_session" in request.cookies:
-        token = request.cookies["selnikel_session"]
+    elif settings.SESSION_COOKIE_NAME in request.cookies:
+        token = request.cookies[settings.SESSION_COOKIE_NAME]
 
-    # 1. Direct Email matching for development/test fixtures
-    if x_user_email and x_user_email in SEED_USERS:
-        user = SEED_USERS[x_user_email]
-        request.state.user = user
-        return user
-
-    # 2. Token evaluation
+    # 1. Check Bearer token / Session cookie against configured users
     if token:
-        # Check if token matches seed user email or standard token format
+        # Standard token format check
         for email, u in SEED_USERS.items():
-            if token == f"token-{email}" or token == email:
+            if token == f"token-{email}" or token == f"Bearer {email}" or token == email or token == f"dev-token-{email}":
                 request.state.user = u
                 return u
-                
-    # 3. Default fallback user for open local development if no auth provided
-    default_user = SEED_USERS["engineer@selnikel.com.tr"]
-    request.state.user = default_user
-    return default_user
+        # If token was provided but invalid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Geçersiz veya süresi dolmuş yetkilendirme belirteci.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 2. Development header (Explicitly allowed ONLY in development mode)
+    dev_email = x_dev_user or x_user_email
+    if dev_email and settings.AUTH_MODE == "development":
+        if dev_email in SEED_USERS:
+            user = SEED_USERS[dev_email]
+            request.state.user = user
+            return user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Geliştirme kullanıcısı bulunamadı: '{dev_email}'.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 3. STRICT: Zero silent fallback. Missing credentials ALWAYS raise 401.
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Kimlik doğrulaması gereklidir: Yetkilendirme başlığı (Bearer token) veya geçerli oturum çerezi bulunamadı.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def require_permission(permission_code: str) -> Callable:

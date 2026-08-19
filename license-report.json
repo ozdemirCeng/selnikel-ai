@@ -1,0 +1,13 @@
+{
+  "summary": "100% Permissive Commercial Licenses. Zero Copyleft/GPL-3 dependencies.",
+  "backend_packages_count": 141,
+  "frontend_packages_count": 16,
+  "license_distribution": {
+    "Apache-2.0": 18,
+    "MIT": 105,
+    "BSD-3-Clause": 16,
+    "PSF-2.0": 2
+  },
+  "gpl_found": false,
+  "compliance_status": "COMPLIANT"
+}

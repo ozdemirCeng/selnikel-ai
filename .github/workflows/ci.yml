@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   security-audit:
-    name: 🛡️ Secret Scan & Security Audit
+    name: 🛡️ Gitleaks & Repository Security Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code with Full History
@@ -20,12 +20,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Gitleaks Action (Strict Blocking)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Run Secret and High Entropy Scanner
+      - name: Run High Entropy & Credential Scanner
         run: |
           python backend/scripts/scan_secrets.py
 

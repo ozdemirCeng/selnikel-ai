@@ -14,6 +14,8 @@ from app.schemas.document import (
     MessageResponse,
 )
 from app.services.ingestion.pipeline import ingestion_pipeline
+from app.api.dependencies import get_current_user, require_permission
+from app.domain.identity.models import User
 
 router = APIRouter()
 
@@ -30,12 +32,19 @@ async def upload_document(
     document_type: str = Form("technical_specification", description="Type of document"),
     language: str = Form("tr", description="Primary document language"),
     allow_duplicate: bool = Form(False, description="Whether to re-index identical file"),
+    user: User = Depends(require_permission("document.upload")),
     db: AsyncSession = Depends(get_db),
 ) -> DocumentUploadResponse:
     """Upload an industrial manufacturing document.
     Coordinates SHA-256 deduplication, Docling layout parsing, structure-aware chunking,
-    and PostgreSQL metadata indexing.
+    and PostgreSQL metadata indexing. Requires 'document.upload' permission.
     """
+    if not user.can_access_department(department):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Erişim reddedildi: '{department}' departmanına belge yükleme yetkiniz yok."
+        )
+
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename must not be empty.")
 
@@ -88,12 +97,19 @@ async def list_documents(
     department: Optional[str] = Query(None, description="Filter by department"),
     document_type: Optional[str] = Query(None, description="Filter by document type"),
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by status"),
+    user: User = Depends(require_permission("document.read")),
     db: AsyncSession = Depends(get_db),
 ) -> DocumentListResponse:
-    """List indexed documents with optional departmental filtering."""
+    """List indexed documents with departmental ACL enforcement."""
     query = select(DocumentModel)
 
+    # Enforce departmental ACL
+    if "admin" not in user.role_codes:
+        query = query.where(DocumentModel.department.in_(user.department_ids))
+
     if department:
+        if not user.can_access_department(department):
+            return DocumentListResponse(items=[], total=0)
         query = query.where(DocumentModel.department == department)
     if document_type:
         query = query.where(DocumentModel.document_type == document_type)
@@ -121,15 +137,22 @@ async def list_documents(
 )
 async def get_document(
     document_id: str,
+    user: User = Depends(require_permission("document.read")),
     db: AsyncSession = Depends(get_db),
 ) -> DocumentResponse:
-    """Get metadata for a specific document."""
+    """Get metadata for a specific document with ACL verification."""
     stmt = select(DocumentModel).where(DocumentModel.id == document_id)
     res = await db.execute(stmt)
     doc = res.scalars().first()
 
     if not doc:
         raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+    if not user.can_access_department(doc.department):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Erişim reddedildi: '{doc.department}' departmanına ait bu belgeye erişim yetkiniz yok."
+        )
 
     return DocumentResponse.model_validate(doc)
 
@@ -141,14 +164,21 @@ async def get_document(
 )
 async def get_document_chunks(
     document_id: str,
+    user: User = Depends(require_permission("document.read")),
     db: AsyncSession = Depends(get_db),
 ) -> List[ChunkResponse]:
-    """Inspect all parsed chunks and section boundaries for a document."""
-    # Verify document exists
+    """Inspect all parsed chunks and section boundaries for a document with ACL check."""
     stmt = select(DocumentModel).where(DocumentModel.id == document_id)
     doc_res = await db.execute(stmt)
-    if not doc_res.scalars().first():
+    doc = doc_res.scalars().first()
+    if not doc:
         raise HTTPException(status_code=404, detail=f"Document '{document_id}' not found.")
+
+    if not user.can_access_department(doc.department):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Erişim reddedildi: Bu belgenin parçalarına erişim yetkiniz yok."
+        )
 
     chunk_stmt = (
         select(DocumentChunkModel)
@@ -179,9 +209,10 @@ async def get_document_chunks(
 )
 async def delete_document(
     document_id: str,
+    user: User = Depends(require_permission("document.delete")),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
-    """Delete document from PostgreSQL catalog and Qdrant vector collection."""
+    """Delete document from PostgreSQL catalog and Qdrant vector collection. Requires 'document.delete'."""
     stmt = select(DocumentModel).where(DocumentModel.id == document_id)
     res = await db.execute(stmt)
     doc = res.scalars().first()
@@ -196,7 +227,7 @@ async def delete_document(
     await db.delete(doc)
     await db.commit()
 
-    logger.info(f"Deleted document '{doc.filename}' (ID: {document_id}) from database and vector index.")
+    logger.info(f"Deleted document '{doc.filename}' (ID: {document_id}) by user {user.email}.")
     return MessageResponse(
         message=f"Document '{doc.filename}' and associated chunks successfully deleted.",
         success=True,

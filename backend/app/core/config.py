@@ -57,5 +57,12 @@ class Settings(BaseSettings):
     # Storage
     STORAGE_DIR: str = "./data/documents"
 
+    # Authentication & Security
+    AUTH_MODE: Literal["development", "oidc", "bff"] = "development"
+    OIDC_ISSUER: Optional[str] = None
+    OIDC_CLIENT_ID: Optional[str] = None
+    OIDC_AUDIENCE: Optional[str] = None
+    SESSION_COOKIE_NAME: str = "selnikel_session"
+
 
 settings = Settings()

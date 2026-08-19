@@ -1,33 +1,41 @@
 """
-Frontend Static Asset Smoke Test Suite
-Verifies that Next.js production bundles, HTML pages, JS chunks, and CSS files
-are served with valid HTTP 200 responses, correct MIME types, and non-empty payloads.
+Frontend Static Asset & Bundle Smoke Test Suite
+Rigorously checks Next.js build manifest and requests all compiled CSS/JS chunks over HTTP 200.
 """
 import os
-import glob
+import json
 import pytest
 import httpx
 
 @pytest.mark.asyncio
-async def test_frontend_production_build_artifacts_exist():
-    """Verify that the Next.js production build folder and manifest files exist."""
+async def test_frontend_production_build_manifest_and_chunks():
+    """Verify that build-manifest.json exists and all referenced JS/CSS files exist on disk."""
     frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
-    next_dir = os.path.join(frontend_dir, ".next")
+    manifest_path = os.path.join(frontend_dir, ".next", "build-manifest.json")
     
-    assert os.path.exists(next_dir), f".next directory does not exist at {next_dir}. Run 'npm run build' first."
+    assert os.path.exists(manifest_path), f"build-manifest.json not found at {manifest_path}. Run 'npm run build' first."
     
-    # Check static chunks directory
-    static_chunks_dir = os.path.join(next_dir, "static", "chunks")
-    assert os.path.exists(static_chunks_dir), f"Static chunks dir not found at {static_chunks_dir}"
-    
-    js_files = glob.glob(os.path.join(static_chunks_dir, "**", "*.js"), recursive=True)
-    assert len(js_files) > 0, "No compiled JS chunks found in .next/static/chunks/"
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    # In Next.js App Router, core bundles are in rootMainFiles and pages["/_app"]
+    root_chunks = manifest.get("rootMainFiles", [])
+    app_chunks = manifest.get("pages", {}).get("/_app", [])
+    all_core_chunks = root_chunks + app_chunks
+
+    assert len(all_core_chunks) > 0, "No core static chunks found in build-manifest.json"
+
+    for chunk_rel_path in all_core_chunks:
+        chunk_disk_path = os.path.join(frontend_dir, ".next", chunk_rel_path)
+        assert os.path.exists(chunk_disk_path), f"Chunk missing on disk: {chunk_disk_path}"
 
 
 @pytest.mark.asyncio
-async def test_frontend_live_asset_serving_smoke():
-    """Verify live HTTP 200 serving of the Next.js app and asset endpoints."""
-    # Test port 3005 (default for this workstation) or 3000
+async def test_frontend_live_asset_serving_over_http():
+    """
+    Queries running Next.js instance, parses build-manifest.json,
+    and validates that every single static chunk returns HTTP 200.
+    """
     urls_to_try = ["http://localhost:3005", "http://localhost:3000"]
     live_url = None
     
@@ -40,16 +48,35 @@ async def test_frontend_live_asset_serving_smoke():
                     break
             except Exception:
                 continue
-                
+
     if not live_url:
         pytest.skip("Next.js live server is not running on port 3005 or 3000 during test.")
-        
+
+    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
+    manifest_path = os.path.join(frontend_dir, ".next", "build-manifest.json")
+    
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    # Collect all distinct chunk URLs
+    all_chunks = set(manifest.get("rootMainFiles", []))
+    for page, chunks in manifest.get("pages", {}).items():
+        for c in chunks:
+            all_chunks.add(c)
+
     async with httpx.AsyncClient(timeout=5.0) as client:
-        # 1. Root page
+        # 1. Check Root Page
         res = await client.get(f"{live_url}/")
         assert res.status_code == 200
         assert "text/html" in res.headers.get("content-type", "")
-        assert len(res.text) > 100
-        
-        # 2. Extract and test a static chunk if referenced in HTML
-        assert "selnikel" in res.text.lower() or "not defteri" in res.text.lower() or "html" in res.text.lower()
+
+        # 2. Check each compiled bundle chunk via HTTP GET
+        tested_count = 0
+        for chunk_path in list(all_chunks):
+            chunk_url = f"{live_url}/_next/{chunk_path}"
+            chunk_res = await client.get(chunk_url)
+            assert chunk_res.status_code == 200, f"Failed to serve chunk {chunk_url} (HTTP {chunk_res.status_code})"
+            assert len(chunk_res.content) > 0, f"Chunk {chunk_url} returned 0 bytes"
+            tested_count += 1
+
+        assert tested_count > 0, "No chunks were verified over HTTP."

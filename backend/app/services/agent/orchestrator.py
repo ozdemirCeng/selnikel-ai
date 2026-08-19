@@ -177,6 +177,26 @@ KULLANABİLECEĞİN ARAÇLAR:
             total_execution_time_ms=total_time,
         )
 
+    async def stream_run(
+        self,
+        query: str,
+        max_steps: int = 5,
+    ):
+        """Streams agent reasoning steps, tool calls, and final answer tokens."""
+        query = query.strip()
+        yield {"type": "thought", "content": f"Soru analiz ediliyor: {query}"}
+        
+        # Execute reasoning step
+        resp = await self.run(query=query, max_steps=max_steps)
+        for step in resp.steps:
+            yield {"type": "thought", "content": step.thought}
+            if step.tool_call:
+                yield {"type": "tool_call", "tool": step.tool_call.tool_name, "args": step.tool_call.arguments}
+            if step.tool_result:
+                yield {"type": "tool_result", "data": step.tool_result.data}
+        
+        yield {"type": "answer_token", "content": resp.final_answer}
+
     def _parse_json_action(self, text: str) -> Dict[str, Any]:
         """Safely extract JSON from model output."""
         text = text.strip()

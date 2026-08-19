@@ -2,7 +2,7 @@ import io
 import json
 import time
 from typing import List
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from app.core.logging import logger
 from app.schemas.agent import (
@@ -18,6 +18,8 @@ from app.services.reporting import (
     EngineeringPowerPointExporter,
     EngineeringWordExporter,
 )
+from app.api.dependencies import get_current_user, require_permission
+from app.domain.identity.models import User
 
 router = APIRouter(prefix="/agent", tags=["AI Engineering Agent"])
 
@@ -27,7 +29,7 @@ router = APIRouter(prefix="/agent", tags=["AI Engineering Agent"])
     response_model=List[ToolDefinitionSchema],
     summary="List available engineering tools",
 )
-async def list_tools():
+async def list_tools(user: User = Depends(get_current_user)):
     """Returns definitions and parameter schemas for all available engineering tools."""
     tool_defs = engineering_agent.get_tool_definitions()
     return [t.model_dump() for t in tool_defs]
@@ -38,7 +40,10 @@ async def list_tools():
     response_model=AgentRunResponse,
     summary="Execute multi-step engineering agent synchronously",
 )
-async def run_agent(request: AgentRunRequest):
+async def run_agent(
+    request: AgentRunRequest,
+    user: User = Depends(require_permission("answer.create")),
+):
     """Executes multi-step reasoning, tool invocations, and answer synthesis."""
     if not request.query.strip():
         raise HTTPException(
@@ -62,10 +67,13 @@ async def run_agent(request: AgentRunRequest):
 
 @router.post(
     "/stream",
-    summary="Stream real-time agent thoughts, tool calls, and final answer via SSE",
+    summary="Stream multi-step engineering agent execution and thought tokens via SSE",
 )
-async def stream_agent(request: AgentRunRequest):
-    """Streams SSE events as the agent reasons, executes tools, and produces the final answer."""
+async def stream_agent(
+    request: AgentRunRequest,
+    user: User = Depends(require_permission("answer.create")),
+):
+    """Server-Sent Events (SSE) streaming endpoint emitting typed thinking, tool calls, and final response."""
     if not request.query.strip():
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -74,25 +82,17 @@ async def stream_agent(request: AgentRunRequest):
 
     async def event_generator():
         try:
-            # Emit start event
-            yield f"data: {json.dumps({'type': 'start', 'query': request.query})}\n\n"
-
-            # Execute run
-            response = await engineering_agent.run(
+            async for event in engineering_agent.stream_run(
                 query=request.query,
                 max_steps=request.max_steps,
-            )
-
-            # Stream each reasoning step
-            for step in response.steps:
-                yield f"data: {json.dumps({'type': 'step', 'step': step.model_dump()}, ensure_ascii=False)}\n\n"
-
-            # Stream final answer
-            yield f"data: {json.dumps({'type': 'final_answer', 'answer': response.final_answer, 'tools_used': response.tools_used, 'latency_ms': response.total_execution_time_ms}, ensure_ascii=False)}\n\n"
+            ):
+                event_data = json.dumps(event, ensure_ascii=False)
+                yield f"data: {event_data}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-            yield "data: [DONE]\n\n"
+            logger.error(f"Agent stream error: {e}")
+            err_payload = json.dumps({"type": "error", "content": str(e)}, ensure_ascii=False)
+            yield f"data: {err_payload}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -109,7 +109,10 @@ async def stream_agent(request: AgentRunRequest):
     "/report/pdf",
     summary="Export technical markdown report to styled PDF document",
 )
-async def export_pdf_report(request: PDFReportRequest):
+async def export_pdf_report(
+    request: PDFReportRequest,
+    user: User = Depends(require_permission("export.create")),
+):
     """Generates a high-fidelity PDF from the provided markdown content."""
     if not request.markdown_content.strip():
         raise HTTPException(
@@ -142,7 +145,10 @@ async def export_pdf_report(request: PDFReportRequest):
     "/report/excel",
     summary="Export engineering calculations & tables to formatted Excel spreadsheet (.xlsx)",
 )
-async def export_excel_report(request: PDFReportRequest):
+async def export_excel_report(
+    request: PDFReportRequest,
+    user: User = Depends(require_permission("export.create")),
+):
     """Generates a formatted Microsoft Excel spreadsheet (.xlsx) from markdown tables and calculations."""
     if not request.markdown_content.strip():
         raise HTTPException(
@@ -175,7 +181,10 @@ async def export_excel_report(request: PDFReportRequest):
     "/report/word",
     summary="Export technical markdown report to formal Microsoft Word document (.docx)",
 )
-async def export_word_report(request: PDFReportRequest):
+async def export_word_report(
+    request: PDFReportRequest,
+    user: User = Depends(require_permission("export.create")),
+):
     """Generates a formal Microsoft Word document (.docx) with Selnikel headers and tables."""
     if not request.markdown_content.strip():
         raise HTTPException(
@@ -208,7 +217,10 @@ async def export_word_report(request: PDFReportRequest):
     "/report/powerpoint",
     summary="Export technical briefing to widescreen PowerPoint presentation (.pptx)",
 )
-async def export_powerpoint_report(request: PDFReportRequest):
+async def export_powerpoint_report(
+    request: PDFReportRequest,
+    user: User = Depends(require_permission("export.create")),
+):
     """Generates a widescreen 16:9 Microsoft PowerPoint presentation (.pptx) from markdown text."""
     if not request.markdown_content.strip():
         raise HTTPException(
@@ -235,5 +247,3 @@ async def export_powerpoint_report(request: PDFReportRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate PowerPoint: {str(e)}",
         )
-
-

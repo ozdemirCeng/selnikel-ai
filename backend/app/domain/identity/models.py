@@ -42,4 +42,6 @@ class User(BaseModel):
     def can_access_department(self, department_id: str) -> bool:
         if "admin" in self.role_codes:
             return True
-        return department_id in self.department_ids
+        clean_target = department_id.replace("dept-", "").lower()
+        clean_user_depts = [d.replace("dept-", "").lower() for d in self.department_ids]
+        return department_id in self.department_ids or clean_target in clean_user_depts

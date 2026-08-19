@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -34,6 +34,9 @@ class ChunkMetadata(BaseModel):
     section: Optional[str] = None
     document_type: str = "technical_specification"
     department: str = "engineering"
+    equipment_ids: List[str] = Field(default_factory=list)
+    classification: str = "public_internal"
+    approval_status: str = "approved"
     language: str = "tr"
     chunk_index: int = 0
     token_count: Optional[int] = None

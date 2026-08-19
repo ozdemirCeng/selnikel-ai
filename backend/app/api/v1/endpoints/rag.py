@@ -15,6 +15,8 @@ from app.schemas.rag import (
     RAGQueryResponse,
 )
 from app.services.rag.engine import rag_engine
+from app.api.dependencies import get_current_user, require_permission
+from app.domain.identity.models import User
 
 router = APIRouter()
 
@@ -26,19 +28,21 @@ router = APIRouter()
 )
 async def query_rag(
     request: RAGQueryRequest,
+    user: User = Depends(require_permission("answer.create")),
     db: AsyncSession = Depends(get_db),
 ) -> RAGQueryResponse:
-    """Execute end-to-end deterministic RAG query with citations and strict grounding."""
+    """Execute end-to-end deterministic RAG query with citations and strict departmental ACL enforcement."""
     start_time = time.perf_counter()
 
-    filter_criteria = None
-    if any([request.department, request.document_type, request.document_id, request.language]):
-        filter_criteria = RetrievalFilter(
-            department=request.department,
-            document_type=request.document_type,
-            document_id=request.document_id,
-            language=request.language,
-        )
+    allowed_depts = None if "admin" in user.role_codes else user.department_ids
+
+    filter_criteria = RetrievalFilter(
+        department=request.department,
+        document_type=request.document_type,
+        document_id=request.document_id,
+        language=request.language,
+        allowed_departments=allowed_depts,
+    )
 
     try:
         output = await rag_engine.query(
@@ -70,40 +74,40 @@ async def query_rag(
             llm_model=getattr(rag_engine.llm, "model_name", "gpt-4o-mini"),
         )
     except Exception as e:
-        logger.error(f"RAG query execution failed: {e}")
+        logger.error(f"RAG query execution error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"RAG execution failed: {str(e)}",
+            detail=f"Failed to process RAG query: {str(e)}",
         )
 
 
 @router.post(
     "/stream",
-    summary="Stream grounded RAG answer via Server-Sent Events (SSE)",
+    summary="Stream grounded technical response via SSE",
 )
 async def stream_rag(
     request: RAGQueryRequest,
+    user: User = Depends(require_permission("answer.create")),
     db: AsyncSession = Depends(get_db),
 ):
-    """Real-time SSE token stream for interactive AI assistant with live citations event."""
-    filter_criteria = None
-    if any([request.department, request.document_type, request.document_id, request.language]):
-        filter_criteria = RetrievalFilter(
-            department=request.department,
-            document_type=request.document_type,
-            document_id=request.document_id,
-            language=request.language,
-        )
+    """Server-Sent Events (SSE) streaming endpoint for RAG query with ACL enforcement."""
+    allowed_depts = None if "admin" in user.role_codes else user.department_ids
 
-    stream_generator = rag_engine.query_stream(
-        query_text=request.query,
-        top_k=request.top_k,
-        filter_criteria=filter_criteria,
-        session=db,
+    filter_criteria = RetrievalFilter(
+        department=request.department,
+        document_type=request.document_type,
+        document_id=request.document_id,
+        language=request.language,
+        allowed_departments=allowed_depts,
     )
 
     return StreamingResponse(
-        stream_generator,
+        rag_engine.query_stream(
+            query_text=request.query,
+            top_k=request.top_k,
+            filter_criteria=filter_criteria,
+            session=db,
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -116,20 +120,16 @@ async def stream_rag(
 @router.get(
     "/history",
     response_model=List[QueryLogResponse],
-    summary="Get recent question answering audit history",
+    summary="Get recent query audit history",
 )
 async def get_query_history(
-    limit: int = Query(20, ge=1, le=100, description="Max history logs to return"),
-    skip: int = Query(0, ge=0, description="Offset"),
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(require_permission("answer.create")),
     db: AsyncSession = Depends(get_db),
 ) -> List[QueryLogResponse]:
-    """Retrieve audit trail of recent queries and their performance latencies."""
-    stmt = (
-        select(QueryLogModel)
-        .order_by(QueryLogModel.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
+    """Retrieve recent query history from audit logs."""
+    stmt = select(QueryLogModel).order_by(QueryLogModel.created_at.desc()).limit(limit)
     res = await db.execute(stmt)
     logs = res.scalars().all()
-    return [QueryLogResponse.model_validate(l) for l in logs]
+
+    return [QueryLogResponse.model_validate(log) for log in logs]

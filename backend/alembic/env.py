@@ -1,13 +1,13 @@
 import asyncio
 from logging.config import fileConfig
-from sqlalchemy import pool
+from sqlalchemy import pool, engine_from_config
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.core.config import settings
 from app.db.base import Base
-import app.db.models  # Ensure models are loaded
+import app.db.models  # Ensure all models are registered
 
 config = context.config
 
@@ -16,9 +16,14 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+
+def get_url() -> str:
+    return config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = settings.DATABASE_URL
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -43,9 +48,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """Run migrations in 'online' mode with asyncpg."""
+    """Run migrations in 'online' mode with async engine."""
+    url = get_url()
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = url
 
     connectable = async_engine_from_config(
         configuration,
@@ -59,9 +65,31 @@ async def run_async_migrations() -> None:
     await connectable.dispose()
 
 
+def run_sync_migrations() -> None:
+    """Run migrations in 'online' mode with sync engine (e.g., standard SQLite test)."""
+    url = get_url()
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = url
+
+    connectable = engine_from_config(
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        do_run_migrations(connection)
+
+    connectable.dispose()
+
+
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    asyncio.run(run_async_migrations())
+    """Run migrations in 'online' mode dynamically selecting sync or async engine."""
+    url = get_url()
+    if "+asyncpg" in url or "+aiosqlite" in url:
+        asyncio.run(run_async_migrations())
+    else:
+        run_sync_migrations()
 
 
 if context.is_offline_mode():
