@@ -10,8 +10,8 @@ from uuid import uuid4
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.database import IngestionJobModel
-from app.domain.ingestion.models import IngestionJob, IngestionJobState, InvalidStateTransitionError
+from app.db.models.ingestion import IngestionJobModel
+from app.domain.ingestion.models import IngestionJob, JobState, InvalidStateTransitionError
 from app.core.logging import logger
 
 

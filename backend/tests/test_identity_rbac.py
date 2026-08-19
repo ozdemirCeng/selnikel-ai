@@ -118,6 +118,19 @@ async def test_auth_mode_oidc_jwt_verification():
         res_tamp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {tampered_jwt}"})
         assert res_tamp.status_code == 401
 
+        # 5. Valid JWT for unmapped external user -> Authenticated with ZERO privileges -> 403 Forbidden on restricted action
+        unmapped_payload = {
+            "sub": "ext-user-999",
+            "email": "external_vendor@contractor.com",
+            "iss": "https://auth.selnikel.com.tr",
+            "aud": "selnikel-ai",
+            "exp": time.time() + 3600,
+        }
+        unmapped_jwt = jwt.encode(unmapped_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+        # Attempt upload without permissions
+        res_unmapped = await ac.post("/api/v1/documents/upload", headers={"Authorization": f"Bearer {unmapped_jwt}"})
+        assert res_unmapped.status_code == 403
+
 
 @pytest.mark.asyncio
 async def test_auth_mode_bff_session_cookie():
@@ -150,10 +163,23 @@ async def test_auth_mode_bff_session_cookie():
 
 
 def test_startup_validation_fail_fast():
+    # 1. Reject development auth in production
+    settings.ENVIRONMENT = "production"
+    settings.AUTH_MODE = "development"
+    with pytest.raises(RuntimeError) as exc1:
+        settings.validate_auth_configuration()
+    assert "forbidden in production" in str(exc1.value).lower()
+
+    # 2. Reject missing OIDC configuration in production
     settings.AUTH_MODE = "oidc"
     settings.OIDC_ISSUER = None
     settings.OIDC_CLIENT_ID = None
-
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(RuntimeError) as exc2:
         settings.validate_auth_configuration()
-    assert "requires OIDC_ISSUER and OIDC_CLIENT_ID" in str(exc.value)
+    assert "requires OIDC_ISSUER and OIDC_CLIENT_ID" in str(exc2.value)
+
+    # 3. Reject wildcard CORS in production
+    settings.BACKEND_CORS_ORIGINS = ["*"]
+    with pytest.raises(RuntimeError) as exc3:
+        settings.validate_auth_configuration()
+    assert "wildcard" in str(exc3.value).lower()

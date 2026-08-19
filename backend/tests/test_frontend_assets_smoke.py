@@ -78,11 +78,13 @@ async def test_frontend_live_asset_serving_over_http():
         assert res.status_code == 200
 
         checked_count = 0
-        for chunk in list(all_chunks)[:10]:
+        for chunk in sorted(list(all_chunks)):
             chunk_url = f"{live_url}/_next/{chunk}"
             chunk_res = await client.get(chunk_url)
             assert chunk_res.status_code == 200, f"Failed to fetch asset: {chunk_url} (HTTP {chunk_res.status_code})"
             assert len(chunk_res.content) > 0, f"Asset returned empty body: {chunk_url}"
             checked_count += 1
+
+        assert checked_count == len(all_chunks), f"Expected to verify all {len(all_chunks)} chunks, verified {checked_count}."
 
         assert checked_count > 0, "No assets were checked during smoke test."

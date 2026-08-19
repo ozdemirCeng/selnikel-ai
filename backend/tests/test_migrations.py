@@ -86,12 +86,17 @@ def test_sqlite_upgrade_downgrade_cycle(tmp_path):
 
 def test_postgresql_upgrade_downgrade_cycle():
     """
-    Executes migration lifecycle on live PostgreSQL database if configured in environment.
-    Runs automatically in CI with PostgreSQL service container.
+    Executes migration lifecycle on live PostgreSQL database.
+    When REQUIRE_POSTGRES_MIGRATION=true (in CI), any failure or missing connection strictly FAILS the build.
     """
+    require_postgres = os.environ.get("REQUIRE_POSTGRES_MIGRATION") == "true"
     pg_url = os.environ.get("TEST_POSTGRES_URL") or os.environ.get("DATABASE_URL")
+
     if not pg_url or not ("postgresql" in pg_url or "postgres" in pg_url):
-        pytest.skip("Live PostgreSQL service not configured (skipped in local unit run).")
+        if require_postgres:
+            pytest.fail("CI Gate Failure: REQUIRE_POSTGRES_MIGRATION=true but valid DATABASE_URL is not set.")
+        else:
+            pytest.skip("Live PostgreSQL service not configured (skipped in local unit run).")
 
     # Convert asyncpg connection string to sync psycopg2/pg8000 for alembic runner if needed
     sync_url = pg_url.replace("+asyncpg", "")
@@ -114,4 +119,7 @@ def test_postgresql_upgrade_downgrade_cycle():
         command.downgrade(config, "base")
         command.upgrade(config, "head")
     except Exception as e:
-        pytest.skip(f"PostgreSQL connection unavailable: {e}")
+        if require_postgres:
+            pytest.fail(f"CI Gate Failure: PostgreSQL migration cycle failed with error: {e}")
+        else:
+            pytest.skip(f"PostgreSQL connection unavailable: {e}")

@@ -23,7 +23,6 @@ class Settings(BaseSettings):
         "http://localhost:3005",
         "http://127.0.0.1:3005",
         "http://localhost:8000",
-        "*",
     ]
 
     # Database (PostgreSQL)
@@ -64,20 +63,37 @@ class Settings(BaseSettings):
     OIDC_ISSUER: Optional[str] = None
     OIDC_CLIENT_ID: Optional[str] = None
     OIDC_AUDIENCE: Optional[str] = None
+    OIDC_JWKS_URI: Optional[str] = None
+    OIDC_TENANT_ID: Optional[str] = None
     SESSION_COOKIE_NAME: str = "selnikel_session"
-    SESSION_SECRET_KEY: str = "dev-insecure-session-secret-change-in-production"
+    SESSION_SECRET_KEY: str = "dev-insecure-session-secret-change-in-production-min32char"
 
     def validate_auth_configuration(self) -> None:
-        """Fail-fast validation for production authentication modes."""
-        if self.AUTH_MODE == "oidc":
-            if not self.OIDC_ISSUER or not self.OIDC_CLIENT_ID:
-                raise RuntimeError(
-                    "AUTH_MODE 'oidc' requires OIDC_ISSUER and OIDC_CLIENT_ID to be configured."
-                )
-        elif self.AUTH_MODE == "bff":
-            if not self.SESSION_SECRET_KEY or self.SESSION_SECRET_KEY.startswith("dev-"):
-                if self.ENVIRONMENT == "production":
-                    raise RuntimeError("AUTH_MODE 'bff' in production requires a secure SESSION_SECRET_KEY.")
+        """Fail-fast validation for startup security and authentication modes."""
+        if self.ENVIRONMENT == "production":
+            # 1. Reject development auth in production
+            if self.AUTH_MODE == "development":
+                raise RuntimeError("Security Violation: AUTH_MODE 'development' is forbidden in production.")
+
+            # 2. Reject wildcard CORS in production
+            if "*" in self.BACKEND_CORS_ORIGINS:
+                raise RuntimeError("Security Violation: Wildcard '*' in BACKEND_CORS_ORIGINS is forbidden in production.")
+
+            # 3. Validate OIDC in production
+            if self.AUTH_MODE == "oidc":
+                if not self.OIDC_ISSUER or not self.OIDC_CLIENT_ID:
+                    raise RuntimeError("AUTH_MODE 'oidc' in production requires OIDC_ISSUER and OIDC_CLIENT_ID.")
+                if self.JWT_ALGORITHM == "HS256" and not self.OIDC_JWKS_URI:
+                    raise RuntimeError("Security Violation: Production OIDC requires asymmetric RS256/ES256 with JWKS.")
+
+            # 4. Validate BFF in production
+            elif self.AUTH_MODE == "bff":
+                if len(self.SESSION_SECRET_KEY) < 32 or self.SESSION_SECRET_KEY.startswith("dev-"):
+                    raise RuntimeError("Security Violation: Production BFF mode requires a 32+ char secure SESSION_SECRET_KEY.")
+        else:
+            # Development/Staging sanity checks
+            if self.AUTH_MODE == "oidc" and not (self.OIDC_ISSUER and self.OIDC_CLIENT_ID) and not self.JWT_SECRET_KEY:
+                raise RuntimeError("OIDC mode requires either OIDC_ISSUER/OIDC_CLIENT_ID or a valid JWT_SECRET_KEY.")
 
 
 settings = Settings()

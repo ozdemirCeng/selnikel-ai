@@ -12,7 +12,8 @@ from app.infrastructure.qdrant import qdrant_repo
 async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
-    logger.info(f"Starting {settings.PROJECT_NAME} backend in {settings.ENVIRONMENT} mode...")
+    settings.validate_auth_configuration()
+    logger.info(f"Starting {settings.PROJECT_NAME} backend in {settings.ENVIRONMENT} mode (AUTH_MODE: {settings.AUTH_MODE})...")
 
     # Initialize DB tables if database is reachable
     if await check_db_connection():

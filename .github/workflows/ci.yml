@@ -92,6 +92,7 @@ jobs:
           QDRANT_HOST: localhost
           QDRANT_PORT: 6333
           AUTH_MODE: development
+          REQUIRE_POSTGRES_MIGRATION: "true"
         run: |
           cd backend
           pytest -v --tb=short

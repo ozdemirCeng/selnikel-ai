@@ -1,15 +1,18 @@
 """
-Ingestion Worker & Queue Unit / Concurrency Test Suite
+Ingestion Worker Daemon & Queue Unit / Concurrency Test Suite
 Validates:
 1. Magic-byte MIME type and file size validation
 2. IngestionJob strict state machine transitions
 3. Worker lease ownership enforcement
 4. Exponential backoff retry and dead-letter queue transitions
+5. IngestionWorkerDaemon lifecycle & graceful shutdown
 """
 import io
+import asyncio
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timezone, timedelta
-from app.services.ingestion.worker import FileValidator
+from app.services.ingestion.worker import FileValidator, IngestionWorkerDaemon
 from app.domain.ingestion.models import IngestionJob, JobState, InvalidStateTransitionError
 
 def test_file_validator_valid_pdf():
@@ -124,3 +127,24 @@ def test_ingestion_job_exponential_backoff_and_dead_letter():
     job.dead_letter = True
     assert job.state == JobState.FAILED
     assert job.dead_letter is True
+
+
+@pytest.mark.asyncio
+async def test_worker_daemon_lifecycle_and_graceful_shutdown():
+    """Verify worker daemon initialization, execution, and graceful shutdown."""
+    worker = IngestionWorkerDaemon(worker_id="test-worker-01", poll_interval_seconds=0.05)
+    assert worker.is_running is False
+    assert worker.worker_id == "test-worker-01"
+
+    mock_session = AsyncMock()
+    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+
+    # Start worker in background task
+    task = asyncio.create_task(worker.start(mock_session_factory))
+    await asyncio.sleep(0.1)
+    assert worker.is_running is True
+
+    # Signal stop
+    worker.stop()
+    await task
+    assert worker.is_running is False

@@ -97,30 +97,67 @@ def _verify_session_cookie(cookie_value: str) -> Optional[User]:
 
 
 def _verify_oidc_jwt(token: str) -> User:
-    """Verifies OIDC JWT cryptographic signature, expiry, issuer, and claims."""
+    """
+    Verifies OIDC / Entra ID JWT cryptographic signature, expiry, issuer, audience, and tenant.
+    Enforces strict zero-privilege fallback (0 roles, 0 departments, 0 permissions) for unassigned accounts.
+    """
     try:
+        # Determine verification key: JWKS URI (asymmetric) or Secret Key (symmetric / test)
+        key = settings.JWT_SECRET_KEY
+        algorithms = [settings.JWT_ALGORITHM]
+
+        if settings.OIDC_JWKS_URI:
+            try:
+                jwks_client = jwt.PyJWKClient(settings.OIDC_JWKS_URI)
+                signing_key = jwks_client.get_signing_key_from_jwt(token)
+                key = signing_key.key
+                algorithms = ["RS256", "ES256", "RSA", "ECDSA"]
+            except Exception as jwks_err:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"JWKS anahtarı alınamadı: {str(jwks_err)}",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
         decode_kwargs: Dict[str, Any] = {
-            "key": settings.JWT_SECRET_KEY,
-            "algorithms": [settings.JWT_ALGORITHM],
+            "key": key,
+            "algorithms": algorithms,
+            "options": {"verify_exp": True, "verify_iss": bool(settings.OIDC_ISSUER), "verify_aud": bool(settings.OIDC_AUDIENCE or settings.OIDC_CLIENT_ID)},
         }
         if settings.OIDC_ISSUER:
             decode_kwargs["issuer"] = settings.OIDC_ISSUER
-        if settings.OIDC_AUDIENCE:
-            decode_kwargs["audience"] = settings.OIDC_AUDIENCE
+        
+        target_audience = settings.OIDC_AUDIENCE or settings.OIDC_CLIENT_ID
+        if target_audience:
+            decode_kwargs["audience"] = target_audience
 
         payload = jwt.decode(token, **decode_kwargs)
-        email = payload.get("email") or payload.get("sub")
+
+        # Microsoft Entra ID Tenant Verification
+        if settings.OIDC_TENANT_ID:
+            token_tid = payload.get("tid")
+            if token_tid != settings.OIDC_TENANT_ID:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Geçersiz Entra Tenant ID: {token_tid}",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        email = payload.get("email") or payload.get("preferred_username") or payload.get("upn") or payload.get("sub")
         if email and email in SEED_USERS:
             return SEED_USERS[email]
 
-        # Dynamically build user from verified JWT claims
+        # Fail-Closed / Zero-Privilege Model:
+        # Unmapped or new external users start with ZERO permissions and ZERO department access.
+        # Permissions must be explicitly provisioned in the database.
         return User(
-            id=payload.get("sub", f"usr-{int(time.time())}"),
-            email=email or "user@selnikel.com.tr",
-            display_name=payload.get("name", "OIDC Authenticated User"),
-            department_ids=payload.get("departments", ["dept-engineering"]),
-            role_codes=payload.get("roles", ["engineer"]),
-            permissions=payload.get("permissions", ["document.read", "answer.create"]),
+            id=payload.get("sub", payload.get("oid", f"usr-{int(time.time())}")),
+            email=email or "unknown@selnikel.com.tr",
+            display_name=payload.get("name", "Unassigned OIDC User"),
+            status="unassigned",
+            department_ids=[],  # ZERO access by default
+            role_codes=[],      # ZERO roles by default
+            permissions=[],     # ZERO permissions by default
         )
     except jwt.PyJWTError as e:
         raise HTTPException(
