@@ -1,0 +1,29 @@
+[
+  {
+    "id": "eval_001",
+    "category": "boiler_specifications",
+    "question": "What is the maximum operating steam pressure for the Selnikel SB-Series industrial boiler?",
+    "expected_document": "SB_Series_Technical_Datasheet.pdf",
+    "expected_page": 4,
+    "expected_keywords": ["16 bar", "steam pressure", "operating limit"],
+    "ground_truth_answer": "The maximum operating steam pressure for the SB-Series boiler is 16 bar (gauge)."
+  },
+  {
+    "id": "eval_002",
+    "category": "burner_maintenance",
+    "question": "What is the recommended nozzle inspection interval for monoblock industrial burners?",
+    "expected_document": "Monoblock_Burner_Service_Manual.pdf",
+    "expected_page": 12,
+    "expected_keywords": ["500 operating hours", "nozzle inspection", "cleaning"],
+    "ground_truth_answer": "Burner nozzles must be inspected and cleaned every 500 operating hours or at least every 6 months."
+  },
+  {
+    "id": "eval_003",
+    "category": "engineering_standards",
+    "question": "Which design code is applied for pressure vessel shell thickness calculations at Selnikel?",
+    "expected_document": "Pressure_Vessel_Design_Standard.pdf",
+    "expected_page": 2,
+    "expected_keywords": ["EN 12953", "ASME Section VIII", "shell calculation"],
+    "ground_truth_answer": "Pressure vessel shells are calculated according to EN 12953 and ASME Section VIII Division 1 standards."
+  }
+]
