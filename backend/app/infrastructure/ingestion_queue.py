@@ -32,24 +32,28 @@ class PostgresIngestionQueue:
         mime_type: str,
         sha256_hash: str,
         max_attempts: int = 3,
+        revision_id: str = "rev-default",
     ) -> IngestionJobModel:
         """Enqueues a new pending ingestion job."""
         job = IngestionJobModel(
             id=f"job-{uuid4().hex[:12]}",
             document_id=document_id,
-            filename=filename,
-            file_path=file_path,
-            department_id=department_id,
-            file_size_bytes=file_size_bytes,
-            mime_type=mime_type,
-            sha256_hash=sha256_hash,
+            revision_id=revision_id,
             state="queued",
+            progress=0.0,
             attempt=0,
             max_attempts=max_attempts,
-            progress=0,
-            dead_letter=False,
             created_at=datetime.now(timezone.utc),
         )
+        # Store metadata attributes if model allows or attach
+        job.filename = filename
+        job.file_path = file_path
+        job.department_id = department_id
+        job.file_size_bytes = file_size_bytes
+        job.mime_type = mime_type
+        job.sha256_hash = sha256_hash
+        job.dead_letter = False
+
         session.add(job)
         await session.flush()
         logger.info(f"Ingestion job enqueued: {job.id} for file {filename}")
@@ -135,7 +139,7 @@ class PostgresIngestionQueue:
         new_state: str,
         progress: int,
         stage: Optional[str] = None,
-    ) -> bool:
+    ) -> IngestionJobModel:
         """Updates progress ensuring worker ownership and valid state transition."""
         stmt = select(IngestionJobModel).where(
             and_(
@@ -147,24 +151,22 @@ class PostgresIngestionQueue:
         job = result.scalars().first()
         if not job:
             logger.warning(f"Worker '{worker_id}' does not own job {job_id}. Update rejected.")
-            return False
+            raise PermissionError(f"Worker lease ownership violation: Worker '{worker_id}' does not own job {job_id}")
 
         job.state = new_state
-        job.progress = progress
-        if stage:
-            job.current_stage = stage
+        job.progress = float(progress)
         job.lease_expires_at = datetime.now(timezone.utc) + timedelta(seconds=self.lease_duration_seconds)
         await session.flush()
-        return True
+        return job
 
     async def complete_job(
         self,
         session: AsyncSession,
         job_id: str,
         worker_id: str,
-        chunks_count: int = 0,
-    ) -> bool:
-        """Marks job as successfully completed."""
+        chunks_count: Optional[int] = None,
+    ) -> IngestionJobModel:
+        """Marks job completed ensuring worker ownership."""
         stmt = select(IngestionJobModel).where(
             and_(
                 IngestionJobModel.id == job_id,
@@ -174,17 +176,18 @@ class PostgresIngestionQueue:
         result = await session.execute(stmt)
         job = result.scalars().first()
         if not job:
-            return False
+            logger.warning(f"Worker '{worker_id}' cannot complete job {job_id}. Ownership mismatch.")
+            raise PermissionError(f"Worker lease ownership violation: Worker '{worker_id}' does not own job {job_id}")
 
-        now = datetime.now(timezone.utc)
         job.state = "completed"
-        job.progress = 100
-        job.completed_at = now
+        job.progress = 100.0
+        job.chunks_count = chunks_count
+        job.completed_at = datetime.now(timezone.utc)
         job.worker_lease_id = None
         job.lease_expires_at = None
         await session.flush()
-        logger.info(f"Job {job_id} successfully completed by worker {worker_id} ({chunks_count} chunks)")
-        return True
+        logger.info(f"Ingestion job {job_id} completed successfully.")
+        return job
 
     async def fail_job(
         self,
@@ -229,7 +232,7 @@ class PostgresIngestionQueue:
             logger.warning(f"Job {job_id} failed (attempt {job.attempt}). Scheduled retry in {backoff_seconds}s.")
 
         await session.flush()
-        return True
+        return job
 
 
 ingestion_queue = PostgresIngestionQueue()

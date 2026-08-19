@@ -1,13 +1,14 @@
 {
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
+  "serialNumber": "urn:uuid:3e679e0e-4f52-4f74-bc61-e5757878dcd1",
   "version": 1,
   "metadata": {
     "component": {
-      "type": "application",
       "name": "selnikel-ai-backend",
-      "version": "1.0.0",
-      "description": "Selnikel AI Industrial Engineering & RAG Decision System Backend"
+      "version": "0.1.0",
+      "type": "application"
     }
   },
   "components": [
@@ -15,2176 +16,871 @@
       "type": "library",
       "name": "accelerate",
       "version": "1.14.0",
-      "purl": "pkg:pypi/accelerate@1.14.0",
-      "author": "The Hugging Face team",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Accelerate"
+      "purl": "pkg:pypi/accelerate@1.14.0"
     },
     {
       "type": "library",
       "name": "aiosqlite",
       "version": "0.22.1",
-      "purl": "pkg:pypi/aiosqlite@0.22.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "asyncio bridge to the standard sqlite3 module"
+      "purl": "pkg:pypi/aiosqlite@0.22.1"
     },
     {
       "type": "library",
       "name": "alembic",
       "version": "1.19.1",
-      "purl": "pkg:pypi/alembic@1.19.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A database migration tool for SQLAlchemy."
+      "purl": "pkg:pypi/alembic@1.19.1"
     },
     {
       "type": "library",
       "name": "annotated-doc",
       "version": "0.0.5",
-      "purl": "pkg:pypi/annotated-doc@0.0.5",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Document parameters, class attributes, return types, and variables inline, with Annotated."
+      "purl": "pkg:pypi/annotated-doc@0.0.5"
     },
     {
       "type": "library",
       "name": "annotated-types",
       "version": "0.8.0",
-      "purl": "pkg:pypi/annotated-types@0.8.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Reusable constraint types to use with typing.Annotated"
+      "purl": "pkg:pypi/annotated-types@0.8.0"
     },
     {
       "type": "library",
       "name": "antlr4-python3-runtime",
       "version": "4.9.3",
-      "purl": "pkg:pypi/antlr4-python3-runtime@4.9.3",
-      "author": "Eric Vergnaud, Terence Parr, Sam Harwell",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "ANTLR 4.9.3 runtime for Python 3.7"
+      "purl": "pkg:pypi/antlr4-python3-runtime@4.9.3"
     },
     {
       "type": "library",
       "name": "anyio",
       "version": "4.14.2",
-      "purl": "pkg:pypi/anyio@4.14.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "High-level concurrency and networking framework on top of asyncio or Trio"
+      "purl": "pkg:pypi/anyio@4.14.2"
     },
     {
       "type": "library",
       "name": "asyncpg",
       "version": "0.31.0",
-      "purl": "pkg:pypi/asyncpg@0.31.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "An asyncio PostgreSQL driver"
+      "purl": "pkg:pypi/asyncpg@0.31.0"
     },
     {
       "type": "library",
       "name": "attrs",
       "version": "26.1.0",
-      "purl": "pkg:pypi/attrs@26.1.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Classes Without Boilerplate"
+      "purl": "pkg:pypi/attrs@26.1.0"
     },
     {
       "type": "library",
       "name": "beautifulsoup4",
       "version": "4.15.0",
-      "purl": "pkg:pypi/beautifulsoup4@4.15.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Screen-scraping library"
+      "purl": "pkg:pypi/beautifulsoup4@4.15.0"
     },
     {
       "type": "library",
       "name": "certifi",
       "version": "2026.7.22",
-      "purl": "pkg:pypi/certifi@2026.7.22",
-      "author": "Kenneth Reitz",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Python package for providing Mozilla's CA Bundle."
+      "purl": "pkg:pypi/certifi@2026.7.22"
     },
     {
       "type": "library",
       "name": "cffi",
       "version": "2.1.1",
-      "purl": "pkg:pypi/cffi@2.1.1",
-      "author": "Armin Rigo, Maciej Fijalkowski",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Foreign Function Interface for Python calling C code."
+      "purl": "pkg:pypi/cffi@2.1.1"
     },
     {
       "type": "library",
       "name": "charset-normalizer",
       "version": "3.5.1",
-      "purl": "pkg:pypi/charset-normalizer@3.5.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
+      "purl": "pkg:pypi/charset-normalizer@3.5.1"
     },
     {
       "type": "library",
       "name": "click",
       "version": "8.4.2",
-      "purl": "pkg:pypi/click@8.4.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Composable command line interface toolkit"
+      "purl": "pkg:pypi/click@8.4.2"
     },
     {
       "type": "library",
       "name": "colorama",
       "version": "0.4.6",
-      "purl": "pkg:pypi/colorama@0.4.6",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Cross-platform colored terminal text."
+      "purl": "pkg:pypi/colorama@0.4.6"
     },
     {
       "type": "library",
       "name": "colorlog",
       "version": "6.12.0",
-      "purl": "pkg:pypi/colorlog@6.12.0",
-      "author": "Sam Clements",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Add colours to the output of Python's logging module."
+      "purl": "pkg:pypi/colorlog@6.12.0"
     },
     {
       "type": "library",
       "name": "cryptography",
       "version": "50.0.0",
-      "purl": "pkg:pypi/cryptography@50.0.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
+      "purl": "pkg:pypi/cryptography@50.0.0"
     },
     {
       "type": "library",
       "name": "defusedxml",
       "version": "0.7.1",
-      "purl": "pkg:pypi/defusedxml@0.7.1",
-      "author": "Christian Heimes",
-      "licenses": [
-        {
-          "license": {
-            "id": "PSF-2.0"
-          }
-        }
-      ],
-      "description": "XML bomb protection for Python stdlib modules"
+      "purl": "pkg:pypi/defusedxml@0.7.1"
     },
     {
       "type": "library",
       "name": "dill",
       "version": "0.4.1",
-      "purl": "pkg:pypi/dill@0.4.1",
-      "author": "Mike McKerns",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "serialize all of Python"
+      "purl": "pkg:pypi/dill@0.4.1"
     },
     {
       "type": "library",
       "name": "distro",
       "version": "1.9.0",
-      "purl": "pkg:pypi/distro@1.9.0",
-      "author": "Nir Cohen",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Distro - an OS platform information API"
+      "purl": "pkg:pypi/distro@1.9.0"
     },
     {
       "type": "library",
       "name": "dnspython",
       "version": "2.8.0",
-      "purl": "pkg:pypi/dnspython@2.8.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "DNS toolkit"
+      "purl": "pkg:pypi/dnspython@2.8.0"
     },
     {
       "type": "library",
       "name": "doclang",
       "version": "0.7.3",
-      "purl": "pkg:pypi/doclang@0.7.3",
-      "author": "DocLang Project",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "DocLang reference toolkit"
+      "purl": "pkg:pypi/doclang@0.7.3"
     },
     {
       "type": "library",
       "name": "docling",
       "version": "2.120.3",
-      "purl": "pkg:pypi/docling@2.120.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
+      "purl": "pkg:pypi/docling@2.120.3"
     },
     {
       "type": "library",
       "name": "docling-core",
       "version": "2.91.0",
-      "purl": "pkg:pypi/docling-core@2.91.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A python library to define and validate data types in Docling."
+      "purl": "pkg:pypi/docling-core@2.91.0"
     },
     {
       "type": "library",
       "name": "docling-ibm-models",
       "version": "3.14.0",
-      "purl": "pkg:pypi/docling-ibm-models@3.14.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "This package contains the AI models used by the Docling PDF conversion package"
+      "purl": "pkg:pypi/docling-ibm-models@3.14.0"
     },
     {
       "type": "library",
       "name": "docling-parse",
       "version": "7.14.0",
-      "purl": "pkg:pypi/docling-parse@7.14.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Simple package to extract text with coordinates from programmatic PDFs"
+      "purl": "pkg:pypi/docling-parse@7.14.0"
     },
     {
       "type": "library",
       "name": "docling-slim",
       "version": "2.120.3",
-      "purl": "pkg:pypi/docling-slim@2.120.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Modular version of the Docling package: SDK and CLI for parsing PDF, DOCX, HTML, and more, to a unified document representation for powering downstream workflows such as gen AI applications."
+      "purl": "pkg:pypi/docling-slim@2.120.3"
     },
     {
       "type": "library",
       "name": "email-validator",
       "version": "2.3.0",
-      "purl": "pkg:pypi/email-validator@2.3.0",
-      "author": "Joshua Tauberer",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "A robust email address syntax and deliverability validation library."
+      "purl": "pkg:pypi/email-validator@2.3.0"
     },
     {
       "type": "library",
       "name": "et_xmlfile",
       "version": "2.0.0",
-      "purl": "pkg:pypi/et_xmlfile@2.0.0",
-      "author": "See AUTHORS.txt",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "An implementation of lxml.xmlfile for the standard library"
+      "purl": "pkg:pypi/et_xmlfile@2.0.0"
     },
     {
       "type": "library",
       "name": "Faker",
       "version": "40.36.0",
-      "purl": "pkg:pypi/faker@40.36.0",
-      "author": "joke2k",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Faker is a Python package that generates fake data for you."
+      "purl": "pkg:pypi/Faker@40.36.0"
     },
     {
       "type": "library",
       "name": "fastapi",
       "version": "0.141.1",
-      "purl": "pkg:pypi/fastapi@0.141.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
+      "purl": "pkg:pypi/fastapi@0.141.1"
     },
     {
       "type": "library",
       "name": "filelock",
       "version": "3.32.3",
-      "purl": "pkg:pypi/filelock@3.32.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A platform independent file lock."
+      "purl": "pkg:pypi/filelock@3.32.3"
     },
     {
       "type": "library",
       "name": "filetype",
       "version": "1.2.0",
-      "purl": "pkg:pypi/filetype@1.2.0",
-      "author": "Tomas Aparicio",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Infer file type and MIME type of any file/buffer. No external dependencies."
+      "purl": "pkg:pypi/filetype@1.2.0"
     },
     {
       "type": "library",
       "name": "FlashRank",
       "version": "0.2.10",
-      "purl": "pkg:pypi/flashrank@0.2.10",
-      "author": "Prithivi Da",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Ultra lite & Super fast SoTA cross-encoder based re-ranking for your search & retrieval pipelines."
+      "purl": "pkg:pypi/FlashRank@0.2.10"
     },
     {
       "type": "library",
       "name": "flatbuffers",
       "version": "25.12.19",
-      "purl": "pkg:pypi/flatbuffers@25.12.19",
-      "author": "Derek Bailey",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "The FlatBuffers serialization format for Python"
+      "purl": "pkg:pypi/flatbuffers@25.12.19"
     },
     {
       "type": "library",
       "name": "fsspec",
       "version": "2026.7.0",
-      "purl": "pkg:pypi/fsspec@2026.7.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "File-system specification"
+      "purl": "pkg:pypi/fsspec@2026.7.0"
     },
     {
       "type": "library",
       "name": "greenlet",
       "version": "3.5.5",
-      "purl": "pkg:pypi/greenlet@3.5.5",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Lightweight in-process concurrent programming"
+      "purl": "pkg:pypi/greenlet@3.5.5"
     },
     {
       "type": "library",
       "name": "grpcio",
       "version": "1.83.0",
-      "purl": "pkg:pypi/grpcio@1.83.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "HTTP/2-based RPC framework"
+      "purl": "pkg:pypi/grpcio@1.83.0"
     },
     {
       "type": "library",
       "name": "h11",
       "version": "0.16.0",
-      "purl": "pkg:pypi/h11@0.16.0",
-      "author": "Nathaniel J. Smith",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
+      "purl": "pkg:pypi/h11@0.16.0"
     },
     {
       "type": "library",
       "name": "h2",
       "version": "4.4.1",
-      "purl": "pkg:pypi/h2@4.4.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pure-Python HTTP/2 protocol implementation"
+      "purl": "pkg:pypi/h2@4.4.1"
     },
     {
       "type": "library",
       "name": "hf-xet",
       "version": "1.6.0",
-      "purl": "pkg:pypi/hf-xet@1.6.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Fast transfer of large files with the Hugging Face Hub."
+      "purl": "pkg:pypi/hf-xet@1.6.0"
     },
     {
       "type": "library",
       "name": "hpack",
       "version": "4.2.0",
-      "purl": "pkg:pypi/hpack@4.2.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pure-Python HPACK header encoding"
+      "purl": "pkg:pypi/hpack@4.2.0"
     },
     {
       "type": "library",
       "name": "httpcore",
       "version": "1.0.9",
-      "purl": "pkg:pypi/httpcore@1.0.9",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A minimal low-level HTTP client."
+      "purl": "pkg:pypi/httpcore@1.0.9"
     },
     {
       "type": "library",
       "name": "httptools",
       "version": "0.8.0",
-      "purl": "pkg:pypi/httptools@0.8.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A collection of framework independent HTTP protocol utils."
+      "purl": "pkg:pypi/httptools@0.8.0"
     },
     {
       "type": "library",
       "name": "httpx",
       "version": "0.28.1",
-      "purl": "pkg:pypi/httpx@0.28.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "The next generation HTTP client."
+      "purl": "pkg:pypi/httpx@0.28.1"
     },
     {
       "type": "library",
       "name": "huggingface_hub",
       "version": "1.28.0",
-      "purl": "pkg:pypi/huggingface_hub@1.28.0",
-      "author": "Hugging Face, Inc.",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
+      "purl": "pkg:pypi/huggingface_hub@1.28.0"
     },
     {
       "type": "library",
       "name": "hyperframe",
       "version": "6.1.0",
-      "purl": "pkg:pypi/hyperframe@6.1.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pure-Python HTTP/2 framing"
+      "purl": "pkg:pypi/hyperframe@6.1.0"
     },
     {
       "type": "library",
       "name": "idna",
       "version": "3.19",
-      "purl": "pkg:pypi/idna@3.19",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Internationalized Domain Names in Applications (IDNA)"
+      "purl": "pkg:pypi/idna@3.19"
     },
     {
       "type": "library",
       "name": "iniconfig",
       "version": "2.3.0",
-      "purl": "pkg:pypi/iniconfig@2.3.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "brain-dead simple config-ini parsing"
+      "purl": "pkg:pypi/iniconfig@2.3.0"
     },
     {
       "type": "library",
       "name": "Jinja2",
       "version": "3.1.6",
-      "purl": "pkg:pypi/jinja2@3.1.6",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A very fast and expressive template engine."
+      "purl": "pkg:pypi/Jinja2@3.1.6"
     },
     {
       "type": "library",
       "name": "jiter",
       "version": "0.16.0",
-      "purl": "pkg:pypi/jiter@0.16.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Fast iterable JSON parser."
+      "purl": "pkg:pypi/jiter@0.16.0"
     },
     {
       "type": "library",
       "name": "jsonlines",
       "version": "4.0.0",
-      "purl": "pkg:pypi/jsonlines@4.0.0",
-      "author": "wouter bolsterlee",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Library with helpers for the jsonlines file format"
+      "purl": "pkg:pypi/jsonlines@4.0.0"
     },
     {
       "type": "library",
       "name": "jsonref",
       "version": "1.1.0",
-      "purl": "pkg:pypi/jsonref@1.1.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "jsonref is a library for automatic dereferencing of JSON Reference objects for Python."
+      "purl": "pkg:pypi/jsonref@1.1.0"
     },
     {
       "type": "library",
       "name": "jsonschema",
       "version": "4.26.0",
-      "purl": "pkg:pypi/jsonschema@4.26.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "An implementation of JSON Schema validation for Python"
+      "purl": "pkg:pypi/jsonschema@4.26.0"
     },
     {
       "type": "library",
       "name": "jsonschema-specifications",
       "version": "2025.9.1",
-      "purl": "pkg:pypi/jsonschema-specifications@2025.9.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
+      "purl": "pkg:pypi/jsonschema-specifications@2025.9.1"
     },
     {
       "type": "library",
       "name": "latex2mathml",
       "version": "3.81.0",
-      "purl": "pkg:pypi/latex2mathml@3.81.0",
-      "author": "Ronie Martinez",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pure Python library for LaTeX to MathML conversion"
+      "purl": "pkg:pypi/latex2mathml@3.81.0"
     },
     {
       "type": "library",
       "name": "lxml",
       "version": "6.1.2",
-      "purl": "pkg:pypi/lxml@6.1.2",
-      "author": "lxml dev team",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
+      "purl": "pkg:pypi/lxml@6.1.2"
     },
     {
       "type": "library",
       "name": "mail-parser",
       "version": "4.6.2",
-      "purl": "pkg:pypi/mail-parser@4.6.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A tool that parses emails by enhancing the Python standard library, extracting all details into a comprehensive object."
+      "purl": "pkg:pypi/mail-parser@4.6.2"
     },
     {
       "type": "library",
       "name": "Mako",
       "version": "1.4.1",
-      "purl": "pkg:pypi/mako@1.4.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A super-fast templating language that borrows the best ideas from the existing templating languages."
+      "purl": "pkg:pypi/Mako@1.4.1"
     },
     {
       "type": "library",
       "name": "markdown-it-py",
       "version": "4.2.0",
-      "purl": "pkg:pypi/markdown-it-py@4.2.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python port of markdown-it. Markdown parsing, done right!"
+      "purl": "pkg:pypi/markdown-it-py@4.2.0"
     },
     {
       "type": "library",
       "name": "marko",
       "version": "2.2.4",
-      "purl": "pkg:pypi/marko@2.2.4",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A markdown parser with high extensibility."
+      "purl": "pkg:pypi/marko@2.2.4"
     },
     {
       "type": "library",
       "name": "MarkupSafe",
       "version": "3.0.3",
-      "purl": "pkg:pypi/markupsafe@3.0.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Safely add untrusted strings to HTML/XML markup."
+      "purl": "pkg:pypi/MarkupSafe@3.0.3"
     },
     {
       "type": "library",
       "name": "mdurl",
       "version": "0.1.2",
-      "purl": "pkg:pypi/mdurl@0.1.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Markdown URL utilities"
+      "purl": "pkg:pypi/mdurl@0.1.2"
     },
     {
       "type": "library",
       "name": "mpire",
       "version": "2.10.2",
-      "purl": "pkg:pypi/mpire@2.10.2",
-      "author": "Sybren Jansen",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A Python package for easy multiprocessing, but faster than multiprocessing"
+      "purl": "pkg:pypi/mpire@2.10.2"
     },
     {
       "type": "library",
       "name": "mpmath",
       "version": "1.3.0",
-      "purl": "pkg:pypi/mpmath@1.3.0",
-      "author": "Fredrik Johansson",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Python library for arbitrary-precision floating-point arithmetic"
+      "purl": "pkg:pypi/mpmath@1.3.0"
     },
     {
       "type": "library",
       "name": "multiprocess",
       "version": "0.70.19",
-      "purl": "pkg:pypi/multiprocess@0.70.19",
-      "author": "Mike McKerns",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "better multiprocessing and multithreading in Python"
+      "purl": "pkg:pypi/multiprocess@0.70.19"
     },
     {
       "type": "library",
       "name": "networkx",
       "version": "3.6.1",
-      "purl": "pkg:pypi/networkx@3.6.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python package for creating and manipulating graphs and networks"
+      "purl": "pkg:pypi/networkx@3.6.1"
     },
     {
       "type": "library",
       "name": "numpy",
       "version": "2.4.6",
-      "purl": "pkg:pypi/numpy@2.4.6",
-      "author": "Travis E. Oliphant et al.",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Fundamental package for array computing in Python"
+      "purl": "pkg:pypi/numpy@2.4.6"
     },
     {
       "type": "library",
       "name": "olefile",
       "version": "0.47",
-      "purl": "pkg:pypi/olefile@0.47",
-      "author": "Philippe Lagadec",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Python package to parse, read and write Microsoft OLE2 files (Structured Storage or Compound Document, Microsoft Office)"
+      "purl": "pkg:pypi/olefile@0.47"
     },
     {
       "type": "library",
       "name": "omegaconf",
       "version": "2.3.1",
-      "purl": "pkg:pypi/omegaconf@2.3.1",
-      "author": "Omry Yadan",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A flexible configuration library"
+      "purl": "pkg:pypi/omegaconf@2.3.1"
     },
     {
       "type": "library",
       "name": "onnxruntime",
       "version": "1.29.0",
-      "purl": "pkg:pypi/onnxruntime@1.29.0",
-      "author": "Microsoft Corporation",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "ONNX Runtime is a runtime accelerator for Machine Learning models"
+      "purl": "pkg:pypi/onnxruntime@1.29.0"
     },
     {
       "type": "library",
       "name": "openai",
       "version": "1.109.1",
-      "purl": "pkg:pypi/openai@1.109.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "The official Python library for the openai API"
+      "purl": "pkg:pypi/openai@1.109.1"
     },
     {
       "type": "library",
       "name": "opencv-python",
       "version": "5.0.0.93",
-      "purl": "pkg:pypi/opencv-python@5.0.0.93",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Wrapper package for OpenCV python bindings."
+      "purl": "pkg:pypi/opencv-python@5.0.0.93"
     },
     {
       "type": "library",
       "name": "openpyxl",
       "version": "3.1.5",
-      "purl": "pkg:pypi/openpyxl@3.1.5",
-      "author": "See AUTHORS",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A Python library to read/write Excel 2010 xlsx/xlsm files"
+      "purl": "pkg:pypi/openpyxl@3.1.5"
     },
     {
       "type": "library",
       "name": "packaging",
       "version": "26.3",
-      "purl": "pkg:pypi/packaging@26.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Core utilities for Python packages"
+      "purl": "pkg:pypi/packaging@26.3"
     },
     {
       "type": "library",
       "name": "pandas",
       "version": "3.0.5",
-      "purl": "pkg:pypi/pandas@3.0.5",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Powerful data structures for data analysis, time series, and statistics"
+      "purl": "pkg:pypi/pandas@3.0.5"
     },
     {
       "type": "library",
       "name": "pillow",
       "version": "12.3.0",
-      "purl": "pkg:pypi/pillow@12.3.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python Imaging Library (fork)"
+      "purl": "pkg:pypi/pillow@12.3.0"
     },
     {
       "type": "library",
       "name": "pip",
       "version": "26.2.1",
-      "purl": "pkg:pypi/pip@26.2.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "The PyPA recommended tool for installing Python packages."
+      "purl": "pkg:pypi/pip@26.2.1"
     },
     {
       "type": "library",
       "name": "pluggy",
       "version": "1.6.0",
-      "purl": "pkg:pypi/pluggy@1.6.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "plugin and hook calling mechanisms for python"
+      "purl": "pkg:pypi/pluggy@1.6.0"
     },
     {
       "type": "library",
       "name": "polyfactory",
       "version": "3.3.0",
-      "purl": "pkg:pypi/polyfactory@3.3.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Mock data generation factories"
+      "purl": "pkg:pypi/polyfactory@3.3.0"
     },
     {
       "type": "library",
       "name": "portalocker",
       "version": "3.2.0",
-      "purl": "pkg:pypi/portalocker@3.2.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Wraps the portalocker recipe for easy usage"
+      "purl": "pkg:pypi/portalocker@3.2.0"
     },
     {
       "type": "library",
       "name": "protobuf",
       "version": "7.35.1",
-      "purl": "pkg:pypi/protobuf@7.35.1",
-      "author": "protobuf@googlegroups.com",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": ""
+      "purl": "pkg:pypi/protobuf@7.35.1"
     },
     {
       "type": "library",
       "name": "psutil",
       "version": "7.2.2",
-      "purl": "pkg:pypi/psutil@7.2.2",
-      "author": "Giampaolo Rodola",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Cross-platform lib for process and system monitoring."
+      "purl": "pkg:pypi/psutil@7.2.2"
     },
     {
       "type": "library",
       "name": "psycopg2-binary",
       "version": "2.9.12",
-      "purl": "pkg:pypi/psycopg2-binary@2.9.12",
-      "author": "Federico Di Gregorio",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "psycopg2 - Python-PostgreSQL Database Adapter"
+      "purl": "pkg:pypi/psycopg2-binary@2.9.12"
     },
     {
       "type": "library",
       "name": "pyclipper",
       "version": "1.4.0",
-      "purl": "pkg:pypi/pyclipper@1.4.0",
-      "author": "Angus Johnson, Maxime Chalton, Lukas Treyer, Gregor Ratajc",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Cython wrapper for the C++ translation of the Angus Johnson's Clipper library (ver. 6.4.2)"
+      "purl": "pkg:pypi/pyclipper@1.4.0"
     },
     {
       "type": "library",
       "name": "pycparser",
       "version": "3.0",
-      "purl": "pkg:pypi/pycparser@3.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "C parser in Python"
+      "purl": "pkg:pypi/pycparser@3.0"
     },
     {
       "type": "library",
       "name": "pydantic",
       "version": "2.13.4",
-      "purl": "pkg:pypi/pydantic@2.13.4",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Data validation using Python type hints"
-    },
-    {
-      "type": "library",
-      "name": "pydantic-settings",
-      "version": "2.15.0",
-      "purl": "pkg:pypi/pydantic-settings@2.15.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Settings management using Pydantic"
+      "purl": "pkg:pypi/pydantic@2.13.4"
     },
     {
       "type": "library",
       "name": "pydantic_core",
       "version": "2.46.4",
-      "purl": "pkg:pypi/pydantic_core@2.46.4",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Core functionality for Pydantic validation and serialization"
+      "purl": "pkg:pypi/pydantic_core@2.46.4"
+    },
+    {
+      "type": "library",
+      "name": "pydantic-settings",
+      "version": "2.15.0",
+      "purl": "pkg:pypi/pydantic-settings@2.15.0"
     },
     {
       "type": "library",
       "name": "Pygments",
       "version": "2.21.0",
-      "purl": "pkg:pypi/pygments@2.21.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pygments is a syntax highlighting package written in Python."
+      "purl": "pkg:pypi/Pygments@2.21.0"
     },
     {
       "type": "library",
       "name": "PyJWT",
       "version": "2.10.1",
-      "purl": "pkg:pypi/pyjwt@2.10.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "JSON Web Token implementation in Python"
+      "purl": "pkg:pypi/PyJWT@2.10.1"
     },
     {
       "type": "library",
       "name": "pylatexenc",
       "version": "2.11",
-      "purl": "pkg:pypi/pylatexenc@2.11",
-      "author": "Philippe Faist",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Simple LaTeX parser providing latex-to-unicode and unicode-to-latex conversion"
+      "purl": "pkg:pypi/pylatexenc@2.11"
     },
     {
       "type": "library",
       "name": "pypdf",
       "version": "6.16.1",
-      "purl": "pkg:pypi/pypdf@6.16.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+      "purl": "pkg:pypi/pypdf@6.16.1"
     },
     {
       "type": "library",
       "name": "pypdfium2",
       "version": "5.13.0",
-      "purl": "pkg:pypi/pypdfium2@5.13.0",
-      "author": "pypdfium2-team",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Python bindings to PDFium"
+      "purl": "pkg:pypi/pypdfium2@5.13.0"
     },
     {
       "type": "library",
       "name": "pytest",
       "version": "9.1.1",
-      "purl": "pkg:pypi/pytest@9.1.1",
-      "author": "Brianna Laugher, Bruno Oliveira, Floris Bruynooghe, Freya Bruhin, Holger Krekel, Others (See AUTHORS), Ronny Pfannschmidt",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "pytest: simple powerful testing with Python"
+      "purl": "pkg:pypi/pytest@9.1.1"
     },
     {
       "type": "library",
       "name": "pytest-asyncio",
       "version": "1.4.0",
-      "purl": "pkg:pypi/pytest-asyncio@1.4.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pytest support for asyncio"
+      "purl": "pkg:pypi/pytest-asyncio@1.4.0"
     },
     {
       "type": "library",
       "name": "python-dateutil",
       "version": "2.9.0.post0",
-      "purl": "pkg:pypi/python-dateutil@2.9.0.post0",
-      "author": "Gustavo Niemeyer",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Extensions to the standard Python datetime module"
+      "purl": "pkg:pypi/python-dateutil@2.9.0.post0"
     },
     {
       "type": "library",
       "name": "python-docx",
       "version": "1.2.0",
-      "purl": "pkg:pypi/python-docx@1.2.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Create, read, and update Microsoft Word .docx files."
+      "purl": "pkg:pypi/python-docx@1.2.0"
     },
     {
       "type": "library",
       "name": "python-dotenv",
       "version": "1.2.3",
-      "purl": "pkg:pypi/python-dotenv@1.2.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Read key-value pairs from a .env file and set them as environment variables"
+      "purl": "pkg:pypi/python-dotenv@1.2.3"
     },
     {
       "type": "library",
       "name": "python-multipart",
       "version": "0.0.32",
-      "purl": "pkg:pypi/python-multipart@0.0.32",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A streaming multipart parser for Python"
+      "purl": "pkg:pypi/python-multipart@0.0.32"
     },
     {
       "type": "library",
       "name": "python-oxmsg",
       "version": "0.0.2",
-      "purl": "pkg:pypi/python-oxmsg@0.0.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Extract attachments from Outlook .msg files."
+      "purl": "pkg:pypi/python-oxmsg@0.0.2"
     },
     {
       "type": "library",
       "name": "python-pptx",
       "version": "1.0.2",
-      "purl": "pkg:pypi/python-pptx@1.0.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Create, read, and update PowerPoint 2007+ (.pptx) files."
+      "purl": "pkg:pypi/python-pptx@1.0.2"
     },
     {
       "type": "library",
       "name": "pywin32",
       "version": "312",
-      "purl": "pkg:pypi/pywin32@312",
-      "author": "Mark Hammond (et al)",
-      "licenses": [
-        {
-          "license": {
-            "id": "PSF-2.0"
-          }
-        }
-      ],
-      "description": "Python for Windows Extensions"
+      "purl": "pkg:pypi/pywin32@312"
     },
     {
       "type": "library",
       "name": "PyYAML",
       "version": "6.0.3",
-      "purl": "pkg:pypi/pyyaml@6.0.3",
-      "author": "Kirill Simonov",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "YAML parser and emitter for Python"
+      "purl": "pkg:pypi/PyYAML@6.0.3"
     },
     {
       "type": "library",
       "name": "qdrant-client",
       "version": "1.19.0",
-      "purl": "pkg:pypi/qdrant-client@1.19.0",
-      "author": "Andrey Vasnetsov",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Client library for the Qdrant vector search engine"
+      "purl": "pkg:pypi/qdrant-client@1.19.0"
     },
     {
       "type": "library",
       "name": "rapidocr",
       "version": "3.9.2",
-      "purl": "pkg:pypi/rapidocr@3.9.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Awesome OCR Library"
+      "purl": "pkg:pypi/rapidocr@3.9.2"
     },
     {
       "type": "library",
       "name": "referencing",
       "version": "0.37.0",
-      "purl": "pkg:pypi/referencing@0.37.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "JSON Referencing + Python"
+      "purl": "pkg:pypi/referencing@0.37.0"
     },
     {
       "type": "library",
       "name": "regex",
       "version": "2026.7.19",
-      "purl": "pkg:pypi/regex@2026.7.19",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Alternative regular expression module, to replace re."
+      "purl": "pkg:pypi/regex@2026.7.19"
     },
     {
       "type": "library",
       "name": "reportlab",
       "version": "5.0.0",
-      "purl": "pkg:pypi/reportlab@5.0.0",
-      "author": "Andy Robinson, Robin Becker, the ReportLab team and the community",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "The Reportlab Toolkit"
+      "purl": "pkg:pypi/reportlab@5.0.0"
     },
     {
       "type": "library",
       "name": "requests",
       "version": "2.34.2",
-      "purl": "pkg:pypi/requests@2.34.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Python HTTP for Humans."
+      "purl": "pkg:pypi/requests@2.34.2"
     },
     {
       "type": "library",
       "name": "rich",
       "version": "15.0.0",
-      "purl": "pkg:pypi/rich@15.0.0",
-      "author": "Will McGugan",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+      "purl": "pkg:pypi/rich@15.0.0"
     },
     {
       "type": "library",
       "name": "rpds-py",
       "version": "2026.6.3",
-      "purl": "pkg:pypi/rpds-py@2026.6.3",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python bindings to Rust's persistent data structures (rpds)"
+      "purl": "pkg:pypi/rpds-py@2026.6.3"
     },
     {
       "type": "library",
       "name": "rtree",
       "version": "1.4.1",
-      "purl": "pkg:pypi/rtree@1.4.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "R-Tree spatial index for Python GIS"
+      "purl": "pkg:pypi/rtree@1.4.1"
     },
     {
       "type": "library",
       "name": "safetensors",
       "version": "0.8.0",
-      "purl": "pkg:pypi/safetensors@0.8.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": ""
+      "purl": "pkg:pypi/safetensors@0.8.0"
     },
     {
       "type": "library",
       "name": "scipy",
       "version": "1.17.1",
-      "purl": "pkg:pypi/scipy@1.17.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Fundamental algorithms for scientific computing in Python"
+      "purl": "pkg:pypi/scipy@1.17.1"
     },
     {
       "type": "library",
       "name": "semchunk",
       "version": "3.2.5",
-      "purl": "pkg:pypi/semchunk@3.2.5",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A fast, lightweight and easy-to-use Python library for splitting text into semantically meaningful chunks."
+      "purl": "pkg:pypi/semchunk@3.2.5"
     },
     {
       "type": "library",
       "name": "setuptools",
       "version": "84.0.0",
-      "purl": "pkg:pypi/setuptools@84.0.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Most extensible Python build backend with support for C/C++ extension modules"
+      "purl": "pkg:pypi/setuptools@84.0.0"
     },
     {
       "type": "library",
       "name": "shapely",
       "version": "2.1.2",
-      "purl": "pkg:pypi/shapely@2.1.2",
-      "author": "Sean Gillies",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Manipulation and analysis of geometric objects"
+      "purl": "pkg:pypi/shapely@2.1.2"
     },
     {
       "type": "library",
       "name": "shellingham",
       "version": "1.5.4",
-      "purl": "pkg:pypi/shellingham@1.5.4",
-      "author": "Tzu-ping Chung",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Tool to Detect Surrounding Shell"
+      "purl": "pkg:pypi/shellingham@1.5.4"
     },
     {
       "type": "library",
       "name": "six",
       "version": "1.17.0",
-      "purl": "pkg:pypi/six@1.17.0",
-      "author": "Benjamin Peterson",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python 2 and 3 compatibility utilities"
+      "purl": "pkg:pypi/six@1.17.0"
     },
     {
       "type": "library",
       "name": "sniffio",
       "version": "1.3.1",
-      "purl": "pkg:pypi/sniffio@1.3.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Sniff out which async library your code is running under"
+      "purl": "pkg:pypi/sniffio@1.3.1"
     },
     {
       "type": "library",
       "name": "soupsieve",
       "version": "2.9.2",
-      "purl": "pkg:pypi/soupsieve@2.9.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "A modern CSS selector implementation for Beautiful Soup."
+      "purl": "pkg:pypi/soupsieve@2.9.2"
     },
     {
       "type": "library",
       "name": "SQLAlchemy",
       "version": "2.0.52",
-      "purl": "pkg:pypi/sqlalchemy@2.0.52",
-      "author": "Mike Bayer",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Database Abstraction Library"
+      "purl": "pkg:pypi/SQLAlchemy@2.0.52"
     },
     {
       "type": "library",
       "name": "starlette",
       "version": "1.6.0",
-      "purl": "pkg:pypi/starlette@1.6.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "The little ASGI library that shines."
+      "purl": "pkg:pypi/starlette@1.6.0"
     },
     {
       "type": "library",
       "name": "sympy",
       "version": "1.14.0",
-      "purl": "pkg:pypi/sympy@1.14.0",
-      "author": "SymPy development team",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "Computer algebra system (CAS) in Python"
+      "purl": "pkg:pypi/sympy@1.14.0"
     },
     {
       "type": "library",
       "name": "tabulate",
       "version": "0.10.0",
-      "purl": "pkg:pypi/tabulate@0.10.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Pretty-print tabular data"
+      "purl": "pkg:pypi/tabulate@0.10.0"
     },
     {
       "type": "library",
       "name": "tokenizers",
       "version": "0.22.2",
-      "purl": "pkg:pypi/tokenizers@0.22.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": ""
+      "purl": "pkg:pypi/tokenizers@0.22.2"
     },
     {
       "type": "library",
       "name": "torch",
       "version": "2.13.0",
-      "purl": "pkg:pypi/torch@2.13.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
+      "purl": "pkg:pypi/torch@2.13.0"
     },
     {
       "type": "library",
       "name": "torchvision",
       "version": "0.28.0",
-      "purl": "pkg:pypi/torchvision@0.28.0",
-      "author": "PyTorch Core Team",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "image and video datasets and models for torch deep learning"
+      "purl": "pkg:pypi/torchvision@0.28.0"
     },
     {
       "type": "library",
       "name": "tqdm",
       "version": "4.70.0",
-      "purl": "pkg:pypi/tqdm@4.70.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Fast, Extensible Progress Meter"
+      "purl": "pkg:pypi/tqdm@4.70.0"
     },
     {
       "type": "library",
       "name": "transformers",
       "version": "5.15.0",
-      "purl": "pkg:pypi/transformers@5.15.0",
-      "author": "The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors)",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training."
+      "purl": "pkg:pypi/transformers@5.15.0"
     },
     {
       "type": "library",
       "name": "tree-sitter",
       "version": "0.26.0",
-      "purl": "pkg:pypi/tree-sitter@0.26.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python bindings to the Tree-sitter parsing library"
+      "purl": "pkg:pypi/tree-sitter@0.26.0"
     },
     {
       "type": "library",
       "name": "tree-sitter-c",
       "version": "0.24.2",
-      "purl": "pkg:pypi/tree-sitter-c@0.24.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "C grammar for tree-sitter"
+      "purl": "pkg:pypi/tree-sitter-c@0.24.2"
     },
     {
       "type": "library",
       "name": "tree-sitter-javascript",
       "version": "0.25.0",
-      "purl": "pkg:pypi/tree-sitter-javascript@0.25.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "JavaScript grammar for tree-sitter"
+      "purl": "pkg:pypi/tree-sitter-javascript@0.25.0"
     },
     {
       "type": "library",
       "name": "tree-sitter-python",
       "version": "0.25.0",
-      "purl": "pkg:pypi/tree-sitter-python@0.25.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Python grammar for tree-sitter"
+      "purl": "pkg:pypi/tree-sitter-python@0.25.0"
     },
     {
       "type": "library",
       "name": "tree-sitter-typescript",
       "version": "0.23.2",
-      "purl": "pkg:pypi/tree-sitter-typescript@0.23.2",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "TypeScript and TSX grammars for tree-sitter"
+      "purl": "pkg:pypi/tree-sitter-typescript@0.23.2"
     },
     {
       "type": "library",
       "name": "typer",
       "version": "0.26.8",
-      "purl": "pkg:pypi/typer@0.26.8",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Typer, build great CLIs. Easy to code. Based on Python type hints."
-    },
-    {
-      "type": "library",
-      "name": "typing-inspection",
-      "version": "0.4.4",
-      "purl": "pkg:pypi/typing-inspection@0.4.4",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Runtime typing introspection tools"
+      "purl": "pkg:pypi/typer@0.26.8"
     },
     {
       "type": "library",
       "name": "typing_extensions",
       "version": "4.16.0",
-      "purl": "pkg:pypi/typing_extensions@4.16.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Backported and Experimental Type Hints for Python 3.9+"
+      "purl": "pkg:pypi/typing_extensions@4.16.0"
+    },
+    {
+      "type": "library",
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "purl": "pkg:pypi/typing-inspection@0.4.4"
     },
     {
       "type": "library",
       "name": "tzdata",
       "version": "2026.3",
-      "purl": "pkg:pypi/tzdata@2026.3",
-      "author": "Python Software Foundation",
-      "licenses": [
-        {
-          "license": {
-            "id": "Apache-2.0"
-          }
-        }
-      ],
-      "description": "Provider of IANA time zone data"
+      "purl": "pkg:pypi/tzdata@2026.3"
     },
     {
       "type": "library",
       "name": "urllib3",
       "version": "2.7.0",
-      "purl": "pkg:pypi/urllib3@2.7.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "HTTP library with thread-safe connection pooling, file post, and more."
+      "purl": "pkg:pypi/urllib3@2.7.0"
     },
     {
       "type": "library",
       "name": "uvicorn",
       "version": "0.52.4",
-      "purl": "pkg:pypi/uvicorn@0.52.4",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "The lightning-fast ASGI server."
+      "purl": "pkg:pypi/uvicorn@0.52.4"
     },
     {
       "type": "library",
       "name": "watchfiles",
       "version": "1.2.0",
-      "purl": "pkg:pypi/watchfiles@1.2.0",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "Simple, modern and high performance file watching and code reload in python."
+      "purl": "pkg:pypi/watchfiles@1.2.0"
     },
     {
       "type": "library",
       "name": "websockets",
       "version": "16.1.1",
-      "purl": "pkg:pypi/websockets@16.1.1",
-      "author": "Open Source Maintainers",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "description": "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
+      "purl": "pkg:pypi/websockets@16.1.1"
     },
     {
       "type": "library",
       "name": "xlsxwriter",
       "version": "3.2.9",
-      "purl": "pkg:pypi/xlsxwriter@3.2.9",
-      "author": "John McNamara",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "description": "A Python module for creating Excel XLSX files."
+      "purl": "pkg:pypi/xlsxwriter@3.2.9"
     }
   ]
 }
