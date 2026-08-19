@@ -1,65 +1,102 @@
 # Selnikel AI — Teslimat Yol Haritası (DELIVERY_ROADMAP.md)
 
-> **Yönetişim Kuralı**: P0 tamamlanmadan P1'e, P1 tamamlanmadan P2'ye kesinlikle geçilmez. Her aşama bağımsız test ve kanıt dosyasıyla onaylanır.
+> **Yönetişim Kuralı**: P0 tamamlanmadan P1'e, P1 tamamlanmadan P2'ye kesinlikle geçilmez. Her aşama bağımsız test, review ve kanıt dosyasıyla onaylanır. Big-bang refactor yasaktır; tüm veri modelleri ve özellikler ayrık domain dilimleri halinde uygulanır.
 
 ---
 
-## 1. Teslimat Aşamaları ve Öncelik Hiyerarşisi
+## 1. Teslimat Aşamaları Genel Bakışı
 
 ```text
-[P0: Temel Güvenlik & Kurumsal Altyapı] ──> [P1: Revizyon Bilinci & RAG Kalitesi] ──> [P2: İleri Servis & Otomasyon]
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ FAZ P0: Temel Güvenlik, Altyapı, Kimlik ve Çekirdek Domain Dilimleri (Sıralı 9 Görev)                  │
+│ [P0-00] ──> [P0-01] ──> [P0-02] ──> [P0-03] ──> [P0-04] ──> [P0-05] ──> [P0-06] ──> [P0-07] ──> [P0-08] │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ FAZ P1: 200+ Sektörel Benchmark, İleri Tablo Çıkarımı ve Revizyon Fark Motoru                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ FAZ P2: Saha Servis Vakaları, Başmühendis Onay Bankası ve İleri Karar Desteği                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Faz P0: Temel Güvenlik, Veri Modeli ve Altyapı (Blocker - Zorunlu)
+## 2. Faz P0: Temel Güvenlik, Altyapı ve Domain Dilimleri
 
-### P0 Görev Listesi:
-1. **TASK-P0-01: Git, Çevresel Değişkenler ve Secret Temizliği Doğrulaması**
-   - `.gitignore` kontrolü, sıfır secret doğrulaması.
-2. **TASK-P0-02: PostgreSQL 16 & Qdrant Canlı Sağlık ve Docker Doğrulaması**
-   - Tek komutla ayağa kalkan Docker Compose yapılandırması ve health check probe'ları.
-3. **TASK-P0-03: 14 Temel Kurumsal Domain Modeli & Alembic Migrasyonları**
-   - `User`, `Role`, `Equipment`, `Document`, `DocumentRevision`, `DocumentElement`, `AuditEvent` tablolarının oluşturulması.
-4. **TASK-P0-04: JWT / OIDC Kimlik Doğrulama ve Rol Bazlı Yetkilendirme (RBAC/ABAC)**
-   - API middleware'i, departman bazlı belge erişim kısıtlaması, Qdrant ACL filtreleme enjeksiyonu.
-5. **TASK-P0-05: Asenkron Ingestion Job Yaşam Döngüsü & Magic Byte Doğrulaması**
-   - `IngestionJob` durumu (`queued` $\rightarrow$ `parsing` $\rightarrow$ `indexing`), malware ve MIME doğrulaması.
-6. **TASK-P0-06: Frontend Marka Temizliği & Sahte Aksiyonların Kaldırılması**
-   - "Gemini", "NotebookLM" ve `alert()` kalıntılarının temizlenmesi, Selnikel kurumsal başlığı ve 6 ana navigasyon sekmesinin bağlanması.
-7. **TASK-P0-07: E2E Entegrasyon Testi & P0 Kabul Kapısı İmzası**
-   - `Upload` $\rightarrow$ `Ingest` $\rightarrow$ `ACL-Protected RAG Query` akışının %100 test edilmesi.
+### P0-00 — Baseline, Güvenlik ve CI Altyapısı
+- [ ] Git geçmişinin tamamında regex/entropi tabanlı secret taraması yapılması.
+- [ ] Python ve Node.js bağımlılıklarının deterministik lockfile (`requirements-lock.txt` / `package-lock.json`) ile sabitlenmesi.
+- [ ] SBOM (Software Bill of Materials) üretilmesi.
+- [ ] GitHub Actions CI workflow'unun (`.github/workflows/ci.yml`) kurulması (Test, Lint, Security Scan).
+- [ ] Derleme sonrası Next.js CSS/JS asset'leri ve fontları için HTTP 200 smoke test harness'ının eklenmesi.
+- [ ] PostgreSQL ve Qdrant entegrasyon testlerinin CI harness'ına bağlanması.
 
-### P0 Kabul Kriterleri (Çıkış Kapısı):
-- [ ] Git ağacı temiz, sıfır secret.
-- [ ] Tek komutla (`docker-compose up`) PostgreSQL ve Qdrant ayağa kalkıyor.
-- [ ] Backend testleri 47+ test ile %100 PASS.
-- [ ] Frontend derlemesi (`npm run build`) 0 hata.
-- [ ] Yetkisiz kullanıcı Ar-Ge dokümanına kesinlikle erişemiyor (ACL doğrulanmış).
-- [ ] Sahte UI butonları ve NotebookLM marka kalıntıları arayüzden arındırılmış.
+### P0-01 — Mimari Karar Kayıtları (ADR Paketi)
+- [ ] `ADR-011`: OIDC Akış Modeli (SPA PKCE vs Backend-for-Frontend / HttpOnly Cookie).
+- [ ] `ADR-012`: Asenkron İş Kuyruğu (PostgreSQL `SKIP LOCKED` vs Harici Broker).
+- [ ] `ADR-013`: Güvenli Dosya Depolama ve Malware Tarama Stratejisi.
+- [ ] `ADR-014`: 3 Katmanlı ACL Mimarisi (PostgreSQL + Qdrant + Answer Provenance) ve Cache İzolasyonu.
+- [ ] `ADR-015`: Üç Ayrı Dağıtım Profili (`cloud-enabled`, `local-private`, `air-gapped`).
+- [ ] `ADR-016`: Soft Delete, Retention ve Audit Değiştirilemezlik Standardı.
+
+### P0-02 — Alembic Migrasyon Altyapısı
+- [ ] Alembic ortamının `backend/alembic/` altına kurulması.
+- [ ] Mevcut `DocumentModel`, `DocumentChunkModel` ve `QueryLogModel` için baseline migrasyon (`001_baseline.py`).
+- [ ] Boş veritabanı upgrade testi, mevcut veritabanı upgrade testi ve downgrade/rollback testlerinin yazılması.
+- [ ] Yıkıcı (destructive) migrasyon çalıştırmayı engelleyen güvenlik kuralının eklenmesi.
+
+### P0-03 — Kimlik ve Organizasyon Çekirdek Dilimi (Identity Slice)
+- [ ] `backend/app/domain/identity/` ve `organization/` modüllerinin oluşturulması.
+- [ ] `users`, `roles`, `permissions`, `user_roles`, `departments`, `department_memberships` tablolarının Alembic ile eklenmesi.
+- [ ] OIDC token doğrulama modülü ve `get_current_user` FastAPI dependency'si.
+- [ ] RBAC yetki kontrol mekanizması (`require_permission("document.read")`).
+- [ ] Giriş ve yetki reddi durumlarının `audit_events` tablosuna loglanması.
+- [ ] Kimlik doğrulama E2E testleri.
+
+### P0-04 — Belge ACL ve Revizyon Dilimi (Document & Revision Slice)
+- [ ] `backend/app/domain/documents/` ve `equipment/` modüllerinin oluşturulması.
+- [ ] `documents`, `document_revisions`, `document_acl`, `equipment`, `document_equipment` tablolarının eklenmesi.
+- [ ] Mevcut belgelerin "Rev. 01 / Onaylı" olarak `document_revisions` tablosuna backfill edilmesi.
+- [ ] Departman bazlı belge erişim kısıtlamasının (ABAC) servis seviyesinde test edilmesi.
+
+### P0-05 — DocumentElement ve Vektör İndeks Dilimi (Element & Vector Slice)
+- [ ] `backend/app/domain/retrieval/` altında `DocumentElement` ve `RetrievalChunk` modelleri.
+- [ ] `document_elements` tablosunun oluşturulması (hiyerarşik bölüm, tablo, formül, uyarı adımları).
+- [ ] Qdrant `selnikel_docs_v2` gölge koleksiyonunun açılması (ACL ve revizyon yükü ile).
+- [ ] Veri sayısı/hash doğrulama testi ve alias yönlendirmesi.
+
+### P0-06 — Asenkron Ingestion Kuyruğu (PostgreSQL Job Worker Slice)
+- [ ] `ingestion_jobs` tablosu ve PostgreSQL `SELECT ... FOR UPDATE SKIP LOCKED` worker prosesi.
+- [ ] Lease, heartbeat, exponential backoff, retry, cancel ve dead-letter durumları.
+- [ ] Magic-byte MIME type kontrolü ve 50 MB dosya boyutu sınırı.
+- [ ] SHA-256 idempotency kontrolü ile mükerrer dosya yüklemenin engellenmesi.
+
+### P0-07 — Grounded Answer ve 3 Katmanlı Kanıt Doğrulama (Answer Slice)
+- [ ] `backend/app/domain/answers/` altında `Query`, `Evidence` ve `Answer` modelleri.
+- [ ] 3 Katmanlı ACL kontrolü: (1) PostgreSQL sorgusu, (2) Qdrant payload filtresi, (3) Citation/Provenance katmanı.
+- [ ] Yetkisiz kaynakların cevap metninden ve alıntılardan katı izolasyonu.
+- [ ] Yetersiz kanıt durumunda zorunlu refusal (`abstained: true`) kuralı.
+
+### P0-08 — Selnikel UI Dönüşümü (Frontend Slice)
+- [ ] Arayüzden tüm Gemini, NotebookLM isimlerinin ve sahte `alert()` eylemlerinin temizlenmesi.
+- [ ] Selnikel kurumsal tasarım belirteçlerinin (renkler, tipografi, tabular numerals) uygulanması.
+- [ ] Gerçek kurumsal navigasyon: `Ekipmanlar`, `Belgeler`, `Teknik Arama`, `Yönetim`. (Servis Vakaları ve Onaylı Cevaplar arka plan modelleri tamamlanana kadar sahte ekran olarak eklenmez).
+- [ ] Yetkilendirme, boş durum, yükleme ve hata ekranlarının bağlanması.
 
 ---
 
-## 3. Faz P1: Belge Revizyonları, 200+ Benchmark ve Arama Doğruluğu
+## 3. P0 Kabul Kriterleri (P0 Gate Sign-off)
 
-### P1 Görev Listesi:
-1. **TASK-P1-01: İki Revizyon Arası Değişiklik Karşılaştırma Motoru (Revision Diff Engine)**
-   - İki teknik şartname revizyonu arasındaki parametre ve tablo değişikliklerini yan yana sunma.
-2. **TASK-P1-02: 200+ Soruluk Sektörel Değerlendirme Veri Seti & Ragas Ölçüm Hattı**
-   - `questions_v1.json` veri seti ile Recall@5, nDCG, Faithfulness, Citation Precision ve Safety-Critical hata oranı ölçümü.
-3. **TASK-P1-03: Gelişmiş Tablo ve Formül Çıkarımı (Structured Content Preservation)**
-   - Çok sütunlu teknik veri föylerinin hücre bazlı doğrulanabilir koordinatlarla kaydedilmesi.
-4. **TASK-P1-04: Selnikel Endüstriyel Tasarım Sistemi (FSD Mimarisi)**
-   - Yüksek yoğunluklu teknik tablo arayüzü, tabular numerals, onaylı/taslak/obsolete renk rozetleri.
-
----
-
-## 4. Faz P2: Servis Vakaları ve İleri Mühendislik Karar Desteği
-
-### P2 Görev Listesi:
-1. **TASK-P2-01: Saha Servis Vakaları & Arıza Kodu Eşleme Motoru (Service Case Matcher)**
-   - Brülör arıza kodları ve geçmiş kazan bakım kayıtları üzerinde vektörel benzerlik araması.
-2. **TASK-P2-02: Başmühendis Onay Akışı & Resmi Cevap Bankası (Approved Answers Bank)**
-   - AI taslağının başmühendis tarafından incelenip onaylanması ve kalıcı olarak damgalanması.
-3. **TASK-P2-03: Otomatik Denetim İzi Raporlama & Yedekleme Otomasyonu**
-   - ISO ve CE denetimleri için erişim loglarının şifreli dışa aktarımı.
+- [x] Temiz Git geçmişi ve doğrulanmış secret scan (Gitleaks / entropy scan PASS).
+- [ ] Deterministik lockfile ve SBOM mevcut.
+- [ ] GitHub Actions CI pipeline'ı yeşil.
+- [ ] PostgreSQL ve Qdrant entegrasyon testleri geçiyor.
+- [ ] 47+ backend testi ve yeni domain testleri %100 PASS.
+- [ ] Frontend build 0 hata ve HTTP asset smoke testleri PASS (200 OK).
+- [ ] Yetkisiz kullanıcı Ar-Ge dokümanını Qdrant'tan, DB'den ve cevap alıntılarından kesinlikle çekemiyor.
+- [ ] Asenkron Ingestion Worker job durumlarını hatasız ilerletiyor.
+- [ ] Arayüz tamamen Selnikel kurumsal kimliğinde ve sahte aksiyonlardan arındırılmış.

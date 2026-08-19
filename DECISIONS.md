@@ -81,14 +81,103 @@
 
 ---
 
-## ADR-010: NotebookLM Workspace Paradigm & Multi-Format Industrial Exporters
+## ADR-010: Native Multi-Format Industrial Exporters (Excel, Word, PDF)
 - **Status**: ACCEPTED (2026-08-19)
-- **Context**: Engineers need to transform grounded technical knowledge directly into standard engineering deliverables: Excel spreadsheets (`.xlsx`) for calculations, Word documents (`.docx`) for specifications, PowerPoint slides (`.pptx`) for presentations, and PDF reports (`.pdf`).
+- **Context**: Engineers need to transform grounded technical knowledge directly into standard engineering deliverables: Excel spreadsheets (`.xlsx`) for calculations, Word documents (`.docx`) for specifications, and PDF reports (`.pdf`).
 - **Decision**:
-  1. Adopt the **NotebookLM 3-Pane Studio layout**: Left Sources checklist, Center grounded conversation, Right Artifact Studio.
-  2. Implement native Python document export services using `openpyxl`, `python-docx`, `python-pptx`, and `reportlab`.
-  3. Expose dedicated API endpoints `/api/v1/agent/export/{format}` (`excel`, `word`, `powerpoint`, `pdf`).
+  1. Implement native Python document export services using `openpyxl`, `python-docx`, and `reportlab`.
+  2. Expose dedicated API endpoints `/api/v1/agent/export/{format}` (`excel`, `word`, `pdf`).
 - **Consequences**: Engineers can generate complete corporate-formatted documents directly from the AI with zero manual copying.
 
+---
 
+## ADR-011: OIDC Authentication Architecture — Backend-For-Frontend (BFF) Pattern
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Evaluating SPA Direct Entra ID token handling vs. Backend-for-Frontend (BFF) pattern. Exposing raw bearer tokens in browser memory (`localStorage` / JS runtime) creates XSS token exfiltration risks for enterprise blueprints.
+- **Decision**: Adopt the **BFF (Backend-For-Frontend)** architecture:
+  1. The backend coordinates OIDC token exchanges with Microsoft Entra ID / IdP.
+  2. Session tokens are issued to the browser exclusively as `HttpOnly`, `Secure`, `SameSite=Strict` cookies.
+  3. All REST and SSE streaming endpoints authenticate via cookie or standard Authorization header for machine clients.
+- **Consequences**: Maximum browser-level credential security, zero custom token generator sprawl, and native CSRF double-submit protection.
 
+---
+
+## ADR-012: PostgreSQL-Native Task Queue via `SELECT FOR UPDATE SKIP LOCKED`
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Evaluating Celery/Redis vs. PostgreSQL-native asynchronous job queues for long-running document ingestion (Docling OCR, chunking, embedding).
+- **Decision**: Implement a **PostgreSQL-native worker queue** using `SELECT ... FOR UPDATE SKIP LOCKED`:
+  1. Ingestion jobs are tracked in the `ingestion_jobs` table with states (`queued`, `validating`, `parsing`, `chunking`, `embedding`, `indexing`, `verifying`, `completed`, `failed`).
+  2. Workers run as independent Python background processes with worker lease timeouts (heartbeats), exponential backoff, and dead-letter states.
+- **Consequences**: Eliminates Redis/RabbitMQ infrastructure overhead in pilot deployments while guaranteeing ACID transactional durability and exactly-once processing.
+
+---
+
+## ADR-013: Hybrid Storage Adapter — Local Encrypted Volume with S3 Protocol Readiness
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Industrial installations may run fully air-gapped on factory on-premise hardware without AWS S3 or MinIO object storage.
+- **Decision**: Implement a storage abstraction (`BaseStorageAdapter`) with:
+  1. `LocalStorageAdapter`: Stores content-addressed binaries at `storage/{sha256[:2]}/{sha256}.bin` with path-traversal sanitization.
+  2. `S3StorageAdapter`: Ready for MinIO or AWS S3 object buckets.
+  3. Pre-upload Magic-Byte MIME verification and 50 MB hard size limit.
+- **Consequences**: Zero friction between air-gapped on-premise single-server setups and multi-node cloud deployments.
+
+---
+
+## ADR-014: Triple-Layer Access Control (ACL) & Cache Partitioning
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Ensuring sensitive Ar-Ge patents or confidential cost sheets never leak across departments or through semantic response caches.
+- **Decision**: Enforce ACL simultaneously across **3 distinct architectural layers**:
+  1. **Layer 1 (PostgreSQL)**: SQL queries filter by user's assigned `department_ids` and roles.
+  2. **Layer 2 (Qdrant Vector)**: Vector queries inject mandatory payload filters (`metadata.department_id in user.departments`).
+  3. **Layer 3 (Answer Provenance)**: The RAG engine re-verifies every candidate citation against the active user ACL before rendering the final response.
+  4. **Cache Partitioning**: RAG response cache keys strictly include `(user_id, department_ids, classification, acl_version)`.
+- **Consequences**: Absolute data isolation with zero cross-department cache contamination.
+
+---
+
+## ADR-015: Three Distinct Deployment Profiles (`cloud-enabled`, `local-private`, `air-gapped`)
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Different Selnikel operating environments have varying internet connectivity and security classification constraints.
+- **Decision**: Explicitly define and enforce 3 deployment profiles via `DEPLOYMENT_PROFILE` environment variable:
+  1. `cloud-enabled`: Allows external OpenAI/Azure LLMs for public data.
+  2. `local-private`: Uses local Ollama/vLLM models while allowing outbound telemetry and package updates.
+  3. `air-gapped`: 100% offline, local BGE-M3, local FlashRank, local Ollama (Qwen2.5-14B), local fonts, zero external HTTP egress, pre-packaged weights.
+- **Consequences**: Total regulatory and intellectual property compliance for defense and sensitive industrial clients.
+
+---
+
+## ADR-016: Soft Delete, 90-Day Retention, and Append-Only Audit Integrity
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Industrial compliance (ISO 9001, CE, ASME) requires non-repudiation and tracking who viewed or modified engineering specifications.
+- **Decision**:
+  1. **Soft Delete**: All documents and revisions use `deleted_at: timestamptz`. Physical deletion requires a two-man rule (`admin` + `approver`).
+  2. **Retention**: Soft-deleted records are retained for 90 days before cold archival.
+  3. **Append-Only Audit Log**: The `audit_events` table is append-only; database updates/deletes on this table are revoked at the SQL grant level.
+- **Consequences**: Full compliance with ISO quality audits and legal non-repudiation.
+
+---
+
+## ADR-017: UUID v4 Standard for All Primary Identifiers
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Sequential integer IDs leak business intelligence (e.g. document count) and complicate distributed multi-site replication.
+- **Decision**: Standardize on RFC 4122 `UUID v4` for all primary keys across PostgreSQL, Qdrant payload IDs, and API DTOs.
+- **Consequences**: Secure, collision-free, distributed-ready identifiers across all services.
+
+---
+
+## ADR-018: Cursor-Based API Pagination Standard
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Offset-based pagination (`OFFSET 1000`) exhibits poor query performance on large chunk tables and suffers from page-drift anomalies during real-time document ingestion.
+- **Decision**: Standardize all collection endpoints (`/documents`, `/equipment`, `/audit/events`) on **cursor-based pagination** with opaque cursor tokens (`limit`, `next_cursor`, `prev_cursor`).
+- **Consequences**: Sub-millisecond pagination performance and stable iteration during concurrent document indexing.
+
+---
+
+## ADR-019: Document Revision Immutability & Supersedes Graph
+- **Status**: ACCEPTED (2026-08-19)
+- **Context**: Engineering specifications must maintain strict version history. Editing an approved specification directly destroys traceability.
+- **Decision**:
+  1. A `DocumentRevision` is **immutable** once approved (`approval_status = 'approved'`).
+  2. Any changes spawn a new `DocumentRevision` with `supersedes_revision_id` pointing to the prior revision.
+  3. Queries default to `revision_policy: approved_latest`.
+- **Consequences**: Guaranteed historical accuracy and instant visual diff generation between revisions.
