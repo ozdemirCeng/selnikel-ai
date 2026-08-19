@@ -59,10 +59,25 @@ class Settings(BaseSettings):
 
     # Authentication & Security
     AUTH_MODE: Literal["development", "oidc", "bff"] = "development"
+    JWT_SECRET_KEY: str = "dev-insecure-jwt-secret-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
     OIDC_ISSUER: Optional[str] = None
     OIDC_CLIENT_ID: Optional[str] = None
     OIDC_AUDIENCE: Optional[str] = None
     SESSION_COOKIE_NAME: str = "selnikel_session"
+    SESSION_SECRET_KEY: str = "dev-insecure-session-secret-change-in-production"
+
+    def validate_auth_configuration(self) -> None:
+        """Fail-fast validation for production authentication modes."""
+        if self.AUTH_MODE == "oidc":
+            if not self.OIDC_ISSUER or not self.OIDC_CLIENT_ID:
+                raise RuntimeError(
+                    "AUTH_MODE 'oidc' requires OIDC_ISSUER and OIDC_CLIENT_ID to be configured."
+                )
+        elif self.AUTH_MODE == "bff":
+            if not self.SESSION_SECRET_KEY or self.SESSION_SECRET_KEY.startswith("dev-"):
+                if self.ENVIRONMENT == "production":
+                    raise RuntimeError("AUTH_MODE 'bff' in production requires a secure SESSION_SECRET_KEY.")
 
 
 settings = Settings()

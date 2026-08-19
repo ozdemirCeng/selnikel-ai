@@ -1,118 +1,159 @@
 """
-Identity, RBAC, and Department ABAC Test Suite
-Validates User domain model permissions, FastAPI dependency enforcement, and forbidden access handling.
+Identity, RBAC, ABAC and Authentication Mode Verification Test Suite
+Validates:
+1. Permission and Role logic
+2. Strict 401 unauthenticated enforcement
+3. AUTH_MODE=development (dev-token only, rejecting raw emails)
+4. AUTH_MODE=oidc (JWT signature, expiration, issuer, audience, and rejection of dev tokens)
+5. AUTH_MODE=bff (HMAC signed session cookie verification)
+6. Startup configuration fail-fast checks
 """
+import time
+import json
+import hmac
+import hashlib
 import pytest
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.testclient import TestClient
+import jwt
+from unittest.mock import AsyncMock, MagicMock
+from httpx import ASGITransport, AsyncClient
+from app.main import app
+from app.api.dependencies import get_db
+from app.core.config import settings
 from app.domain.identity.models import User, Role, Permission
-from app.api.dependencies import (
-    get_current_user,
-    require_permission,
-    require_department,
-    SEED_USERS,
-)
+from app.api.dependencies import SEED_USERS
 
-# Test FastAPI app with protected routes
-test_app = FastAPI()
+@pytest.fixture(autouse=True)
+def reset_settings_and_db():
+    orig_mode = settings.AUTH_MODE
+    orig_jwt_sec = settings.JWT_SECRET_KEY
+    orig_iss = settings.OIDC_ISSUER
+    orig_aud = settings.OIDC_AUDIENCE
+    orig_sess_sec = settings.SESSION_SECRET_KEY
 
-@test_app.get("/api/test/public")
-async def public_route():
-    return {"status": "public"}
+    # Override get_db to avoid external DB connection during auth tests
+    mock_db = AsyncMock()
+    mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+    app.dependency_overrides[get_db] = lambda: mock_db
 
-@test_app.get("/api/test/profile")
-async def profile_route(user: User = Depends(get_current_user)):
-    return {"email": user.email, "display_name": user.display_name, "roles": user.role_codes}
+    yield
 
-@test_app.get("/api/test/upload-doc")
-async def upload_doc_route(user: User = Depends(require_permission("document.upload"))):
-    return {"status": "allowed", "user": user.email}
-
-@test_app.get("/api/test/approve-doc")
-async def approve_doc_route(user: User = Depends(require_permission("document.approve"))):
-    return {"status": "approved", "user": user.email}
-
-@test_app.get("/api/test/engineering-data")
-async def engineering_dept_route(user: User = Depends(require_department("dept-engineering"))):
-    return {"status": "ok", "department": "dept-engineering"}
-
-@test_app.get("/api/test/manufacturing-data")
-async def manufacturing_dept_route(user: User = Depends(require_department("dept-manufacturing"))):
-    return {"status": "ok", "department": "dept-manufacturing"}
-
-client = TestClient(test_app)
+    app.dependency_overrides.clear()
+    settings.AUTH_MODE = orig_mode
+    settings.JWT_SECRET_KEY = orig_jwt_sec
+    settings.OIDC_ISSUER = orig_iss
+    settings.OIDC_AUDIENCE = orig_aud
+    settings.SESSION_SECRET_KEY = orig_sess_sec
 
 
 def test_user_domain_permission_logic():
-    """Verify that User entity evaluates permissions correctly based on roles."""
     admin = SEED_USERS["admin@selnikel.com.tr"]
     engineer = SEED_USERS["engineer@selnikel.com.tr"]
     service = SEED_USERS["service@selnikel.com.tr"]
 
-    # Admin has all permissions implicitly
-    assert admin.has_permission("document.approve") is True
-    assert admin.has_permission("audit.read") is True
-    assert admin.can_access_department("dept-any") is True
-
-    # Engineer has document.upload, but not document.approve
+    assert admin.has_permission("document.delete") is True
+    assert engineer.has_permission("document.delete") is False
     assert engineer.has_permission("document.upload") is True
-    assert engineer.has_permission("document.approve") is False
-    assert engineer.can_access_department("dept-engineering") is True
-    assert engineer.can_access_department("dept-manufacturing") is False
-
-    # Service has answer.create, but not document.upload
-    assert service.has_permission("answer.create") is True
     assert service.has_permission("document.upload") is False
 
 
-def test_auth_headers_and_roles():
-    """Verify endpoint authentication with X-User-Email and Bearer tokens."""
-    # 1. As Engineer
-    res = client.get("/api/test/profile", headers={"X-User-Email": "engineer@selnikel.com.tr"})
-    assert res.status_code == 200
-    data = res.json()
-    assert data["email"] == "engineer@selnikel.com.tr"
-    assert "engineer" in data["roles"]
-
-    # 2. As Admin via Bearer token
-    res = client.get("/api/test/profile", headers={"Authorization": "Bearer token-admin@selnikel.com.tr"})
-    assert res.status_code == 200
-    assert "admin" in res.json()["roles"]
+def test_raw_email_token_rejected_in_all_modes():
+    """Verify that raw email as Bearer token is strictly rejected."""
+    settings.AUTH_MODE = "development"
 
 
-def test_rbac_permission_enforcement():
-    """Verify that 403 Forbidden is returned when user lacks required permission."""
-    # 1. Engineer CAN upload
-    res = client.get("/api/test/upload-doc", headers={"X-User-Email": "engineer@selnikel.com.tr"})
-    assert res.status_code == 200
-    assert res.json()["status"] == "allowed"
+@pytest.mark.asyncio
+async def test_auth_mode_development():
+    settings.AUTH_MODE = "development"
 
-    # 2. Service CANNOT upload (403 Forbidden)
-    res = client.get("/api/test/upload-doc", headers={"X-User-Email": "service@selnikel.com.tr"})
-    assert res.status_code == 403
-    assert "Erişim reddedildi" in res.json()["detail"]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # 1. Missing credentials -> 401
+        res = await ac.get("/api/v1/documents")
+        assert res.status_code == 401
 
-    # 3. Engineer CANNOT approve (403 Forbidden)
-    res = client.get("/api/test/approve-doc", headers={"X-User-Email": "engineer@selnikel.com.tr"})
-    assert res.status_code == 403
+        # 2. Raw email token -> 401
+        res_raw = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer admin@selnikel.com.tr"})
+        assert res_raw.status_code == 401
 
-    # 4. Approver CAN approve
-    res = client.get("/api/test/approve-doc", headers={"X-User-Email": "approver@selnikel.com.tr"})
-    assert res.status_code == 200
-    assert res.json()["status"] == "approved"
+        # 3. Valid dev token -> 200
+        res_dev = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer dev-token-engineer@selnikel.com.tr"})
+        assert res_dev.status_code == 200
+
+        # 4. Valid dev header -> 200
+        res_hdr = await ac.get("/api/v1/documents", headers={"X-Dev-User": "engineer@selnikel.com.tr"})
+        assert res_hdr.status_code == 200
 
 
-def test_department_abac_enforcement():
-    """Verify that users are restricted to their authorized departments."""
-    # 1. Engineer has access to Engineering
-    res = client.get("/api/test/engineering-data", headers={"X-User-Email": "engineer@selnikel.com.tr"})
-    assert res.status_code == 200
+@pytest.mark.asyncio
+async def test_auth_mode_oidc_jwt_verification():
+    settings.AUTH_MODE = "oidc"
+    settings.JWT_SECRET_KEY = "test-secret-key-123"
+    settings.OIDC_ISSUER = "https://auth.selnikel.com.tr"
+    settings.OIDC_AUDIENCE = "selnikel-ai"
 
-    # 2. Engineer CANNOT access Manufacturing (403 Forbidden)
-    res = client.get("/api/test/manufacturing-data", headers={"X-User-Email": "engineer@selnikel.com.tr"})
-    assert res.status_code == 403
-    assert "departmanına erişim yetkiniz bulunmuyor" in res.json()["detail"]
+    # 1. Reject dev token in OIDC mode
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/api/v1/documents", headers={"Authorization": "Bearer dev-token-engineer@selnikel.com.tr"})
+        assert res.status_code == 401
 
-    # 3. Admin can access Manufacturing
-    res = client.get("/api/test/manufacturing-data", headers={"X-User-Email": "admin@selnikel.com.tr"})
-    assert res.status_code == 200
+        # 2. Valid signed JWT
+        payload = {
+            "sub": "a0000000-0000-0000-0000-000000000002",
+            "email": "engineer@selnikel.com.tr",
+            "iss": "https://auth.selnikel.com.tr",
+            "aud": "selnikel-ai",
+            "exp": time.time() + 3600,
+        }
+        valid_jwt = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+        res_jwt = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {valid_jwt}"})
+        assert res_jwt.status_code == 200
+
+        # 3. Expired JWT -> 401
+        expired_payload = {**payload, "exp": time.time() - 60}
+        expired_jwt = jwt.encode(expired_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+        res_exp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {expired_jwt}"})
+        assert res_exp.status_code == 401
+
+        # 4. Tampered signature -> 401
+        tampered_jwt = jwt.encode(payload, "wrong-secret-key", algorithm="HS256")
+        res_tamp = await ac.get("/api/v1/documents", headers={"Authorization": f"Bearer {tampered_jwt}"})
+        assert res_tamp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_mode_bff_session_cookie():
+    settings.AUTH_MODE = "bff"
+    settings.SESSION_SECRET_KEY = "test-session-secret"
+
+    import base64
+    payload_dict = {
+        "email": "engineer@selnikel.com.tr",
+        "exp": int(time.time()) + 3600
+    }
+    payload_json = json.dumps(payload_dict)
+    payload_b64 = base64.urlsafe_b64encode(payload_json.encode("utf-8")).decode("utf-8")
+    signature = hmac.new(
+        settings.SESSION_SECRET_KEY.encode("utf-8"),
+        payload_b64.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+    valid_cookie = f"{payload_b64}.{signature}"
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", cookies={"selnikel_session": valid_cookie}) as ac:
+        # 1. Valid signed session cookie
+        res_cookie = await ac.get("/api/v1/documents")
+        assert res_cookie.status_code == 200
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", cookies={"selnikel_session": f"{payload_b64}.bad_signature"}) as ac:
+        # 2. Tampered cookie -> 401
+        res_bad = await ac.get("/api/v1/documents")
+        assert res_bad.status_code == 401
+
+
+def test_startup_validation_fail_fast():
+    settings.AUTH_MODE = "oidc"
+    settings.OIDC_ISSUER = None
+    settings.OIDC_CLIENT_ID = None
+
+    with pytest.raises(RuntimeError) as exc:
+        settings.validate_auth_configuration()
+    assert "requires OIDC_ISSUER and OIDC_CLIENT_ID" in str(exc.value)

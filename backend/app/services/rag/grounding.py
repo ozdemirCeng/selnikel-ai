@@ -41,7 +41,6 @@ class CitationEngine:
             section = match.group(3).strip() if match.group(3) else None
 
             page_num = int(page_str) if page_str and page_str.isdigit() else 1
-            sources_used.add(identifier)
 
             # Check if this exact (identifier, page) exists in retrieved chunks
             matched_chunk = (
@@ -58,30 +57,24 @@ class CitationEngine:
                 score = matched_chunk.score
                 real_page = matched_chunk.metadata.page_number
                 real_section = matched_chunk.metadata.section or section
-            else:
-                doc_id = "unverified"
-                resolved_filename = identifier
-                snippet = f"Alıntı: {identifier}, Sayfa {page_num}"
-                score = 0.5
-                real_page = page_num
-                real_section = section
 
-            citation = Citation(
-                document_id=doc_id,
-                filename=resolved_filename,
-                page_number=real_page,
-                section=real_section,
-                snippet=snippet,
-                score=score,
-            )
+                citation = Citation(
+                    document_id=doc_id,
+                    filename=resolved_filename,
+                    page_number=real_page,
+                    section=real_section,
+                    snippet=snippet,
+                    score=score,
+                )
 
-            # Avoid duplicates
-            if not any(
-                c.filename.lower() == citation.filename.lower()
-                and c.page_number == citation.page_number
-                for c in citations
-            ):
-                citations.append(citation)
+                # Avoid duplicates
+                if not any(
+                    c.filename.lower() == citation.filename.lower()
+                    and c.page_number == citation.page_number
+                    for c in citations
+                ):
+                    citations.append(citation)
+                    sources_used.add(resolved_filename)
 
         # If LLM didn't produce inline citations but answer is present and not a refusal:
         if not citations and retrieved_chunks and "bulunmamaktadır" not in answer_text.lower():

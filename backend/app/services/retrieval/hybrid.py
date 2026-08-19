@@ -32,6 +32,11 @@ class QdrantHybridRetriever(BaseRetriever):
         if not query.strip():
             return []
 
+        # Fail-closed: If user has 0 allowed departments assigned, return empty list
+        if filter_criteria and filter_criteria.allowed_departments is not None and len(filter_criteria.allowed_departments) == 0:
+            logger.warning("Retrieval blocked: User has 0 allowed departments.")
+            return []
+
         # 1. Compute Dense Query Embedding
         dense_vector = await self.embedding_provider.embed_query(query)
 

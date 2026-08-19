@@ -54,6 +54,8 @@ class IngestionJob(BaseModel):
     max_attempts: int = 3
     worker_lease_id: Optional[str] = None
     lease_expires_at: Optional[datetime] = None
+    next_attempt_at: Optional[datetime] = None
+    dead_letter: bool = False
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     started_at: Optional[datetime] = None

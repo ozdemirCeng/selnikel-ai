@@ -50,7 +50,8 @@ yarn-error.log*
 *.pem
 *.key
 
-# Persistent Data, Uploads & Databases
+# Persistent Data, Uploads & Runtime Artifacts
+security_scan_results.json
 data/
 data/documents/
 data/qdrant_storage/
