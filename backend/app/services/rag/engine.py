@@ -2,9 +2,11 @@ import json
 import time
 import uuid
 from typing import AsyncGenerator, List, Optional, Tuple
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
 from app.db.models.query_log import QueryLogModel
+from app.db.models.revision import DocumentRevisionModel
 from app.domain.rag import Citation, GenerationOutput, RetrievalFilter, RetrievalResult
 from app.services.llm.base import BaseLLMProvider
 from app.services.llm.factory import llm_provider
@@ -66,10 +68,13 @@ class DeterministicRAGEngine:
             top_n=top_k,
         )
 
-        # 3. Build Grounded Prompt
+        # 3. Layer 3 Relational Snapshot Gate: Suppress obsolete/draft revision chunks if session available
+        verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
+
+        # 4. Build Grounded Prompt
         user_prompt = build_rag_user_prompt(
             query=query_text,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
         # 4. Generate Answer via LLM
@@ -81,7 +86,7 @@ class DeterministicRAGEngine:
         # 5. Extract and Verify Citations
         citations, sources = self.citation_engine.extract_and_verify_citations(
             answer_text=answer,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
         latency_ms = (time.perf_counter() - start_time) * 1000.0
@@ -92,7 +97,7 @@ class DeterministicRAGEngine:
                 session=session,
                 query=query_text,
                 answer=answer,
-                chunks=reranked_chunks,
+                chunks=verified_chunks,
                 citations=citations,
                 latency_ms=latency_ms,
                 user_id=user_id,
@@ -145,22 +150,25 @@ class DeterministicRAGEngine:
             top_n=top_k,
         )
 
-        # 3. Build Grounded Prompt
+        # 3. Layer 3 Relational Snapshot Gate
+        verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
+
+        # 4. Build Grounded Prompt
         user_prompt = build_rag_user_prompt(
             query=query_text,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
-        # 4. Generate Answer via LLM
+        # 5. Generate Answer via LLM
         answer = await self.llm.generate(
             prompt=user_prompt,
             system_prompt=SELNIKEL_RAG_SYSTEM_PROMPT,
         )
 
-        # 5. Extract and Verify Citations
+        # 6. Extract and Verify Citations
         citations, sources = self.citation_engine.extract_and_verify_citations(
             answer_text=answer,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
         latency_ms = (time.perf_counter() - start_time) * 1000.0
@@ -170,7 +178,7 @@ class DeterministicRAGEngine:
                 session=session,
                 query=query_text,
                 answer=answer,
-                chunks=reranked_chunks,
+                chunks=verified_chunks,
                 citations=citations,
                 latency_ms=latency_ms,
                 user_id=user_id,
@@ -182,7 +190,7 @@ class DeterministicRAGEngine:
                 citations=citations,
                 sources_used=sources,
             ),
-            reranked_chunks,
+            verified_chunks,
         )
 
     async def query_stream(
@@ -214,14 +222,17 @@ class DeterministicRAGEngine:
             top_n=top_k,
         )
 
+        # Layer 3 Relational Snapshot Gate
+        verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
+
         # Emit initial event with retrieved sources overview
-        initial_sources = list(set(r.metadata.filename for r in reranked_chunks))
-        yield f"data: {json.dumps({'type': 'retrieval_status', 'sources': initial_sources, 'count': len(reranked_chunks)})}\n\n"
+        initial_sources = list(set(r.metadata.filename for r in verified_chunks))
+        yield f"data: {json.dumps({'type': 'retrieval_status', 'sources': initial_sources, 'count': len(verified_chunks)})}\n\n"
 
         # 2. Build Prompt
         user_prompt = build_rag_user_prompt(
             query=query_text,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
         # 3. Stream LLM Tokens
@@ -240,7 +251,7 @@ class DeterministicRAGEngine:
         # 4. Extract Citations from full accumulated response
         citations, sources = self.citation_engine.extract_and_verify_citations(
             answer_text=accumulated_text,
-            retrieved_chunks=reranked_chunks,
+            retrieved_chunks=verified_chunks,
         )
 
         # 5. Emit Citations event
@@ -255,11 +266,63 @@ class DeterministicRAGEngine:
                 session=session,
                 query=query_text,
                 answer=accumulated_text,
-                chunks=reranked_chunks,
+                chunks=verified_chunks,
                 citations=citations,
                 latency_ms=latency_ms,
                 user_id=user_id,
             )
+
+    async def _verify_active_revisions(
+        self,
+        chunks: List[RetrievalResult],
+        session: Optional[AsyncSession] = None,
+    ) -> List[RetrievalResult]:
+        """
+        Layer 3 Relational Snapshot Gate:
+        Verifies that each retrieved chunk belongs to the currently APPROVED revision in PostgreSQL.
+        If a chunk belongs to an obsolete or draft revision (e.g. due to Qdrant sync lag),
+        it is filtered out and suppressed before prompt construction.
+        """
+        if not session or not chunks:
+            return chunks
+
+        doc_ids = {c.metadata.document_id for c in chunks if c.metadata and c.metadata.document_id}
+        if not doc_ids:
+            return chunks
+
+        try:
+            stmt = (
+                select(DocumentRevisionModel.document_id, DocumentRevisionModel.id)
+                .where(
+                    DocumentRevisionModel.document_id.in_(doc_ids),
+                    DocumentRevisionModel.approval_status == "approved",
+                )
+            )
+            res = await session.execute(stmt)
+            approved_map = {}
+            if hasattr(res, "all"):
+                rows = res.all()
+                if isinstance(rows, list):
+                    for row in rows:
+                        if hasattr(row, "__getitem__") and len(row) >= 2:
+                            approved_map[row[0]] = row[1]
+
+            valid_chunks: List[RetrievalResult] = []
+            for c in chunks:
+                doc_id = c.metadata.document_id
+                if doc_id in approved_map:
+                    rev_id = getattr(c.metadata, "revision_id", None)
+                    # If chunk explicitly carries a revision_id that doesn't match active approved revision
+                    if rev_id and rev_id != approved_map[doc_id]:
+                        logger.warning(
+                            f"Layer 3 Gate: Suppressed obsolete chunk '{c.chunk_id}' (Doc: '{doc_id}', Rev: '{rev_id}', Active: '{approved_map[doc_id]}')."
+                        )
+                        continue
+                valid_chunks.append(c)
+            return valid_chunks
+        except Exception as e:
+            logger.warning(f"Layer 3 revision verification failed (falling back to retrieved chunks): {e}")
+            return chunks
 
     async def _log_query(
         self,

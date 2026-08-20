@@ -38,11 +38,13 @@ def test_layer2_qdrant_vector_payload_filter():
     )
     built_filter = repo._build_filter(filt)
     assert built_filter is not None
-    assert len(built_filter.must) == 2
+    assert len(built_filter.must) == 3
     assert built_filter.must[0].key == "department"
     assert built_filter.must[0].match.any == ["dept-service"]
     assert built_filter.must[1].key == "equipment_ids"
     assert built_filter.must[1].match.any == ["eq-sb100"]
+    assert built_filter.must[2].key == "approval_status"
+    assert built_filter.must[2].match.value == "approved"
 
 
 def test_layer3_citation_provenance_acl_reverification():

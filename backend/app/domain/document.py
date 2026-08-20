@@ -37,6 +37,9 @@ class ChunkMetadata(BaseModel):
     equipment_ids: List[str] = Field(default_factory=list)
     classification: str = "public_internal"
     approval_status: str = "approved"
+    revision_id: Optional[str] = None
+    revision_number: Optional[int] = None
+    revision_code: Optional[str] = None
     language: str = "tr"
     chunk_index: int = 0
     token_count: Optional[int] = None

@@ -43,6 +43,7 @@ async def test_rag_engine_sync_query(mock_retrieval_result):
 
     mock_session = AsyncMock()
     mock_session.add = MagicMock()
+    mock_session.execute.return_value.all.return_value = []
 
     engine = DeterministicRAGEngine(
         retriever=mock_retriever,

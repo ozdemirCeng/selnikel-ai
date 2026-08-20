@@ -71,7 +71,7 @@ class QdrantVectorRepository:
                     ),
                 )
                 # Create payload index for fast filtering
-                for field_name in ["document_id", "department", "document_type", "language"]:
+                for field_name in ["document_id", "department", "document_type", "language", "approval_status", "revision_id", "equipment_ids"]:
                     await self.client.create_payload_index(
                         collection_name=self.collection_name,
                         field_name=field_name,
@@ -127,6 +127,13 @@ class QdrantVectorRepository:
                 rest_models.FieldCondition(
                     key="language",
                     match=rest_models.MatchValue(value=filter_spec.language),
+                )
+            )
+        if filter_spec.approval_status:
+            must_conditions.append(
+                rest_models.FieldCondition(
+                    key="approval_status",
+                    match=rest_models.MatchValue(value=filter_spec.approval_status),
                 )
             )
 
@@ -251,6 +258,66 @@ class QdrantVectorRepository:
             return results
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
+            raise
+
+    async def update_revision_payload_status(
+        self,
+        document_id: str,
+        approved_revision_id: str,
+    ) -> bool:
+        """
+        Synchronize Qdrant payload approval statuses when a revision is approved:
+        1. Set approval_status='obsolete' and is_active=false on all existing non-approved chunks for this document.
+        2. Set approval_status='approved' and is_active=true on the target approved revision chunks.
+        """
+        try:
+            # 1. Obsolete previous revision chunks
+            await self.client.set_payload(
+                collection_name=self.collection_name,
+                payload={
+                    "approval_status": "obsolete",
+                    "is_active": False,
+                },
+                points=rest_models.Filter(
+                    must=[
+                        rest_models.FieldCondition(
+                            key="document_id",
+                            match=rest_models.MatchValue(value=document_id),
+                        ),
+                    ],
+                    must_not=[
+                        rest_models.FieldCondition(
+                            key="revision_id",
+                            match=rest_models.MatchValue(value=approved_revision_id),
+                        ),
+                    ],
+                ),
+            )
+
+            # 2. Approve target revision chunks
+            await self.client.set_payload(
+                collection_name=self.collection_name,
+                payload={
+                    "approval_status": "approved",
+                    "is_active": True,
+                },
+                points=rest_models.Filter(
+                    must=[
+                        rest_models.FieldCondition(
+                            key="document_id",
+                            match=rest_models.MatchValue(value=document_id),
+                        ),
+                        rest_models.FieldCondition(
+                            key="revision_id",
+                            match=rest_models.MatchValue(value=approved_revision_id),
+                        ),
+                    ],
+                ),
+            )
+            logger.info(f"Updated Qdrant revision payload for document '{document_id}' (Approved Rev: '{approved_revision_id}').")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update Qdrant revision payload for doc {document_id}: {e}")
             raise
 
     async def delete_by_document_id(self, document_id: str) -> bool:

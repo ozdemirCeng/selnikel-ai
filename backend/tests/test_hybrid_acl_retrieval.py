@@ -18,7 +18,12 @@ def test_qdrant_filter_builder_with_acl_departments():
     )
     built = repo._build_filter(filt)
     assert built is not None
-    assert len(built.must) == 3
+    assert len(built.must) == 4
+    keys = [cond.key for cond in built.must]
+    assert "department" in keys
+    assert "equipment_ids" in keys
+    assert "document_type" in keys
+    assert "approval_status" in keys
 
 
 def test_citation_engine_refusal_on_empty_context():
