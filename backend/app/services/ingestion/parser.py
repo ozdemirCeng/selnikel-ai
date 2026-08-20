@@ -63,6 +63,7 @@ class FastFallbackParser(BaseDocumentParser):
             return self._parse_text(path)
 
     def _parse_pdf(self, path: Path) -> ParsedDocument:
+        path = Path(path)
         try:
             import pypdf
 
@@ -121,13 +122,20 @@ class FastFallbackParser(BaseDocumentParser):
         raw_text = page.extract_text() or ""
         section_headers: List[str] = []
 
-        # 1. Extract Section Headers reliably from page text
+        # 1. Extract Section Headers reliably from page text (excluding model codes and table values)
         for line in raw_text.splitlines():
             line_str = line.strip()
             if not line_str:
                 continue
-            if re.match(r"^\d+(\.\d+)*\.?\s+[A-Z]", line_str) or (
-                len(line_str) < 80 and line_str.isupper() and len(line_str) > 4
+            if re.match(r"^\d+(\.\d+)*\.?\s+[A-Z]", line_str):
+                if line_str not in section_headers:
+                    section_headers.append(line_str)
+            elif (
+                line_str.isupper()
+                and 5 <= len(line_str) <= 60
+                and not re.search(r"\d", line_str)
+                and "SELNIKEL" not in line_str
+                and not line_str.startswith("SB-")
             ):
                 if line_str not in section_headers:
                     section_headers.append(line_str)
@@ -150,12 +158,12 @@ class FastFallbackParser(BaseDocumentParser):
         if not elements:
             return [], raw_text.strip(), section_headers
 
-        # Group elements by y-coordinate within vertical tolerance (4 points)
+        # Group elements by y-coordinate within vertical tolerance (3.0 points)
         lines_dict = defaultdict(list)
         for y, x, text in elements:
             matched_y = None
             for existing_y in lines_dict:
-                if abs(existing_y - y) <= 4.0:
+                if abs(existing_y - y) <= 3.0:
                     matched_y = existing_y
                     break
             if matched_y is None:
@@ -163,47 +171,55 @@ class FastFallbackParser(BaseDocumentParser):
             lines_dict[matched_y].append((x, text))
 
         sorted_y = sorted(lines_dict.keys(), reverse=True)
-        rows = []
+        raw_table_rows = []
 
         for y in sorted_y:
             line_elems = sorted(lines_dict[y], key=lambda item: item[0])
             line_texts = [t for _, t in line_elems]
-            if len(line_elems) >= 3:
-                rows.append((y, line_texts))
+            # Exclude section headers from table row candidates
+            line_texts_filtered = [
+                t for t in line_texts
+                if not any(t == sh or t in sh for sh in section_headers)
+                and not t.startswith("Section ")
+            ]
+            if len(line_texts_filtered) >= 3:
+                raw_table_rows.append(line_texts_filtered)
 
-        # Detect tabular blocks (consecutive multi-column rows with consistent column counts)
+        # Detect tabular blocks with strict column count consistency
         tables: List[ParsedTable] = []
-        if len(rows) >= 2:
-            # Check column count consistency
-            col_counts = [len(r[1]) for r in rows]
-            # Group into clusters of identical or nearly identical column counts
-            table_rows = [r[1] for r in rows]
-            hdr = table_rows[0]
+        if len(raw_table_rows) >= 2:
+            hdr = raw_table_rows[0]
             col_count = len(hdr)
-            sep = ["---"] * col_count
+            valid_body_rows = []
+            for r in raw_table_rows[1:]:
+                if len(r) == col_count:
+                    valid_body_rows.append(r)
 
-            header_line = "| " + " | ".join(hdr) + " |"
-            sep_line = "| " + " | ".join(sep) + " |"
-            body_lines = ["| " + " | ".join(r) + " |" for r in table_rows[1:]]
+            if valid_body_rows and col_count >= 2:
+                sep = ["---"] * col_count
+                header_line = "| " + " | ".join(hdr) + " |"
+                sep_line = "| " + " | ".join(sep) + " |"
+                body_lines = ["| " + " | ".join(r) + " |" for r in valid_body_rows]
 
-            table_md = "\n".join([header_line, sep_line] + body_lines)
-            tables.append(
-                ParsedTable(
-                    table_id=f"pdf_tab_{page_number}_{str(uuid.uuid4())[:8]}",
-                    page_number=page_number,
-                    markdown_table=table_md,
-                    num_rows=len(table_rows) - 1,
-                    num_cols=col_count,
-                    headers=hdr,
-                    caption=section_headers[-1] if section_headers else f"Table Page {page_number}",
+                table_md = "\n".join([header_line, sep_line] + body_lines)
+                tables.append(
+                    ParsedTable(
+                        table_id=f"pdf_tab_{page_number}_{str(uuid.uuid4())[:8]}",
+                        page_number=page_number,
+                        markdown_table=table_md,
+                        num_rows=len(valid_body_rows),
+                        num_cols=col_count,
+                        headers=hdr,
+                        caption=section_headers[-1] if section_headers else f"Table Page {page_number}",
+                    )
                 )
-            )
 
         page_text = raw_text.strip()
         return tables, page_text, section_headers
 
     def _parse_docx(self, path: Path) -> ParsedDocument:
         """Parses DOCX preserving document flow order, page breaks, and tabular layout."""
+        path = Path(path)
         try:
             import docx
 
@@ -327,6 +343,7 @@ class FastFallbackParser(BaseDocumentParser):
             raise
 
     def _parse_text(self, path: Path) -> ParsedDocument:
+        path = Path(path)
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
