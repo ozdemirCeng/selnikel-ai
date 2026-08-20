@@ -68,8 +68,16 @@ class DeterministicRAGEngine:
             top_n=top_k,
         )
 
-        # 3. Layer 3 Relational Snapshot Gate: Suppress obsolete/draft revision chunks if session available
+        # 3. Layer 3 Relational Snapshot Gate: Suppress obsolete/draft revision chunks
         verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
+
+        if raw_candidates and not verified_chunks:
+            logger.warning("Layer 3 Gate: All retrieved chunks suppressed due to obsolete/unverified revisions. Returning safe abstention.")
+            return GenerationOutput(
+                answer="Belge revizyon doğrulaması sağlanamadığı veya mevcut belgeler güncel onaylı revizyonda olmadığı için teknik parametre güvenliği nedeniyle yanıt üretilemedi.",
+                citations=[],
+                sources_used=[],
+            )
 
         # 4. Build Grounded Prompt
         user_prompt = build_rag_user_prompt(
@@ -153,6 +161,17 @@ class DeterministicRAGEngine:
         # 3. Layer 3 Relational Snapshot Gate
         verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
 
+        if raw_candidates and not verified_chunks:
+            logger.warning("Layer 3 Gate: All retrieved chunks suppressed due to obsolete/unverified revisions. Returning safe abstention.")
+            return (
+                GenerationOutput(
+                    answer="Belge revizyon doğrulaması sağlanamadığı veya mevcut belgeler güncel onaylı revizyonda olmadığı için teknik parametre güvenliği nedeniyle yanıt üretilemedi.",
+                    citations=[],
+                    sources_used=[],
+                ),
+                [],
+            )
+
         # 4. Build Grounded Prompt
         user_prompt = build_rag_user_prompt(
             query=query_text,
@@ -225,6 +244,13 @@ class DeterministicRAGEngine:
         # Layer 3 Relational Snapshot Gate
         verified_chunks = await self._verify_active_revisions(reranked_chunks, session=session)
 
+        if raw_candidates and not verified_chunks:
+            logger.warning("Layer 3 Gate: All retrieved chunks suppressed due to obsolete/unverified revisions. Returning safe abstention.")
+            yield f"data: {json.dumps({'type': 'token', 'content': 'Belge revizyon doğrulaması sağlanamadığı veya mevcut belgeler güncel onaylı revizyonda olmadığı için teknik parametre güvenliği nedeniyle yanıt üretilemedi.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'citations', 'citations': [], 'sources_used': []})}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
         # Emit initial event with retrieved sources overview
         initial_sources = list(set(r.metadata.filename for r in verified_chunks))
         yield f"data: {json.dumps({'type': 'retrieval_status', 'sources': initial_sources, 'count': len(verified_chunks)})}\n\n"
@@ -278,17 +304,40 @@ class DeterministicRAGEngine:
         session: Optional[AsyncSession] = None,
     ) -> List[RetrievalResult]:
         """
-        Layer 3 Relational Snapshot Gate:
+        Layer 3 Relational Snapshot Gate (Fail-Closed):
         Verifies that each retrieved chunk belongs to the currently APPROVED revision in PostgreSQL.
-        If a chunk belongs to an obsolete or draft revision (e.g. due to Qdrant sync lag),
-        it is filtered out and suppressed before prompt construction.
+        - If a chunk carries a revision_id (revision-bearing technical content):
+          It MUST be validated against the active approved revision in PostgreSQL.
+          If no DB session is available, or if DB query fails, or if revision is obsolete/unapproved,
+          it is suppressed (fail-closed).
+        - If all candidate chunks are suppressed, downstream generation safely abstains.
         """
-        if not session or not chunks:
+        if not chunks:
             return chunks
 
-        doc_ids = {c.metadata.document_id for c in chunks if c.metadata and c.metadata.document_id}
-        if not doc_ids:
+        # Filter for revision-bearing chunks and document IDs
+        revision_bearing_chunks = [c for c in chunks if getattr(c.metadata, "revision_id", None)]
+        if not revision_bearing_chunks:
+            # Chunks do not carry revision_id (e.g., offline benchmark fixtures or static unversioned documents)
             return chunks
+
+        doc_ids = {c.metadata.document_id for c in revision_bearing_chunks if c.metadata and c.metadata.document_id}
+        if not doc_ids:
+            logger.warning("Layer 3 Gate: Revision-bearing chunks have no document_id. Enforcing fail-closed gate.")
+            return [c for c in chunks if c not in revision_bearing_chunks]
+
+        # If no session provided, attempt auto-session from database pool or fail-closed
+        if session is None:
+            try:
+                from app.db.session import AsyncSessionLocal
+                async with AsyncSessionLocal() as auto_session:
+                    return await self._verify_active_revisions(chunks, session=auto_session)
+            except Exception as auto_err:
+                logger.error(
+                    f"Layer 3 Gate: No DB session provided and auto-session unavailable ({auto_err}). "
+                    "Enforcing fail-closed gate: dropping all revision-bearing chunks."
+                )
+                return [c for c in chunks if c not in revision_bearing_chunks]
 
         try:
             stmt = (
@@ -309,20 +358,29 @@ class DeterministicRAGEngine:
 
             valid_chunks: List[RetrievalResult] = []
             for c in chunks:
+                rev_id = getattr(c.metadata, "revision_id", None)
+                if not rev_id:
+                    valid_chunks.append(c)
+                    continue
+
                 doc_id = c.metadata.document_id
                 if doc_id in approved_map:
-                    rev_id = getattr(c.metadata, "revision_id", None)
-                    # If chunk explicitly carries a revision_id that doesn't match active approved revision
-                    if rev_id and rev_id != approved_map[doc_id]:
+                    if rev_id != approved_map[doc_id]:
                         logger.warning(
                             f"Layer 3 Gate: Suppressed obsolete chunk '{c.chunk_id}' (Doc: '{doc_id}', Rev: '{rev_id}', Active: '{approved_map[doc_id]}')."
                         )
                         continue
-                valid_chunks.append(c)
+                    valid_chunks.append(c)
+                else:
+                    # Document has no approved revision in PostgreSQL -> fail-closed (drop chunk)
+                    logger.warning(
+                        f"Layer 3 Gate: Suppressed chunk '{c.chunk_id}' because document '{doc_id}' has no approved active revision."
+                    )
+                    continue
             return valid_chunks
         except Exception as e:
-            logger.warning(f"Layer 3 revision verification failed (falling back to retrieved chunks): {e}")
-            return chunks
+            logger.error(f"Layer 3 revision verification failed ({e}). Enforcing fail-closed gate: dropping revision-bearing chunks.")
+            return [c for c in chunks if c not in revision_bearing_chunks]
 
     async def _log_query(
         self,

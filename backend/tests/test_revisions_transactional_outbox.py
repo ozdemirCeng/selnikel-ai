@@ -1,25 +1,27 @@
 """
 Unit & Integration Test Suite for Document Revisions, Transactional Outbox, and Layer 3 Gate.
 Validates:
-1. Canonical FSM Lifecycle (draft -> approved -> obsolete)
+1. Canonical FSM Lifecycle (draft -> approved -> obsolete), invalid transition rejection, and idempotent approved return.
 2. Database-level partial unique index (at most 1 approved revision per document_id)
 3. Transactional Outbox dual-write atomicity
 4. Outbox worker SKIP LOCKED processing & idempotency
 5. Qdrant failure isolation & non-rollback retry mechanism
-6. Layer 3 Relational Snapshot Gate (suppressing stale/obsolete revision chunks)
-7. Concurrent approval race serialization via FOR UPDATE locking
+6. Qdrant search payload hydration (revision_id, approval_status, etc.)
+7. Layer 3 Relational Snapshot Gate Fail-Closed safety (suppressing stale/obsolete chunks, DB error safety, unapproved document safety)
+8. Concurrent approval race serialization via FOR UPDATE locking and partial unique index
 """
+import asyncio
 from datetime import datetime, timezone
 import os
 import uuid
 from typing import Optional
 import pytest
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import StaticPool, NullPool
 
 from app.db.base import Base
 from app.db.models.document import DocumentModel
@@ -32,6 +34,7 @@ from app.services.document.revision_service import revision_service
 from app.workers.revision_outbox_worker import RevisionOutboxWorker
 from app.services.rag.engine import DeterministicRAGEngine
 from app.services.llm.base import BaseLLMProvider
+from app.infrastructure.qdrant import QdrantVectorRepository
 
 
 def get_test_engine():
@@ -79,7 +82,6 @@ class MockLLM(BaseLLMProvider):
 async def test_canonical_fsm_single_approved_invariant():
     """Verify draft -> approved -> obsolete FSM transitions with timestamps and outbox event creation."""
     async with get_test_session() as session:
-        # 1. Create document
         doc_id = str(uuid.uuid4())
         doc = DocumentModel(
             id=doc_id,
@@ -96,7 +98,7 @@ async def test_canonical_fsm_single_approved_invariant():
         session.add(doc)
         await session.commit()
 
-        # 2. Create REV-01 (Draft)
+        # 1. Create REV-01 (Draft)
         rev1 = await revision_service.create_new_revision(
             session=session,
             document_id=doc_id,
@@ -106,7 +108,7 @@ async def test_canonical_fsm_single_approved_invariant():
         assert rev1.approval_status == RevisionApprovalStatus.DRAFT.value
         assert rev1.revision_number == 1
 
-        # 3. Approve REV-01
+        # 2. Approve REV-01
         approved_rev1 = await revision_service.approve_revision(
             session=session,
             revision_id=rev1.id,
@@ -119,15 +121,14 @@ async def test_canonical_fsm_single_approved_invariant():
 
         # Verify outbox event created
         outbox_stmt = select(OutboxEventModel).where(OutboxEventModel.aggregate_id == rev1.id)
-        outbox_res = await session.execute(outbox_stmt)
-        outbox1 = outbox_res.scalars().first()
+        outbox1 = (await session.execute(outbox_stmt)).scalars().first()
         assert outbox1 is not None
         assert outbox1.event_type == "document_revision.approved"
         assert outbox1.status == "pending"
         assert outbox1.payload["document_id"] == doc_id
         assert outbox1.payload["approved_revision_id"] == rev1.id
 
-        # 4. Create REV-02 (Draft)
+        # 3. Create REV-02 (Draft)
         rev2 = await revision_service.create_new_revision(
             session=session,
             document_id=doc_id,
@@ -138,7 +139,7 @@ async def test_canonical_fsm_single_approved_invariant():
         assert rev2.approval_status == RevisionApprovalStatus.DRAFT.value
         assert rev2.revision_number == 2
 
-        # 5. Approve REV-02 -> REV-01 must transition to OBSOLETE
+        # 4. Approve REV-02 -> REV-01 must transition to OBSOLETE
         approved_rev2 = await revision_service.approve_revision(
             session=session,
             revision_id=rev2.id,
@@ -156,6 +157,74 @@ async def test_canonical_fsm_single_approved_invariant():
         outbox2 = (await session.execute(outbox_stmt2)).scalars().first()
         assert outbox2 is not None
         assert outbox2.payload["approved_revision_id"] == rev2.id
+
+
+@pytest.mark.asyncio
+async def test_fsm_invalid_transition_rejection_and_idempotent_approved():
+    """Verify that obsolete revisions cannot be approved, and approved revisions return idempotently."""
+    async with get_test_session() as session:
+        doc_id = str(uuid.uuid4())
+        doc = DocumentModel(
+            id=doc_id,
+            filename="SB_Series_Boiler_Datasheet.pdf",
+            file_hash="hash_fsm_test_001",
+            file_size_bytes=102400,
+            content_type="application/pdf",
+            document_type="datasheet",
+            department="engineering",
+            language="tr",
+            version=1,
+            status="ready",
+        )
+        session.add(doc)
+        await session.commit()
+
+        # 1. Create and approve REV-01
+        rev1 = await revision_service.create_new_revision(
+            session=session,
+            document_id=doc_id,
+            source_sha256="sha256_rev01",
+            revision_code="Rev. 01",
+        )
+        approved_rev1 = await revision_service.approve_revision(
+            session=session,
+            revision_id=rev1.id,
+            approver_id="chief_eng",
+        )
+        assert approved_rev1.approval_status == "approved"
+
+        # 2. Idempotent re-approval of REV-01 should succeed as no-op
+        idempotent_rev1 = await revision_service.approve_revision(
+            session=session,
+            revision_id=rev1.id,
+            approver_id="chief_eng",
+        )
+        assert idempotent_rev1.id == rev1.id
+        assert idempotent_rev1.approval_status == "approved"
+
+        # 3. Create and approve REV-02, making REV-01 obsolete
+        rev2 = await revision_service.create_new_revision(
+            session=session,
+            document_id=doc_id,
+            source_sha256="sha256_rev02",
+            revision_code="Rev. 02",
+        )
+        await revision_service.approve_revision(
+            session=session,
+            revision_id=rev2.id,
+            approver_id="chief_eng",
+        )
+
+        await session.refresh(rev1)
+        assert rev1.approval_status == "obsolete"
+
+        # 4. Attempting to approve obsolete REV-01 must raise ValueError (FSM invariant violation)
+        with pytest.raises(ValueError, match="Invalid FSM transition"):
+            await revision_service.approve_revision(
+                session=session,
+                revision_id=rev1.id,
+                approver_id="chief_eng",
+            )
 
 
 @pytest.mark.asyncio
@@ -214,7 +283,6 @@ async def test_outbox_worker_process_batch_and_idempotency():
         doc_id = str(uuid.uuid4())
         rev_id = str(uuid.uuid4())
 
-        # Seed pending outbox event
         event = OutboxEventModel(
             event_id=str(uuid.uuid4()),
             aggregate_type="document_revision",
@@ -286,14 +354,14 @@ async def test_outbox_worker_qdrant_failure_isolation_and_retry():
 
 
 @pytest.mark.asyncio
-async def test_layer_3_stale_result_suppression():
-    """Verify that Layer 3 Relational Gate filters out obsolete revision chunks before LLM prompt assembly."""
+async def test_qdrant_search_hydration_and_e2e_stale_suppression():
+    """Verify QdrantVectorRepository.search hydrations include revision_id and Layer 3 suppresses stale chunks end-to-end."""
     async with get_test_session() as session:
         doc_id = str(uuid.uuid4())
         doc = DocumentModel(
             id=doc_id,
             filename="SB_Series_Boiler_Datasheet.pdf",
-            file_hash="hash_layer3_test",
+            file_hash="hash_qdrant_hydrate_test",
             file_size_bytes=102400,
             content_type="application/pdf",
             document_type="datasheet",
@@ -304,7 +372,6 @@ async def test_layer_3_stale_result_suppression():
         )
         session.add(doc)
 
-        # REV-01 (Obsolete - says 14.0 bar)
         rev1_id = str(uuid.uuid4())
         rev1 = DocumentRevisionModel(
             id=rev1_id,
@@ -317,7 +384,6 @@ async def test_layer_3_stale_result_suppression():
         )
         session.add(rev1)
 
-        # REV-02 (Approved - says 16.0 bar)
         rev2_id = str(uuid.uuid4())
         rev2 = DocumentRevisionModel(
             id=rev2_id,
@@ -331,44 +397,54 @@ async def test_layer_3_stale_result_suppression():
         session.add(rev2)
         await session.commit()
 
-        # Simulate retriever returning 2 chunks (one stale from REV-01 due to Qdrant sync lag, one from REV-02)
-        stale_meta = ChunkMetadata(
-            chunk_id="chk-obsolete-01",
-            document_id=doc_id,
-            document_version=1,
-            filename="SB_Series_Boiler_Datasheet.pdf",
-            page_number=1,
-            section="Technical Specs",
-            revision_id=rev1_id,
-        )
-        stale_chunk = RetrievalResult(
-            chunk_id="chk-obsolete-01",
-            content="SB-500 Dizayn Basıncı: 14.0 bar (Eski Veri)",
-            metadata=stale_meta,
-            score=0.95,
-        )
+        # Mock Qdrant client search returning hits with revision_id in payload
+        qdrant_repo_inst = QdrantVectorRepository()
+        mock_hit_stale = MagicMock()
+        mock_hit_stale.id = "chunk_hit_stale_01"
+        mock_hit_stale.score = 0.95
+        mock_hit_stale.payload = {
+            "content": "SB-500 Dizayn Basıncı: 14.0 bar (Eski Veri)",
+            "document_id": doc_id,
+            "revision_id": rev1_id,
+            "revision_code": "Rev. 01",
+            "approval_status": "obsolete",
+            "filename": "SB_Series_Boiler_Datasheet.pdf",
+            "page_number": 1,
+            "department": "engineering",
+        }
 
-        active_meta = ChunkMetadata(
-            chunk_id="chk-active-02",
-            document_id=doc_id,
-            document_version=2,
-            filename="SB_Series_Boiler_Datasheet.pdf",
-            page_number=1,
-            section="Technical Specs",
-            revision_id=rev2_id,
-        )
-        active_chunk = RetrievalResult(
-            chunk_id="chk-active-02",
-            content="SB-500 Dizayn Basıncı: 16.0 bar (Güncel Onaylı Veri)",
-            metadata=active_meta,
-            score=0.92,
-        )
+        mock_hit_active = MagicMock()
+        mock_hit_active.id = "chunk_hit_active_02"
+        mock_hit_active.score = 0.93
+        mock_hit_active.payload = {
+            "content": "SB-500 Dizayn Basıncı: 16.0 bar (Güncel Onaylı Veri)",
+            "document_id": doc_id,
+            "revision_id": rev2_id,
+            "revision_code": "Rev. 02",
+            "approval_status": "approved",
+            "filename": "SB_Series_Boiler_Datasheet.pdf",
+            "page_number": 1,
+            "department": "engineering",
+        }
 
+        mock_client = AsyncMock()
+        mock_client.search.return_value = [mock_hit_stale, mock_hit_active]
+        qdrant_repo_inst._async_client = mock_client
+
+        # 1. Verify Qdrant search correctly hydrates revision_id in ChunkMetadata
+        search_results = await qdrant_repo_inst.search(query_vector=[0.1] * 1024)
+        assert len(search_results) == 2
+        assert search_results[0].metadata.revision_id == rev1_id
+        assert search_results[0].metadata.approval_status == "obsolete"
+        assert search_results[1].metadata.revision_id == rev2_id
+        assert search_results[1].metadata.approval_status == "approved"
+
+        # 2. Pass hydrated chunks to DeterministicRAGEngine with DB session
         mock_retriever = AsyncMock()
-        mock_retriever.retrieve.return_value = [stale_chunk, active_chunk]
+        mock_retriever.retrieve.return_value = search_results
 
         mock_reranker = AsyncMock()
-        mock_reranker.rerank.return_value = [stale_chunk, active_chunk]
+        mock_reranker.rerank.return_value = search_results
 
         engine = DeterministicRAGEngine(
             retriever=mock_retriever,
@@ -381,17 +457,75 @@ async def test_layer_3_stale_result_suppression():
             session=session,
         )
 
-        # Layer 3 Gate must have stripped the obsolete chunk
+        # Layer 3 Gate must have suppressed the obsolete chunk (rev1_id)
         assert len(returned_chunks) == 1
-        assert returned_chunks[0].chunk_id == "chk-active-02"
+        assert returned_chunks[0].chunk_id == "chunk_hit_active_02"
         assert "16.0 bar" in returned_chunks[0].content
         assert "14.0 bar" not in returned_chunks[0].content
 
 
 @pytest.mark.asyncio
-async def test_concurrent_approval_lock_serialization():
-    """Verify that concurrent approval attempts for the same document serialize and enforce 1 active approved revision."""
-    engine = get_test_engine()
+async def test_layer_3_fail_closed_on_db_error_and_unapproved_doc():
+    """Verify Layer 3 Gate enforces fail-closed abstention when DB errors or unapproved docs occur."""
+    doc_id = str(uuid.uuid4())
+    chunk = RetrievalResult(
+        chunk_id="chk_unverified_01",
+        content="SB-500 Kritik Teknik Parametre: 16.0 bar",
+        metadata=ChunkMetadata(
+            chunk_id="chk_unverified_01",
+            document_id=doc_id,
+            revision_id="unverified_rev_id",
+            filename="SB_Series_Boiler_Datasheet.pdf",
+            page_number=1,
+            department="engineering",
+        ),
+        score=0.90,
+    )
+
+    mock_retriever = AsyncMock()
+    mock_retriever.retrieve.return_value = [chunk]
+
+    mock_reranker = AsyncMock()
+    mock_reranker.rerank.return_value = [chunk]
+
+    engine = DeterministicRAGEngine(
+        retriever=mock_retriever,
+        reranker=mock_reranker,
+        llm=MockLLM(),
+    )
+
+    # 1. Simulate DB query failure in session
+    failing_session = AsyncMock()
+    failing_session.execute.side_effect = RuntimeError("Database connection lost during revision verification")
+
+    out = await engine.query(
+        query_text="SB-500 kritik parametre nedir?",
+        session=failing_session,
+    )
+    # Must return safe fail-closed abstention
+    assert "Belge revizyon doğrulaması sağlanamadığı" in out.answer
+    assert len(out.citations) == 0
+
+    # 2. Simulate valid DB session but document has no approved revisions
+    async with get_test_session() as session:
+        out2 = await engine.query(
+            query_text="SB-500 kritik parametre nedir?",
+            session=session,
+        )
+        assert "Belge revizyon doğrulaması sağlanamadığı" in out2.answer
+        assert len(out2.citations) == 0
+
+
+@pytest.mark.asyncio
+async def test_concurrent_approval_race_condition(tmp_path):
+    """Verify that concurrent approval attempts for the same document serialize and enforce exactly 1 active approved revision."""
+    db_file = tmp_path / f"test_concurrent_{uuid.uuid4().hex[:8]}.db"
+    db_url = f"sqlite+aiosqlite:///{db_file.as_posix()}"
+    engine = create_async_engine(
+        db_url,
+        echo=False,
+        poolclass=NullPool,
+    )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -405,7 +539,7 @@ async def test_concurrent_approval_lock_serialization():
         doc = DocumentModel(
             id=doc_id,
             filename="Burner_Specs.pdf",
-            file_hash="hash_concurrent_001",
+            file_hash="hash_concurrent_race_001",
             file_size_bytes=64000,
             content_type="application/pdf",
             document_type="manual",
@@ -435,32 +569,26 @@ async def test_concurrent_approval_lock_serialization():
         init_session.add_all([rev_a, rev_b])
         await init_session.commit()
 
-    # Approve rev_a
-    async with session_maker() as s_a:
-        await revision_service.approve_revision(s_a, revision_id=rev_a_id, approver_id="engineer_a")
+    # Run concurrent approval attempts across distinct async sessions/connections
+    async def approve_candidate(r_id: str, approver: str):
+        async with session_maker() as sess:
+            return await revision_service.approve_revision(sess, revision_id=r_id, approver_id=approver)
 
-    # Approve rev_b
-    async with session_maker() as s_b:
-        await revision_service.approve_revision(s_b, revision_id=rev_b_id, approver_id="engineer_b")
+    results = await asyncio.gather(
+        approve_candidate(rev_a_id, "engineer_a"),
+        approve_candidate(rev_b_id, "engineer_b"),
+        return_exceptions=True,
+    )
+    exceptions = [r for r in results if isinstance(r, Exception)]
+    successes = [r for r in results if not isinstance(r, Exception)]
+    # At least one approval succeeds or the concurrent conflict is serialized/rejected
+    assert len(successes) >= 1
 
-    # Verify that the final state in DB has strictly 1 approved revision (rev_b) and rev_a is obsolete
     async with session_maker() as check_session:
-        stmt = (
-            select(DocumentRevisionModel)
-            .where(
-                DocumentRevisionModel.document_id == doc_id,
-                DocumentRevisionModel.approval_status == "approved",
-            )
-        )
-        approved_revisions = (await check_session.execute(stmt)).scalars().all()
-        assert len(approved_revisions) == 1
-        assert approved_revisions[0].id == rev_b_id
-
-        # Check total revisions: exactly one approved and one obsolete
         all_stmt = select(DocumentRevisionModel).where(DocumentRevisionModel.document_id == doc_id)
         all_revs = (await check_session.execute(all_stmt)).scalars().all()
-        statuses = {r.id: r.approval_status for r in all_revs}
-        assert statuses[rev_a_id] == "obsolete"
-        assert statuses[rev_b_id] == "approved"
+        approved_revs = [r for r in all_revs if r.approval_status == "approved"]
+        # Database strictly contains exactly 1 approved revision
+        assert len(approved_revs) == 1
 
     await engine.dispose()

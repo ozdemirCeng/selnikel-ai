@@ -72,85 +72,106 @@ class RevisionService:
           5. Single active approved revision per document_id physically enforced by DB partial unique index.
         """
         now = datetime.now(timezone.utc)
+        try:
+            # 1. Fetch target revision
+            stmt = select(DocumentRevisionModel).where(DocumentRevisionModel.id == revision_id)
+            res = await session.execute(stmt)
+            rev = res.scalars().first()
 
-        # 1. Fetch target revision
-        stmt = select(DocumentRevisionModel).where(DocumentRevisionModel.id == revision_id)
-        res = await session.execute(stmt)
-        rev = res.scalars().first()
+            if not rev:
+                raise ValueError(f"Revision '{revision_id}' not found.")
 
-        if not rev:
-            raise ValueError(f"Revision '{revision_id}' not found.")
+            # 2. Acquire exclusive lock on parent Document row to serialize concurrent approvals for this document
+            doc_lock_stmt = select(DocumentModel.id).where(DocumentModel.id == rev.document_id).with_for_update()
+            doc_res = await session.execute(doc_lock_stmt)
+            if not doc_res.scalars().first():
+                raise ValueError(f"Parent Document '{rev.document_id}' not found for revision '{revision_id}'.")
 
-        # 2. Acquire exclusive lock on parent Document row to serialize concurrent approvals for this document
-        doc_lock_stmt = select(DocumentModel.id).where(DocumentModel.id == rev.document_id).with_for_update()
-        doc_res = await session.execute(doc_lock_stmt)
-        if not doc_res.scalars().first():
-            raise ValueError(f"Parent Document '{rev.document_id}' not found for revision '{revision_id}'.")
+            # Re-fetch target revision under the document lock
+            rev_stmt = select(DocumentRevisionModel).where(DocumentRevisionModel.id == revision_id)
+            rev = (await session.execute(rev_stmt)).scalars().first()
+            if not rev:
+                raise ValueError(f"Revision '{revision_id}' not found.")
 
-        # 3. Mark ALL currently approved revisions under this document as OBSOLETE
-        obsolete_stmt = (
-            update(DocumentRevisionModel)
-            .where(
-                DocumentRevisionModel.document_id == rev.document_id,
-                DocumentRevisionModel.approval_status == RevisionApprovalStatus.APPROVED.value,
-                DocumentRevisionModel.id != rev.id,
+            # FSM Invariant: Check approval status transition validity
+            if rev.approval_status == RevisionApprovalStatus.APPROVED.value:
+                # Idempotent no-op: already approved
+                logger.info(f"Revision '{rev.revision_code}' is already APPROVED. Idempotent return.")
+                return rev
+
+            if rev.approval_status != RevisionApprovalStatus.DRAFT.value:
+                raise ValueError(
+                    f"Invalid FSM transition: Cannot approve revision '{rev.id}' with status '{rev.approval_status}'. "
+                    f"Only '{RevisionApprovalStatus.DRAFT.value}' revisions can be transitioned to '{RevisionApprovalStatus.APPROVED.value}'."
+                )
+
+            # 3. Mark ALL currently approved revisions under this document as OBSOLETE
+            obsolete_stmt = (
+                update(DocumentRevisionModel)
+                .where(
+                    DocumentRevisionModel.document_id == rev.document_id,
+                    DocumentRevisionModel.approval_status == RevisionApprovalStatus.APPROVED.value,
+                    DocumentRevisionModel.id != rev.id,
+                )
+                .values(
+                    approval_status=RevisionApprovalStatus.OBSOLETE.value,
+                    obsoleted_at=now,
+                )
             )
-            .values(
-                approval_status=RevisionApprovalStatus.OBSOLETE.value,
-                obsoleted_at=now,
+            await session.execute(obsolete_stmt)
+
+            # 4. Approve target revision
+            rev.approval_status = RevisionApprovalStatus.APPROVED.value
+            rev.approved_by = approver_id
+            rev.approved_at = now
+            rev.effective_at = now
+            rev.obsoleted_at = None
+
+            # 5. Update parent Document updated_at and active version
+            doc_stmt = (
+                update(DocumentModel)
+                .where(DocumentModel.id == rev.document_id)
+                .values(updated_at=now, version=rev.revision_number)
             )
-        )
-        await session.execute(obsolete_stmt)
+            await session.execute(doc_stmt)
 
-        # 4. Approve target revision
-        rev.approval_status = RevisionApprovalStatus.APPROVED.value
-        rev.approved_by = approver_id
-        rev.approved_at = now
-        rev.effective_at = now
-        rev.obsoleted_at = None
+            # 6. Insert idempotent outbox event in the same transaction
+            idempotency_raw = f"rev_approve:{rev.document_id}:{rev.id}:{rev.revision_number}"
+            idempotency_key = hashlib.sha256(idempotency_raw.encode("utf-8")).hexdigest()
 
-        # 5. Update parent Document updated_at and active version
-        doc_stmt = (
-            update(DocumentModel)
-            .where(DocumentModel.id == rev.document_id)
-            .values(updated_at=now, version=rev.revision_number)
-        )
-        await session.execute(doc_stmt)
+            # Check if outbox event already exists (idempotency guard)
+            check_outbox = select(OutboxEventModel).where(OutboxEventModel.idempotency_key == idempotency_key)
+            existing_outbox = (await session.execute(check_outbox)).scalars().first()
 
-        # 6. Insert idempotent outbox event in the same transaction
-        idempotency_raw = f"rev_approve:{rev.document_id}:{rev.id}:{rev.revision_number}"
-        idempotency_key = hashlib.sha256(idempotency_raw.encode("utf-8")).hexdigest()
+            if not existing_outbox:
+                outbox_event = OutboxEventModel(
+                    event_id=str(uuid.uuid4()),
+                    aggregate_type="document_revision",
+                    aggregate_id=rev.id,
+                    event_type="document_revision.approved",
+                    idempotency_key=idempotency_key,
+                    payload={
+                        "document_id": rev.document_id,
+                        "approved_revision_id": rev.id,
+                        "revision_code": rev.revision_code,
+                        "revision_number": rev.revision_number,
+                        "approved_by": approver_id,
+                        "approved_at": now.isoformat(),
+                    },
+                    status="pending",
+                    retry_count=0,
+                    max_retries=5,
+                )
+                session.add(outbox_event)
 
-        # Check if outbox event already exists (idempotency guard)
-        check_outbox = select(OutboxEventModel).where(OutboxEventModel.idempotency_key == idempotency_key)
-        existing_outbox = (await session.execute(check_outbox)).scalars().first()
-
-        if not existing_outbox:
-            outbox_event = OutboxEventModel(
-                event_id=str(uuid.uuid4()),
-                aggregate_type="document_revision",
-                aggregate_id=rev.id,
-                event_type="document_revision.approved",
-                idempotency_key=idempotency_key,
-                payload={
-                    "document_id": rev.document_id,
-                    "approved_revision_id": rev.id,
-                    "revision_code": rev.revision_code,
-                    "revision_number": rev.revision_number,
-                    "approved_by": approver_id,
-                    "approved_at": now.isoformat(),
-                },
-                status="pending",
-                retry_count=0,
-                max_retries=5,
-            )
-            session.add(outbox_event)
-
-        # 7. Commit atomic transaction
-        await session.commit()
-        await session.refresh(rev)
-        logger.info(f"Revision '{rev.revision_code}' (ID: {rev.id}) approved by '{approver_id}' with outbox event.")
-        return rev
+            # 7. Commit atomic transaction
+            await session.commit()
+            await session.refresh(rev)
+            logger.info(f"Revision '{rev.revision_code}' (ID: {rev.id}) approved by '{approver_id}' with outbox event.")
+            return rev
+        except Exception:
+            await session.rollback()
+            raise
 
 
 revision_service = RevisionService()
