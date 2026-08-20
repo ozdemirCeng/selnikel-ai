@@ -75,8 +75,12 @@ class FastFallbackParser(BaseDocumentParser):
             all_tables: List[ParsedTable] = []
             all_rejected_rows: List[Dict[str, Any]] = []
 
+            table_global_idx = 1
             for idx, page in enumerate(reader.pages, start=1):
-                page_tables, page_text, section_headers, rejected_rows = self._extract_pdf_page_content(page, page_number=idx)
+                page_tables, page_text, section_headers, rejected_rows = self._extract_pdf_page_content(
+                    page, page_number=idx, start_table_idx=table_global_idx
+                )
+                table_global_idx += len(page_tables)
                 all_tables.extend(page_tables)
                 all_rejected_rows.extend(rejected_rows)
 
@@ -101,8 +105,17 @@ class FastFallbackParser(BaseDocumentParser):
                     )
 
             if all_rejected_rows:
+                safe_telemetry = [
+                    {
+                        "page_number": r["page_number"],
+                        "reason": r["reason"],
+                        "expected_cols": r["expected_cols"],
+                        "actual_cols": r["actual_cols"],
+                    }
+                    for r in all_rejected_rows
+                ]
                 logger.warning(
-                    f"FastFallbackParser detected {len(all_rejected_rows)} non-conforming table rows across {path.name}: {all_rejected_rows}"
+                    f"FastFallbackParser detected {len(all_rejected_rows)} non-conforming table rows across {path.name}: {safe_telemetry}"
                 )
 
             full_markdown = "\n\n".join(all_text_parts)
@@ -129,7 +142,9 @@ class FastFallbackParser(BaseDocumentParser):
             logger.error(f"FastFallbackParser PDF extraction failed: {e}")
             raise
 
-    def _extract_pdf_page_content(self, page, page_number: int) -> Tuple[List[ParsedTable], str, List[str], List[Dict[str, Any]]]:
+    def _extract_pdf_page_content(
+        self, page, page_number: int, start_table_idx: int = 1
+    ) -> Tuple[List[ParsedTable], str, List[str], List[Dict[str, Any]]]:
         """Extracts spatial text elements, detects sections and tabular layouts from PDF pages with zero silent loss."""
         raw_text = page.extract_text() or ""
         section_headers: List[str] = []
@@ -271,7 +286,7 @@ class FastFallbackParser(BaseDocumentParser):
                 table_md = "\n".join([header_line, sep_line] + body_lines)
                 tables.append(
                     ParsedTable(
-                        table_id=f"pdf_tab_{page_number}_{cluster_idx}",
+                        table_id=f"pdf_tab_{start_table_idx + cluster_idx - 1:02d}",
                         page_number=page_number,
                         markdown_table=table_md,
                         num_rows=len(valid_body_rows),
@@ -286,37 +301,35 @@ class FastFallbackParser(BaseDocumentParser):
 
     def _parse_docx(self, path: Path) -> ParsedDocument:
         """Parses DOCX preserving document flow order, page breaks, and tabular layout."""
-        path = Path(path)
         try:
             import docx
-
+            path = Path(path)
             doc = docx.Document(str(path))
             pages: List[ParsedPage] = []
-            all_tables: List[ParsedTable] = []
             blocks: List[ParsedBlock] = []
+            all_tables: List[ParsedTable] = []
 
             curr_page_num = 1
             curr_page_text_lines: List[str] = []
             curr_page_tables: List[ParsedTable] = []
             curr_page_headers: List[str] = []
 
-            # Iterate through body elements in document order
             for child in doc.element.body:
                 tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
 
                 if tag == "p":
                     p = docx.text.paragraph.Paragraph(child, doc)
                     p_text = p.text.strip()
-
-                    # Check for explicit page break in runs
                     has_page_break = any(
-                        "w:br" in r._r.xml and 'w:type="page"' in r._r.xml for r in p.runs
+                        "w:type=\"page\"" in r._r.xml or "<w:br/>" in r._r.xml for r in p.runs if hasattr(r, "_r")
                     )
 
                     if p_text:
+                        is_heading = p.style.name.startswith("Heading") or re.match(
+                            r"^\d+(\.\d+)*\.?\s+[A-Z]", p_text
+                        )
                         curr_page_text_lines.append(p_text)
-                        is_heading = p.style and "Heading" in p.style.name
-                        if is_heading:
+                        if is_heading and p_text not in curr_page_headers:
                             curr_page_headers.append(p_text)
 
                         blocks.append(
@@ -359,7 +372,7 @@ class FastFallbackParser(BaseDocumentParser):
                         table_md = "\n".join([header_line, sep_line] + body_lines)
 
                         parsed_tab = ParsedTable(
-                            table_id=f"docx_tab_{curr_page_num}_{len(curr_page_tables)+1}",
+                            table_id=f"docx_tab_{len(all_tables)+1:02d}",
                             page_number=curr_page_num,
                             markdown_table=table_md,
                             num_rows=len(rows_data) - 1,
@@ -470,7 +483,7 @@ class FastFallbackParser(BaseDocumentParser):
 
                 tables.append(
                     ParsedTable(
-                        table_id=f"txt_tab_{page_number}_{len(tables)+1}",
+                        table_id=f"txt_tab_{len(tables)+1:02d}",
                         page_number=page_number,
                         markdown_table=table_md,
                         num_rows=len(lines) - 2,

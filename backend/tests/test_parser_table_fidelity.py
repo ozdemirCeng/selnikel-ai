@@ -11,6 +11,7 @@ Validates:
 """
 import hashlib
 import json
+import re
 import pytest
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -144,17 +145,26 @@ async def test_parametric_manifest_table_and_cell_coordinate_fidelity(fixtures_d
             page_tables = [t for t in parsed_doc.tables if t.page_number == page_no]
             assert len(page_tables) > 0, f"No tables parsed on page {page_no} of {fix['filename']}"
 
-            # Strict Table Identification: match by exact header signature AND title
+            # Strict Table Identification: match by exact table_id, exact headers, AND exact normalized title
+            def norm_title(title: Optional[str]) -> str:
+                if not title:
+                    return ""
+                t = re.sub(r"^(Table\s*\d*\s*[:\-.]\s*|\d+(\.\d+)*\.?\s*)", "", title.strip(), flags=re.IGNORECASE)
+                return t.strip()
+
             matching_tables = [
                 pt for pt in page_tables
-                if pt.headers == expected_tab["headers"]
-                and (pt.caption == expected_tab["title"] or expected_tab["title"] in (pt.caption or ""))
+                if pt.table_id == expected_tab["table_id"]
+                and pt.headers == expected_tab["headers"]
+                and norm_title(pt.caption) == norm_title(expected_tab["title"])
             ]
             assert len(matching_tables) == 1, (
-                f"Expected exactly 1 matching table on page {page_no} for title='{expected_tab['title']}' "
-                f"AND headers={expected_tab['headers']}. Found {len(matching_tables)}. Available tables: {[(pt.headers, pt.caption) for pt in page_tables]}"
+                f"Expected exactly 1 matching table on page {page_no} for table_id='{expected_tab['table_id']}', "
+                f"title='{expected_tab['title']}', headers={expected_tab['headers']}. "
+                f"Found {len(matching_tables)}. Available tables: {[(pt.table_id, pt.headers, pt.caption) for pt in page_tables]}"
             )
             target_table = matching_tables[0]
+            assert target_table.table_id == expected_tab["table_id"]
 
             assert target_table.num_cols == expected_tab["column_count"], (
                 f"Column count mismatch for table {expected_tab['table_id']} on page {page_no}: "
