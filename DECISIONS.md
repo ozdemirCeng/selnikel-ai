@@ -187,7 +187,7 @@
 ## ADR-020: Spatial FastFallbackParser, Dynamic Table Grid Clustered Boundaries, and Optional AI Document Converters
 
 - **Date**: 2026-08-20
-- **Status**: PROPOSED (SUBMITTED FOR MANAGER REVIEW)
+- **Status**: ACCEPTED / APPROVED BY PROJECT MANAGER (2026-08-20)
 - **Context**: Document ingestion in Selnikel AI requires both high fidelity across complex layouts (multi-column PDF tables, multi-page DOCX documents) and guaranteed determinism in lightweight CI, testing, and offline environments where heavy OCR (Tesseract), Poppler rendering binaries, or Docling dependencies are unavailable or cost-prohibitive.
 - **Decision**:
   1. Implement a spatial, coordinate-based fallback parser (`FastFallbackParser`) using `pypdf` spatial visitor geometry (`visitor_text`) and `python-docx` element-order traversal as the baseline deterministic parser.
