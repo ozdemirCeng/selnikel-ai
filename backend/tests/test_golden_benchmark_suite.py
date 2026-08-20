@@ -183,7 +183,37 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_val
     assert any("expected cell value '999.0 bar', but found '16.0 bar'" in e for e in err_val)
 
-    # 7. Mutate table_cell locator by removing expected_cell_value (missing_expected_cell_value)
+    # 7. Adversarial Substring Mutation A: partial numeric ("16.0" instead of "16.0 bar")
+    mut_pnum = copy.deepcopy(base_data)
+    mut_pnum[0]["expected_evidence"]["locator"]["expected_cell_value"] = "16.0"
+    p_pnum = tmp_path / "mut_pnum.json"
+    with open(p_pnum, "w", encoding="utf-8") as f:
+        json.dump(mut_pnum, f)
+    v_pnum, err_pnum = validate_dataset_file(p_pnum, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_pnum
+    assert any("expected cell value '16.0', but found '16.0 bar'" in e for e in err_pnum)
+
+    # 8. Adversarial Substring Mutation B: partial unit ("bar" instead of "16.0 bar")
+    mut_punit = copy.deepcopy(base_data)
+    mut_punit[0]["expected_evidence"]["locator"]["expected_cell_value"] = "bar"
+    p_punit = tmp_path / "mut_punit.json"
+    with open(p_punit, "w", encoding="utf-8") as f:
+        json.dump(mut_punit, f)
+    v_punit, err_punit = validate_dataset_file(p_punit, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_punit
+    assert any("expected cell value 'bar', but found '16.0 bar'" in e for e in err_punit)
+
+    # 9. Adversarial Substring Mutation C: truncated token ("16.0 ba" instead of "16.0 bar")
+    mut_ptrunc = copy.deepcopy(base_data)
+    mut_ptrunc[0]["expected_evidence"]["locator"]["expected_cell_value"] = "16.0 ba"
+    p_ptrunc = tmp_path / "mut_ptrunc.json"
+    with open(p_ptrunc, "w", encoding="utf-8") as f:
+        json.dump(mut_ptrunc, f)
+    v_ptrunc, err_ptrunc = validate_dataset_file(p_ptrunc, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_ptrunc
+    assert any("expected cell value '16.0 ba', but found '16.0 bar'" in e for e in err_ptrunc)
+
+    # 10. Mutate table_cell locator by removing expected_cell_value (missing_expected_cell_value)
     mut_nval = copy.deepcopy(base_data)
     mut_nval[0]["expected_evidence"]["locator"]["expected_cell_value"] = None
     p_nval = tmp_path / "mut_nval.json"
@@ -322,7 +352,10 @@ def test_qdrant_local_profile_handling(tmp_path):
 
 
 class MockLLMProvider(BaseLLMProvider):
-    """Deterministic Mock LLM Provider for Full-RAG pipeline testing."""
+    """
+    Deterministic Mock LLM Provider for Full-RAG pipeline integration test harness.
+    Note: Live production models run in full-rag mode when LIVE provider API keys or LOCAL_LLM_URL are set.
+    """
     async def generate(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         return "The SB-500 steam boiler has steam capacity of 0.5 t/h and design pressure of 16.0 bar. [Doc: SB_Series_Steam_Boiler_Datasheet.pdf, P. 2]"
 
@@ -334,11 +367,13 @@ class MockLLMProvider(BaseLLMProvider):
 
 
 @pytest.mark.asyncio
-async def test_full_rag_pipeline_end_to_end():
+async def test_full_rag_pipeline_integration_harness():
     """
-    Verify DeterministicRAGEngine query_with_retrieval contract runs end-to-end with:
-      - Real ingested fixture chunks from disk
-      - Non-empty hybrid retrieval
+    Full-RAG Pipeline Integration Test Harness.
+    Verifies DeterministicRAGEngine query_with_retrieval contract runs end-to-end with:
+      - Real ingested fixture chunks parsed from disk
+      - Non-empty hybrid BM25 retrieval
+      - Deterministic LLM response parsing
       - Live citation extraction & verification
       - Full evaluator scoring
     """

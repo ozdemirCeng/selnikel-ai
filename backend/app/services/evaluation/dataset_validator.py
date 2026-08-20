@@ -259,7 +259,7 @@ def validate_dataset_file(
                                                     else:
                                                         norm_actual = re.sub(r"\s+", " ", cell_value.lower().strip()).replace("°", "").replace("", "")
                                                         norm_expected = re.sub(r"\s+", " ", loc.expected_cell_value.lower().strip()).replace("°", "").replace("", "")
-                                                        if norm_actual != norm_expected and norm_expected not in norm_actual and norm_actual not in norm_expected:
+                                                        if norm_actual != norm_expected:
                                                             errors.append(
                                                                 f"Question '{q.id}' coordinate ({loc.row_key}, {loc.column_name}) expected cell value '{loc.expected_cell_value}', but found '{cell_value}' in table '{loc.table_id}'."
                                                             )
