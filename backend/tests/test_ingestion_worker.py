@@ -17,11 +17,58 @@ import tempfile
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timezone, timedelta
 from app.services.ingestion.worker import FileValidator, IngestionWorkerDaemon
 from app.domain.ingestion.models import IngestionJob, JobState, InvalidStateTransitionError
 from app.infrastructure.ingestion_queue import PostgresIngestionQueue
 from app.infrastructure.qdrant import qdrant_repo
+
+
+class _DummyAsyncSession:
+    """Concrete async session dummy to prevent unawaited mock coroutine warnings."""
+    async def commit(self):
+        pass
+
+    async def rollback(self):
+        pass
+
+    async def close(self):
+        pass
+
+
+class _MockAsyncSessionContext:
+    """Concrete async context manager for session factories."""
+    def __init__(self, session=None):
+        self.session = session or _DummyAsyncSession()
+
+    async def __aenter__(self):
+        return self.session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+class _FakeIngestionJob:
+    """Concrete job object to avoid MagicMock unintended coroutine creation."""
+    def __init__(
+        self,
+        id="job-001",
+        document_id="doc-001",
+        revision_id="rev-001",
+        file_path="/tmp/test.pdf",
+        filename="test.pdf",
+        department_id="dept-engineering",
+        equipment_id="EQ-100",
+        classification="internal",
+    ):
+        self.id = id
+        self.document_id = document_id
+        self.revision_id = revision_id
+        self.file_path = file_path
+        self.filename = filename
+        self.department_id = department_id
+        self.equipment_id = equipment_id
+        self.classification = classification
+
 
 def test_file_validator_valid_pdf():
     pdf_bytes = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
@@ -144,8 +191,8 @@ async def test_worker_daemon_lifecycle_and_graceful_shutdown():
     assert worker.is_running is False
     assert worker.worker_id == "test-worker-01"
 
-    mock_session = AsyncMock()
-    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+    mock_session = _DummyAsyncSession()
+    mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     # Start worker in background task
     task = asyncio.create_task(worker.start(mock_session_factory))
@@ -161,7 +208,6 @@ async def test_worker_daemon_lifecycle_and_graceful_shutdown():
 @pytest.mark.asyncio
 async def test_worker_pipeline_end_to_end():
     """Verify real file execution through entire worker pipeline (validate -> parse -> chunk -> embed -> index)."""
-    # Create real temporary file
     sample_content = "# Selnikel Kazan Bakım Kılavuzu\n\nStandart çalışma basıncı 16 bar'dır.\n\n| Parametre | Değer |\n| Basınç | 16 bar |\n"
     with tempfile.NamedTemporaryFile(suffix="_test_doc.md", delete=False, mode="w", encoding="utf-8") as tmp:
         tmp.write(sample_content)
@@ -175,22 +221,23 @@ async def test_worker_pipeline_end_to_end():
 
         worker = IngestionWorkerDaemon(worker_id="worker-test-pipeline", queue=mock_queue)
 
-        mock_job = MagicMock()
-        mock_job.id = "job-e2e-001"
-        mock_job.document_id = "doc-e2e-001"
-        mock_job.revision_id = "rev-e2e-001"
-        mock_job.file_path = tmp_file_path
-        mock_job.filename = "test_doc.md"
-        mock_job.department_id = "dept-engineering"
-        mock_job.equipment_id = "EQ-100"
-        mock_job.classification = "internal"
+        fake_job = _FakeIngestionJob(
+            id="job-e2e-001",
+            document_id="doc-e2e-001",
+            revision_id="rev-e2e-001",
+            file_path=tmp_file_path,
+            filename="test_doc.md",
+            department_id="dept-engineering",
+            equipment_id="EQ-100",
+            classification="internal",
+        )
 
-        mock_session = AsyncMock()
+        mock_session = _DummyAsyncSession()
 
         # Mock Qdrant healthy and successful upsert
-        with patch.object(qdrant_repo, "check_health", new_callable=AsyncMock, return_value=True), \
-             patch.object(qdrant_repo, "upsert_chunks", new_callable=AsyncMock, return_value=True):
-            total_chunks = await worker.execute_pipeline(mock_session, mock_job)
+        with patch.object(qdrant_repo, "check_health", AsyncMock(return_value=True)), \
+             patch.object(qdrant_repo, "upsert_chunks", AsyncMock(return_value=True)):
+            total_chunks = await worker.execute_pipeline(mock_session, fake_job)
 
             assert total_chunks >= 1
             mock_queue.complete_job.assert_awaited_once_with(mock_session, "job-e2e-001", "worker-test-pipeline", chunks_count=total_chunks)
@@ -214,20 +261,21 @@ async def test_worker_pipeline_qdrant_outage_fails_fast():
 
         worker = IngestionWorkerDaemon(worker_id="worker-fail-test", queue=mock_queue)
 
-        mock_job = MagicMock()
-        mock_job.id = "job-fail-001"
-        mock_job.document_id = "doc-fail-001"
-        mock_job.revision_id = "rev-fail-001"
-        mock_job.file_path = tmp_file_path
-        mock_job.filename = "test_doc.txt"
-        mock_job.department_id = "dept-service"
+        fake_job = _FakeIngestionJob(
+            id="job-fail-001",
+            document_id="doc-fail-001",
+            revision_id="rev-fail-001",
+            file_path=tmp_file_path,
+            filename="test_doc.txt",
+            department_id="dept-service",
+        )
 
         mock_session = _DummyAsyncSession()
 
         # Mock Qdrant offline
         with patch.object(qdrant_repo, "check_health", AsyncMock(return_value=False)):
             with pytest.raises(RuntimeError) as exc_info:
-                await worker.execute_pipeline(mock_session, mock_job)
+                await worker.execute_pipeline(mock_session, fake_job)
             assert "Qdrant" in str(exc_info.value)
             mock_queue.complete_job.assert_not_awaited()
     finally:
@@ -244,38 +292,17 @@ async def test_worker_pipeline_missing_file_hard_error():
 
     worker = IngestionWorkerDaemon(worker_id="worker-missing-test", queue=mock_queue)
 
-    mock_job = MagicMock()
-    mock_job.id = "job-missing-001"
-    mock_job.file_path = "/non/existent/path/document.pdf"
-    mock_job.filename = "document.pdf"
+    fake_job = _FakeIngestionJob(
+        id="job-missing-001",
+        file_path="/non/existent/path/document.pdf",
+        filename="document.pdf",
+    )
 
-    mock_session = AsyncMock()
+    mock_session = _DummyAsyncSession()
 
     with pytest.raises(FileNotFoundError):
-        await worker.execute_pipeline(mock_session, mock_job)
+        await worker.execute_pipeline(mock_session, fake_job)
     mock_queue.complete_job.assert_not_awaited()
-
-
-class _DummyAsyncSession:
-    async def commit(self):
-        pass
-
-    async def rollback(self):
-        pass
-
-    async def close(self):
-        pass
-
-
-class _MockAsyncSessionContext:
-    def __init__(self, session=None):
-        self.session = session or _DummyAsyncSession()
-
-    async def __aenter__(self):
-        return self.session
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return False
 
 
 @pytest.mark.asyncio
@@ -326,10 +353,9 @@ async def test_worker_heartbeat_lease_loss_aborts_pipeline():
     # Lease lost event must be set by heartbeat failure
     assert lease_lost_event.is_set() is True
 
-    # Attempting pipeline execution with lost lease must raise PermissionError immediately
-    mock_job = MagicMock(id="job-lost-100")
+    fake_job = _FakeIngestionJob(id="job-lost-100")
     with pytest.raises(PermissionError) as exc_info:
-        await worker.execute_pipeline(mock_session, mock_job, lease_lost_event=lease_lost_event)
+        await worker.execute_pipeline(mock_session, fake_job, lease_lost_event=lease_lost_event)
     assert "lease lost" in str(exc_info.value).lower()
     mock_queue.complete_job.assert_not_awaited()
 
