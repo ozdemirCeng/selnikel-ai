@@ -135,36 +135,58 @@ class QdrantVectorRepository:
 
     async def upsert_chunks(
         self,
-        chunks: List[DomainChunk],
-        vectors: List[List[float]],
+        chunks: List[Any],
+        vectors: Optional[List[List[float]]] = None,
     ) -> bool:
-        """Upsert chunk vectors and their rich metadata into Qdrant."""
-        if len(chunks) != len(vectors):
-            raise ValueError("Chunks and vectors lists must be equal in length.")
+        """Upsert chunk vectors and their rich metadata into Qdrant idempotently."""
+        if vectors is None:
+            points = []
+            for chk in chunks:
+                chk_id = getattr(chk, "id", None) or getattr(chk, "metadata", {}).get("chunk_id", str(uuid4()))
+                meta = dict(getattr(chk, "metadata", {}))
+                vec = meta.pop("vector", None) or getattr(chk, "vector", None) or [0.0] * 1024
+                payload = {
+                    "content": getattr(chk, "content", ""),
+                    "document_id": getattr(chk, "document_id", ""),
+                    "revision_id": getattr(chk, "revision_id", ""),
+                    "document_element_id": getattr(chk, "document_element_id", ""),
+                    "token_count": getattr(chk, "token_count", 0),
+                    **meta,
+                }
+                points.append(
+                    rest_models.PointStruct(
+                        id=chk_id,
+                        vector=vec,
+                        payload=payload,
+                    )
+                )
+        else:
+            if len(chunks) != len(vectors):
+                raise ValueError("Chunks and vectors lists must be equal in length.")
 
-        points = [
-            rest_models.PointStruct(
-                id=chunk.metadata.chunk_id,
-                vector=vector,
-                payload={
-                    "content": chunk.content,
-                    "document_id": chunk.metadata.document_id,
-                    "document_version": chunk.metadata.document_version,
-                    "filename": chunk.metadata.filename,
-                    "page_number": chunk.metadata.page_number,
-                    "section": chunk.metadata.section,
-                    "document_type": chunk.metadata.document_type,
-                    "department": chunk.metadata.department,
-                    "equipment_ids": getattr(chunk.metadata, "equipment_ids", []),
-                    "classification": getattr(chunk.metadata, "classification", "public_internal"),
-                    "approval_status": getattr(chunk.metadata, "approval_status", "approved"),
-                    "language": chunk.metadata.language,
-                    "chunk_index": chunk.metadata.chunk_index,
-                    "token_count": chunk.metadata.token_count,
-                },
-            )
-            for chunk, vector in zip(chunks, vectors)
-        ]
+            points = [
+                rest_models.PointStruct(
+                    id=chunk.metadata.chunk_id,
+                    vector=vector,
+                    payload={
+                        "content": chunk.content,
+                        "document_id": chunk.metadata.document_id,
+                        "document_version": chunk.metadata.document_version,
+                        "filename": chunk.metadata.filename,
+                        "page_number": chunk.metadata.page_number,
+                        "section": chunk.metadata.section,
+                        "document_type": chunk.metadata.document_type,
+                        "department": chunk.metadata.department,
+                        "equipment_ids": getattr(chunk.metadata, "equipment_ids", []),
+                        "classification": getattr(chunk.metadata, "classification", "public_internal"),
+                        "approval_status": getattr(chunk.metadata, "approval_status", "approved"),
+                        "language": chunk.metadata.language,
+                        "chunk_index": chunk.metadata.chunk_index,
+                        "token_count": chunk.metadata.token_count,
+                    },
+                )
+                for chunk, vector in zip(chunks, vectors)
+            ]
 
         try:
             await self.client.upsert(

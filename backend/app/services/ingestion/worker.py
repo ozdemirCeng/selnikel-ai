@@ -130,9 +130,16 @@ class IngestionWorkerDaemon:
     def is_running(self) -> bool:
         return self._is_running
 
-    async def _heartbeat_loop(self, session_maker, job_id: str, lease_lost_event: asyncio.Event):
+    async def _heartbeat_loop(
+        self,
+        session_maker,
+        job_id: str,
+        lease_lost_event: asyncio.Event,
+        pipeline_task: Optional[asyncio.Task] = None,
+    ):
         """Periodically renews worker lease in background while processing long jobs.
-        If lease extension fails (another worker stole or lease expired), triggers lease_lost_event to abort pipeline.
+        If lease extension fails OR if any database error occurs during heartbeat,
+        strictly fails closed: triggers lease_lost_event and cancels pipeline_task immediately.
         """
         try:
             while not lease_lost_event.is_set():
@@ -146,12 +153,21 @@ class IngestionWorkerDaemon:
                         else:
                             logger.critical(
                                 f"Worker [{self.worker_id}] heartbeat renewal rejected for job {job_id}! "
-                                "Lease was lost or re-assigned. Triggering immediate pipeline cancellation."
+                                "Lease was lost or re-assigned. Canceling pipeline task immediately."
                             )
                             lease_lost_event.set()
+                            if pipeline_task and not pipeline_task.done():
+                                pipeline_task.cancel()
                             break
                 except Exception as hb_err:
-                    logger.warning(f"Heartbeat execution error for job {job_id}: {hb_err}")
+                    logger.critical(
+                        f"Worker [{self.worker_id}] heartbeat database error for job {job_id}: {hb_err}. "
+                        "Failing closed; canceling pipeline task immediately to prevent unleased duplicate processing."
+                    )
+                    lease_lost_event.set()
+                    if pipeline_task and not pipeline_task.done():
+                        pipeline_task.cancel()
+                    break
         except asyncio.CancelledError:
             pass
 
@@ -259,7 +275,7 @@ class IngestionWorkerDaemon:
         return total_chunks
 
     async def process_one_job(self, session_maker) -> bool:
-        """Claims and processes a single job from the queue with background heartbeat."""
+        """Claims and processes a single job from the queue with fail-closed background heartbeat and immediate cancellation."""
         async with session_maker() as session:
             job = await self.queue.claim_next_job(session, self.worker_id)
             await session.commit()
@@ -271,14 +287,25 @@ class IngestionWorkerDaemon:
         logger.info(f"[{self.worker_id}] Executing real ingestion pipeline for job {job_id} ({job.filename})...")
 
         lease_lost_event = asyncio.Event()
-        heartbeat_task = asyncio.create_task(self._heartbeat_loop(session_maker, job_id, lease_lost_event))
 
-        try:
+        async def _run_pipeline():
             async with session_maker() as session:
                 chunks_count = await self.execute_pipeline(session, job, lease_lost_event=lease_lost_event)
                 await session.commit()
+                return chunks_count
+
+        pipeline_task = asyncio.create_task(_run_pipeline())
+        heartbeat_task = asyncio.create_task(
+            self._heartbeat_loop(session_maker, job_id, lease_lost_event, pipeline_task=pipeline_task)
+        )
+
+        try:
+            chunks_count = await pipeline_task
             logger.info(f"[{self.worker_id}] Job {job_id} completed successfully with {chunks_count} chunks.")
             return True
+        except asyncio.CancelledError:
+            logger.critical(f"[{self.worker_id}] Pipeline task was cancelled for job {job_id} (lease lost / heartbeat error).")
+            return False
         except PermissionError as pe:
             logger.critical(f"[{self.worker_id}] Pipeline aborted for job {job_id}: {pe}")
             return False

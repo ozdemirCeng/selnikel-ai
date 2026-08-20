@@ -111,7 +111,7 @@ async def test_rs256_jwks_signature_verification(rsa_keypair):
     mock_ext = MagicMock()
     mock_ext.user_id = "usr-rs256-001"
 
-    async def mock_execute(stmt, *args, **kwargs):
+    def mock_execute(stmt, *args, **kwargs):
         stmt_str = str(stmt).lower()
         if "user_external_identities" in stmt_str:
             return MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_ext), all=MagicMock(return_value=[mock_ext]))))

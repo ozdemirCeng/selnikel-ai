@@ -256,6 +256,17 @@ async def test_worker_pipeline_missing_file_hard_error():
     mock_queue.complete_job.assert_not_awaited()
 
 
+class _MockAsyncSessionContext:
+    def __init__(self, session):
+        self.session = session
+
+    async def __aenter__(self):
+        return self.session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
 @pytest.mark.asyncio
 async def test_worker_heartbeat_loop():
     """Verify background lease heartbeat loop renews lease periodically."""
@@ -265,7 +276,7 @@ async def test_worker_heartbeat_loop():
     worker = IngestionWorkerDaemon(worker_id="worker-hb-01", queue=mock_queue, heartbeat_interval_seconds=0.05)
 
     mock_session = AsyncMock()
-    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+    mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     lease_lost_event = asyncio.Event()
     hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-hb-100", lease_lost_event))
@@ -295,7 +306,7 @@ async def test_worker_heartbeat_lease_loss_aborts_pipeline():
     worker = IngestionWorkerDaemon(worker_id="worker-lost-01", queue=mock_queue, heartbeat_interval_seconds=0.02)
 
     mock_session = AsyncMock()
-    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+    mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     lease_lost_event = asyncio.Event()
     hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-lost-100", lease_lost_event))
@@ -310,6 +321,48 @@ async def test_worker_heartbeat_lease_loss_aborts_pipeline():
         await worker.execute_pipeline(mock_session, mock_job, lease_lost_event=lease_lost_event)
     assert "lease lost" in str(exc_info.value).lower()
     mock_queue.complete_job.assert_not_awaited()
+
+    hb_task.cancel()
+    try:
+        await hb_task
+    except asyncio.CancelledError:
+        pass
+
+
+@pytest.mark.asyncio
+async def test_worker_heartbeat_db_exception_fails_closed_and_cancels_pipeline():
+    """
+    CRITICAL SECURITY TEST:
+    Verify that if database connection drops / raises an exception during heartbeat renewal,
+    the worker strictly fails closed: sets lease_lost_event, cancels the pipeline task immediately,
+    and never writes unleased results.
+    """
+    mock_queue = MagicMock(spec=PostgresIngestionQueue)
+    mock_queue.heartbeat = AsyncMock(side_effect=Exception("Database connection terminated abruptly!"))
+    mock_queue.complete_job = AsyncMock()
+
+    worker = IngestionWorkerDaemon(worker_id="worker-err-01", queue=mock_queue, heartbeat_interval_seconds=0.02)
+
+    mock_session = AsyncMock()
+    mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
+
+    lease_lost_event = asyncio.Event()
+
+    # Create dummy pipeline task that runs a sleep
+    async def dummy_pipeline():
+        await asyncio.sleep(1.0)
+        return 10
+
+    pipeline_task = asyncio.create_task(dummy_pipeline())
+    hb_task = asyncio.create_task(
+        worker._heartbeat_loop(mock_session_factory, "job-err-100", lease_lost_event, pipeline_task=pipeline_task)
+    )
+
+    await asyncio.sleep(0.06)
+
+    # Fail closed: lease_lost_event must be set and pipeline_task must be cancelled
+    assert lease_lost_event.is_set() is True
+    assert pipeline_task.cancelled() or pipeline_task.done()
 
     hb_task.cancel()
     try:
