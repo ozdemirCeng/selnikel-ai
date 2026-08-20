@@ -8,7 +8,6 @@
       "id",
       "category",
       "question",
-      "expected_evidence",
       "is_safety_critical",
       "is_out_of_domain",
       "dataset_version",
@@ -37,14 +36,27 @@
         "type": "string",
         "minLength": 5
       },
+      "is_safety_critical": {
+        "type": "boolean"
+      },
+      "is_out_of_domain": {
+        "type": "boolean"
+      },
+      "abstention_expected": {
+        "type": "boolean"
+      },
+      "expected_abstention_reason": {
+        "type": "string",
+        "enum": [
+          "out_of_domain",
+          "insufficient_context",
+          "obsolete_revision",
+          "safety_ambiguity",
+          "none"
+        ]
+      },
       "expected_evidence": {
-        "type": "object",
-        "required": [
-          "document_name",
-          "page_number",
-          "ground_truth_answer",
-          "expected_numerical_parameters"
-        ],
+        "type": ["object", "null"],
         "properties": {
           "document_name": {
             "type": "string",
@@ -58,10 +70,26 @@
           },
           "page_number": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 1
           },
           "section": {
             "type": ["string", "null"]
+          },
+          "locator": {
+            "type": "object",
+            "required": ["locator_type"],
+            "properties": {
+              "locator_type": {
+                "type": "string",
+                "enum": ["table_cell", "section_text"]
+              },
+              "table_id": { "type": "string" },
+              "row_key": { "type": "string" },
+              "column_name": { "type": "string" },
+              "section_header": { "type": "string" },
+              "key_phrase": { "type": "string" }
+            },
+            "additionalProperties": false
           },
           "expected_numerical_parameters": {
             "type": "array",
@@ -74,13 +102,13 @@
             "minLength": 1
           }
         },
+        "required": [
+          "document_name",
+          "page_number",
+          "ground_truth_answer",
+          "expected_numerical_parameters"
+        ],
         "additionalProperties": false
-      },
-      "is_safety_critical": {
-        "type": "boolean"
-      },
-      "is_out_of_domain": {
-        "type": "boolean"
       },
       "expert_reviewer": {
         "type": ["string", "null"]
@@ -109,41 +137,37 @@
     "allOf": [
       {
         "if": {
-          "properties": {
-            "review_status": { "const": "verified_expert_reviewed" }
-          }
+          "properties": { "is_out_of_domain": { "const": true } }
         },
         "then": {
+          "required": ["abstention_expected", "expected_abstention_reason"],
           "properties": {
-            "synthetic": { "const": false },
-            "expert_reviewer": {
-              "type": "string",
-              "minLength": 3
-            },
-            "expected_evidence": {
-              "properties": {
-                "document_sha256": {
-                  "type": "string",
-                  "pattern": "^[a-fA-F0-9]{64}$"
-                },
-                "revision_code": {
-                  "type": "string",
-                  "minLength": 2
-                }
-              },
-              "required": [
-                "document_name",
-                "document_sha256",
-                "revision_code",
-                "page_number",
-                "ground_truth_answer",
-                "expected_numerical_parameters"
-              ]
-            }
-          },
-          "required": [
-            "expert_reviewer"
-          ]
+            "abstention_expected": { "const": true },
+            "expected_abstention_reason": { "const": "out_of_domain" },
+            "expected_evidence": { "type": "null" }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": { "is_out_of_domain": { "const": false } }
+        },
+        "then": {
+          "required": ["expected_evidence"],
+          "properties": {
+            "expected_evidence": { "type": "object" }
+          }
+        }
+      },
+      {
+        "if": {
+          "properties": { "review_status": { "const": "verified_expert_reviewed" } }
+        },
+        "then": {
+          "required": ["expert_reviewer"],
+          "properties": {
+            "synthetic": { "const": false }
+          }
         }
       }
     ],

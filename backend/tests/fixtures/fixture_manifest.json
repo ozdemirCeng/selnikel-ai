@@ -1,16 +1,111 @@
 {
-  "manifest_version": "1.1.0",
-  "description": "Selnikel AI Synthetically Generated Industrial Technical Document Fixtures Inventory for Stage P1.1",
+  "manifest_version": "1.2.0",
+  "description": "Selnikel AI Synthetically Generated Industrial Technical Document Fixtures Inventory for Stage P1.2",
   "fixture_kind": "synthetic_generated",
   "synthetic": true,
   "review_status": "unverified_draft",
   "generator": "backend/scripts/generate_fixtures.py",
   "fixtures": [
     {
+      "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+      "relative_path": "tests/fixtures/documents/SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+      "format": "pdf",
+      "sha256": "a3da103ca655db27c5e29db6798ee83134d06bd348ece27a4ba96fc7774809c0",
+      "page_count": 3,
+      "revision_code": "REV-01",
+      "ocr_applied": false,
+      "section_inventory": [
+        {
+          "page_number": 1,
+          "header": "1. General Overview & Design Standards"
+        },
+        {
+          "page_number": 2,
+          "header": "2. Technical Operating Parameters & Capacities"
+        },
+        {
+          "page_number": 3,
+          "header": "3. Safety Relief Valves & Auxiliary Limits"
+        }
+      ],
+      "table_inventory": [
+        {
+          "table_id": "pdf_tab_01",
+          "page_number": 2,
+          "title": "Technical Operating Parameters & Capacities",
+          "column_count": 6,
+          "row_count": 4,
+          "headers": [
+            "Model Code",
+            "Steam Cap. (t/h)",
+            "Working Press. (bar)",
+            "Design Press. (bar)",
+            "Steam Temp. (°C)",
+            "Thermal Power (kW)"
+          ],
+          "ground_truth_cells": {
+            "SB-500": {
+              "steam_cap": "0.45 t/h",
+              "working_press": "10.0 bar",
+              "design_press": "14.0 bar",
+              "steam_temp": "184.1 °C",
+              "thermal_power": "315 kW"
+            },
+            "SB-1000": {
+              "steam_cap": "0.9 t/h",
+              "working_press": "14.0 bar",
+              "design_press": "16.0 bar",
+              "steam_temp": "198.3 °C",
+              "thermal_power": "630 kW"
+            },
+            "SB-2000": {
+              "steam_cap": "1.8 t/h",
+              "working_press": "14.0 bar",
+              "design_press": "18.0 bar",
+              "steam_temp": "198.3 °C",
+              "thermal_power": "1260 kW"
+            },
+            "SB-5000": {
+              "steam_cap": "4.5 t/h",
+              "working_press": "14.0 bar",
+              "design_press": "22.0 bar",
+              "steam_temp": "198.3 °C",
+              "thermal_power": "3150 kW"
+            }
+          }
+        },
+        {
+          "table_id": "pdf_tab_02",
+          "page_number": 3,
+          "title": "Safety Relief Valves & Auxiliary Limits",
+          "column_count": 4,
+          "row_count": 2,
+          "headers": [
+            "Safety Device",
+            "Set Pressure (bar)",
+            "Connection DN (mm)",
+            "Discharge Cap. (kg/h)"
+          ],
+          "ground_truth_cells": {
+            "Primary Safety Valve": {
+              "set_pressure": "14.5 bar",
+              "dn": "32 mm",
+              "discharge_cap": "1100 kg/h"
+            },
+            "Secondary Safety Valve": {
+              "set_pressure": "15.0 bar",
+              "dn": "40 mm",
+              "discharge_cap": "1350 kg/h"
+            }
+          }
+        }
+      ]
+    },
+    {
       "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
       "relative_path": "tests/fixtures/documents/SB_Series_Steam_Boiler_Datasheet.pdf",
       "format": "pdf",
-      "sha256": "355f450aaae4cf48dd3cf8553d599e816fc24535e5fc4453dec33001260bb872",
+      "sha256": "0cc6c4b5cfd9a4a895aa88f14e2093c912c6248b75cad6daadb87a23104ffc90",
       "page_count": 3,
       "revision_code": "REV-02",
       "ocr_applied": false,
@@ -79,7 +174,7 @@
           "page_number": 3,
           "title": "Safety Relief Valves & Auxiliary Limits",
           "column_count": 4,
-          "row_count": 3,
+          "row_count": 2,
           "headers": [
             "Safety Device",
             "Set Pressure (bar)",
@@ -91,6 +186,11 @@
               "set_pressure": "16.5 bar",
               "dn": "32 mm",
               "discharge_cap": "1250 kg/h"
+            },
+            "Secondary Safety Valve": {
+              "set_pressure": "17.0 bar",
+              "dn": "40 mm",
+              "discharge_cap": "1500 kg/h"
             }
           }
         }
@@ -100,8 +200,8 @@
       "filename": "Monoblock_Burner_Maintenance_Manual.docx",
       "relative_path": "tests/fixtures/documents/Monoblock_Burner_Maintenance_Manual.docx",
       "format": "docx",
-      "sha256": "573563f1efaa0795a12126049cd0475002d67d1b15c5b8c1f178580ea3dad85f",
-      "page_count": 1,
+      "sha256": "afc98c74e4fff35a3fbf48c9adc13031125c2e3ab64173e79578a6f9cc558c88",
+      "page_count": 2,
       "revision_code": "REV-01",
       "ocr_applied": false,
       "section_inventory": [
@@ -112,6 +212,14 @@
         {
           "page_number": 1,
           "header": "2. Periodic Maintenance Schedule & Intervals"
+        },
+        {
+          "page_number": 2,
+          "header": "3. Diagnostic Fault Codes & Troubleshooting Matrix"
+        },
+        {
+          "page_number": 2,
+          "header": "4. Burner Nozzle & Mechanical Parts Compatibility"
         }
       ],
       "table_inventory": [
@@ -120,7 +228,7 @@
           "page_number": 1,
           "title": "Periodic Maintenance Schedule & Intervals",
           "column_count": 4,
-          "row_count": 5,
+          "row_count": 4,
           "headers": [
             "Component",
             "Inspection Action",
@@ -133,6 +241,11 @@
               "interval": "500 hour",
               "torque": "25 Nm"
             },
+            "Nozzle Overhaul": {
+              "action": "Replace atomizing disc and filter",
+              "interval": "2000 hour",
+              "torque": "30 Nm"
+            },
             "Gas Valve Train": {
               "action": "Tightness and leak test",
               "interval": "6 month",
@@ -144,6 +257,36 @@
               "torque": "ISO 1940 G2.5"
             }
           }
+        },
+        {
+          "table_id": "docx_tab_02",
+          "page_number": 2,
+          "title": "Diagnostic Fault Codes & Troubleshooting Matrix",
+          "column_count": 4,
+          "row_count": 3,
+          "headers": [
+            "Fault Code",
+            "Fault Description",
+            "Possible Root Cause",
+            "Action Required"
+          ],
+          "ground_truth_cells": {
+            "E01": {
+              "desc": "Flame Failure Lockout",
+              "cause": "Ionization probe contamination or gas cutoff",
+              "action": "Clean ionization probe and verify supply pressure"
+            },
+            "E04": {
+              "desc": "Air Pressure Switch Fault",
+              "cause": "Insufficient combustion air flow or clogged fan",
+              "action": "Check blower differential pressure and air switch tube"
+            },
+            "E07": {
+              "desc": "High Flue Gas Temperature Trip",
+              "cause": "Heat exchanger soot buildup or excess firing rate",
+              "action": "Shutdown burner and perform boiler tube cleaning"
+            }
+          }
         }
       ]
     },
@@ -151,7 +294,7 @@
       "filename": "Industrial_Boiler_Commissioning_Guide.docx",
       "relative_path": "tests/fixtures/documents/Industrial_Boiler_Commissioning_Guide.docx",
       "format": "docx",
-      "sha256": "808c4831a07c0cb6c7f72f6388cc6c5a1bc4d83e89c105e9a868c2b5e5284b46",
+      "sha256": "2bfb5547eeb2c9f73ec4fc85b7f5146a5adeac2ce67b0598eae15f7fdb538c42",
       "page_count": 2,
       "revision_code": "REV-01",
       "ocr_applied": false,
@@ -161,8 +304,12 @@
           "header": "1. Pre-Commissioning Electrical Limits"
         },
         {
+          "page_number": 1,
+          "header": "2. Standards, Directives & Regulatory Compliance"
+        },
+        {
           "page_number": 2,
-          "header": "2. Flue Gas Emission Limits"
+          "header": "3. Flue Gas Emission Limits"
         }
       ],
       "table_inventory": [
@@ -171,7 +318,7 @@
           "page_number": 1,
           "title": "Pre-Commissioning Electrical Limits",
           "column_count": 3,
-          "row_count": 3,
+          "row_count": 2,
           "headers": [
             "Terminal",
             "Signal Type",
@@ -193,7 +340,7 @@
           "page_number": 2,
           "title": "Flue Gas Emission Limits",
           "column_count": 3,
-          "row_count": 3,
+          "row_count": 2,
           "headers": [
             "Emission Parameter",
             "Natural Gas Limit",
@@ -216,7 +363,7 @@
       "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
       "relative_path": "tests/fixtures/documents/Thermal_Oil_Heater_Operating_Limits.txt",
       "format": "txt",
-      "sha256": "6e6d5f7c0834a9fe88fbefda9d6233235cd64a5bca57ffcdd27cb59a2cc9003e",
+      "sha256": "77d254d8b8d887e576a89eb66b62fd89799f3c2f7c146ae0b1939d6e35c8c03e",
       "page_count": 1,
       "revision_code": "REV-03",
       "ocr_applied": false,
@@ -236,7 +383,7 @@
           "page_number": 1,
           "title": "Thermal Oil Operational Limits",
           "column_count": 5,
-          "row_count": 5,
+          "row_count": 3,
           "headers": [
             "Parameter",
             "Minimum Value",

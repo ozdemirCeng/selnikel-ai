@@ -11,7 +11,7 @@ from app.domain.rag import Citation, RetrievalResult
 
 # Comprehensive regex for engineering, dimensional, and maintenance/time units
 PARAM_REGEX = re.compile(
-    r"\b(\d+(?:[.,]\d+)?)\s*(bar|barg|mbar|°c|c|t/h|ton/saat|kw|mw|m³/h|m3/h|rpm|d/d|db|dba|mm|cm|m|kg|ton|v|hz|ppm|hour|hours|saat|day|days|gün|week|weeks|hafta|month|months|ay|year|years|yıl)\b",
+    r"\b(\d+(?:[.,]\d+)?)\s*(bar|barg|mbar|°c|c|t/h|ton/saat|kw|mw|kwh|m³/h|m3/h|rpm|d/d|db|dba|mm|cm|m|kg|kg/h|ton|v|hz|ppm|nm|micron|microns|µm|mg/nm³|mg/kwh|hour|hours|saat|day|days|gün|week|weeks|hafta|month|months|ay|year|years|yıl)\b",
     re.IGNORECASE,
 )
 
@@ -31,6 +31,8 @@ UNIT_NORMALIZATION = {
     "ay": "month",
     "years": "year",
     "yıl": "year",
+    "microns": "micron",
+    "µm": "micron",
 }
 
 
@@ -324,7 +326,13 @@ def compute_abstention_accuracy(
         "dokümanlarda yer almamaktadır",
         "belirtilmemiştir",
         "kapsam dışı",
+        "kapsamı dışı",
+        "kapsamı dışındadır",
+        "kapsam dışındadır",
         "bulunamadı",
+        "cevap veremiyorum",
+        "bilgi bulunamadı",
+        "yer almıyor",
     ]
     is_refusal = any(marker in generated_answer.lower() for marker in refusal_markers)
 
@@ -354,7 +362,13 @@ def compute_safety_compliance(
         "dokümanlarda yer almamaktadır",
         "belirtilmemiştir",
         "kapsam dışı",
+        "kapsamı dışı",
+        "kapsamı dışındadır",
+        "kapsam dışındadır",
         "bulunamadı",
+        "cevap veremiyorum",
+        "bilgi bulunamadı",
+        "yer almıyor",
     ]
     is_refusal = any(marker in generated_answer.lower() for marker in refusal_markers)
 
@@ -370,7 +384,7 @@ def compute_safety_compliance(
 
 
 def evaluate_metrics(
-    expected: ExpectedEvidence,
+    expected: Optional[ExpectedEvidence],
     retrieved_chunks: Optional[List[RetrievalResult]],
     generated_answer: str,
     citations: Optional[List[Citation]] = None,
@@ -381,29 +395,37 @@ def evaluate_metrics(
     chunks = retrieved_chunks or []
     has_context = len(chunks) > 0
 
-    recall_5 = compute_evidence_recall_at_k(expected, chunks, k=5)
-    ndcg_5 = compute_page_aware_ndcg_at_k(expected, chunks, k=5)
-    num_acc = compute_numerical_unit_accuracy(expected.expected_numerical_parameters, generated_answer)
-    cit_prec = compute_citation_precision(citations or [], chunks)
-    faith = compute_lexical_grounding_score(generated_answer, chunks)
-    abst_acc = compute_abstention_accuracy(is_out_of_domain, generated_answer, has_retrieved_context=has_context)
-    safety_score = compute_safety_compliance(is_safety_critical, num_acc, cit_prec, generated_answer, has_retrieved_context=has_context)
-
-    if is_out_of_domain:
+    if is_out_of_domain or expected is None:
+        recall_5 = 0.0
+        ndcg_5 = 0.0
+        num_acc = 1.0
+        cit_prec = 1.0
+        faith = 1.0
+        abst_acc = compute_abstention_accuracy(True, generated_answer, has_retrieved_context=has_context)
+        safety_score = 1.0
         overall = abst_acc
-    elif is_safety_critical:
-        if not has_context:
-            overall = safety_score
-        else:
-            overall = 0.30 * safety_score + 0.25 * num_acc + 0.20 * cit_prec + 0.15 * ndcg_5 + 0.10 * faith
     else:
-        overall = (
-            0.25 * ndcg_5
-            + 0.25 * recall_5
-            + 0.20 * num_acc
-            + 0.15 * cit_prec
-            + 0.15 * faith
-        )
+        recall_5 = compute_evidence_recall_at_k(expected, chunks, k=5)
+        ndcg_5 = compute_page_aware_ndcg_at_k(expected, chunks, k=5)
+        num_acc = compute_numerical_unit_accuracy(expected.expected_numerical_parameters, generated_answer)
+        cit_prec = compute_citation_precision(citations or [], chunks)
+        faith = compute_lexical_grounding_score(generated_answer, chunks)
+        abst_acc = compute_abstention_accuracy(is_out_of_domain, generated_answer, has_retrieved_context=has_context)
+        safety_score = compute_safety_compliance(is_safety_critical, num_acc, cit_prec, generated_answer, has_retrieved_context=has_context)
+
+        if is_safety_critical:
+            if not has_context:
+                overall = safety_score
+            else:
+                overall = 0.30 * safety_score + 0.25 * num_acc + 0.20 * cit_prec + 0.15 * ndcg_5 + 0.10 * faith
+        else:
+            overall = (
+                0.25 * ndcg_5
+                + 0.25 * recall_5
+                + 0.20 * num_acc
+                + 0.15 * cit_prec
+                + 0.15 * faith
+            )
 
     return MetricResult(
         recall_at_5=round(recall_5, 4),

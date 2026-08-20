@@ -478,7 +478,7 @@ class FastFallbackParser(BaseDocumentParser):
         section_headers = [
             line.strip()
             for line in content.splitlines()
-            if line.strip().startswith("#") or re.match(r"^\d+(\.\d+)*\s+[A-Z]", line.strip())
+            if line.strip().startswith("#") or re.match(r"^\d+(\.\d+)*\.?\s+[A-Z]", line.strip())
         ]
 
         page = ParsedPage(

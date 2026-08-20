@@ -16,12 +16,27 @@ class AbstentionReason(str, Enum):
     NONE = "none"
 
 
+class LocatorType(str, Enum):
+    TABLE_CELL = "table_cell"
+    SECTION_TEXT = "section_text"
+
+
+class EvidenceLocator(BaseModel):
+    locator_type: LocatorType
+    table_id: Optional[str] = None
+    row_key: Optional[str] = None
+    column_name: Optional[str] = None
+    section_header: Optional[str] = None
+    key_phrase: Optional[str] = None
+
+
 class ExpectedEvidence(BaseModel):
     document_name: str
     document_sha256: Optional[str] = None
     revision_code: Optional[str] = None
     page_number: int
     section: Optional[str] = None
+    locator: Optional[EvidenceLocator] = None
     expected_numerical_parameters: List[str] = Field(default_factory=list)
     ground_truth_answer: str
 
@@ -30,9 +45,11 @@ class BenchmarkQuestion(BaseModel):
     id: str
     category: str
     question: str
-    expected_evidence: ExpectedEvidence
+    expected_evidence: Optional[ExpectedEvidence] = None
     is_safety_critical: bool = False
     is_out_of_domain: bool = False
+    abstention_expected: Optional[bool] = None
+    expected_abstention_reason: Optional[AbstentionReason] = None
     expert_reviewer: Optional[str] = None
     dataset_version: str = "1.0.0"
     anonymized: bool = True
@@ -86,17 +103,26 @@ class EvaluationItemResult(BaseModel):
 
 class EvaluationRunReport(BaseModel):
     run_id: str
-    dataset_version: str
-    prompt_version: str
-    model_name: str
+    execution_mode: str = "self-check"
+    status: str = "COMPLETED"
+    dataset_version: str = "1.0.0"
+    prompt_version: str = "1.2.0"
+    prompt_sha256: Optional[str] = None
+    dataset_sha256: Optional[str] = None
+    manifest_sha256: Optional[str] = None
+    git_commit: Optional[str] = None
+    model_name: str = "evaluator"
+    oracle_mock_used: bool = False
+    network_access: str = "disabled"
     executed_at: str
-    total_questions: int
-    passed_questions: int
-    mean_recall_at_5: float
-    mean_ndcg_at_5: float
-    mean_numerical_unit_accuracy: float
-    mean_citation_precision: float
-    mean_faithfulness: float
-    safety_compliance_rate: float
-    abstention_rate: float
+    duration_seconds: float = 0.0
+    total_questions: int = 0
+    passed_questions: int = 0
+    mean_recall_at_5: float = 0.0
+    mean_ndcg_at_5: float = 0.0
+    mean_numerical_unit_accuracy: float = 0.0
+    mean_citation_precision: float = 0.0
+    mean_faithfulness: float = 0.0
+    safety_compliance_rate: float = 0.0
+    abstention_rate: float = 0.0
     item_results: List[EvaluationItemResult] = Field(default_factory=list)

@@ -9,7 +9,9 @@
       "revision_code": "REV-02",
       "page_number": 4,
       "section": "Operating Specifications",
-      "expected_numerical_parameters": ["16 bar"],
+      "expected_numerical_parameters": [
+        "16 bar"
+      ],
       "ground_truth_answer": "The maximum operating steam pressure for the SB-Series boiler is 16 bar (gauge)."
     },
     "is_safety_critical": true,
@@ -30,7 +32,10 @@
       "revision_code": "REV-01",
       "page_number": 12,
       "section": "Periodic Maintenance Procedures",
-      "expected_numerical_parameters": ["500 hour", "6 month"],
+      "expected_numerical_parameters": [
+        "500 hour",
+        "6 month"
+      ],
       "ground_truth_answer": "Burner nozzles must be inspected and cleaned every 500 operating hours or at least every 6 months."
     },
     "is_safety_critical": false,

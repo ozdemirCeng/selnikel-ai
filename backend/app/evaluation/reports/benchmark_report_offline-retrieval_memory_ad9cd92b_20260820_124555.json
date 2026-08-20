@@ -1,0 +1,2238 @@
+{
+  "run_id": "ad9cd92b-dc4c-4af9-a916-e925a5ff66a7",
+  "execution_mode": "offline-retrieval",
+  "status": "COMPLETED",
+  "dataset_version": "1.0.0",
+  "prompt_version": "1.2.0",
+  "prompt_sha256": "97bdda7d0493ebda9c667f6f9e650f430ecbed82ede53dc7d0ea1f4382719389",
+  "dataset_sha256": "f58909fc2f4174a751d92171bcdef3edd422d5e22d6a389b2b69b19376cdb9da",
+  "manifest_sha256": "4dc2a35587019f1547b952ab050399160639ccde5ffbd76618f0dbb99f3ce388",
+  "git_commit": "036395d07f19682630fd58002f92d1f33b5da943",
+  "model_name": "retrieval-memory-bm25",
+  "oracle_mock_used": false,
+  "network_access": "disabled",
+  "executed_at": "2026-08-20T12:45:55.399913+00:00",
+  "duration_seconds": 0.3,
+  "total_questions": 28,
+  "passed_questions": 19,
+  "mean_recall_at_5": 0.6786,
+  "mean_ndcg_at_5": 0.6187,
+  "mean_numerical_unit_accuracy": 0.4286,
+  "mean_citation_precision": 1.0,
+  "mean_faithfulness": 1.0,
+  "safety_compliance_rate": 0.0,
+  "abstention_rate": 1.0,
+  "item_results": [
+    {
+      "question_id": "selnikel-bench-001",
+      "category": "capacity_pressure_temp",
+      "question": "What is the steam capacity and design pressure for the Selnikel SB-500 boiler model according to the technical datasheet?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.3
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 17.246
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 17.0218
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 11.0638
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 8.4563
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 6.838
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-002",
+      "category": "capacity_pressure_temp",
+      "question": "What is the operating steam temperature and thermal power rating for model SB-1000?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nW",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking Press. (bar)\nDesign Press. (bar)\nSteam Temp. (°C)",
+          "score": 8.3109
+        },
+        {
+          "chunk_id": "c56bbdc1-d1c4-4906-953c-2febb920c86f",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking Press. (bar)\nDesign Press. (bar)\nSteam Temp",
+          "score": 8.3109
+        },
+        {
+          "chunk_id": "a1195b52-0617-4dcc-bf64-e4889b41536f",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities > Table: 2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities | Type: Table]\n\n### Table: 2. Technical Operating Parameters & Capacities\n\n| Model Code | Steam Cap. (t/h) | Working Press. (bar) | De",
+          "score": 7.9178
+        },
+        {
+          "chunk_id": "01b6c1e1-43af-45d9-8cd0-5ea71c4a8da3",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities > Table: 2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities | Type: Table]\n\n### Table: 2. Technical Operating Parameters & Capacities\n\n| Model Code | Steam Cap. (t/h) | Working Press. (bar",
+          "score": 7.9178
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 6.1764
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-003",
+      "category": "capacity_pressure_temp",
+      "question": "For the SB-5000 industrial boiler, what are the working pressure and design pressure limits?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.3
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 9.8807
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 9.3995
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 9.3953
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 9.2583
+        },
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 6.9575
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-004",
+      "category": "maintenance_intervals",
+      "question": "How often should the burner nozzles be cleaned and inspected on Monoblock MB-Series burners?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 0.6309,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.7077
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 11.2975
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 10.3796
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 8.4872
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 7.06
+        },
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 3.2484
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-005",
+      "category": "maintenance_intervals",
+      "question": "What is the service interval and action required for a complete nozzle overhaul?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 14.0681
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 13.4238
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 11.471
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 6.4036
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 5.1034
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-006",
+      "category": "maintenance_intervals",
+      "question": "What are the periodic inspection requirements and interval for the gas valve train tightness test?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 18.2664
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 16.8739
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 8.2555
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 4.5474
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 4.4431
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-007",
+      "category": "fault_troubleshooting",
+      "question": "What does fault code E01 indicate on MB-Series burners and what corrective action is required?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 14.9277
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 10.856
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 7.4223
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 6.9773
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 3.6966
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-008",
+      "category": "fault_troubleshooting",
+      "question": "What is the cause and recommended action for diagnostic fault code E04?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 15.791
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 12.9247
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 7.0729
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 6.4853
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 3.6966
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-009",
+      "category": "fault_troubleshooting",
+      "question": "What fault is indicated by code E07 on the burner control unit and how should it be resolved?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 16.6017
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 8.8474
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 4.8711
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 4.6616
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 3.5376
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-010",
+      "category": "parts_compatibility",
+      "question": "What is the thread specification for replacement burner nozzles on MB-Series monoblock burners?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 14.0569
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 10.594
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 9.302
+        },
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 5.0177
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 4.8557
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-011",
+      "category": "parts_compatibility",
+      "question": "What is the nominal connection size (DN) and discharge capacity for the primary safety relief valve on SB-Series boilers?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConn",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safety Valv",
+          "score": 13.9416
+        },
+        {
+          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safet",
+          "score": 13.9416
+        },
+        {
+          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | Dischar",
+          "score": 13.3738
+        },
+        {
+          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | D",
+          "score": 13.3738
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 10.8097
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-012",
+      "category": "parts_compatibility",
+      "question": "What are the gas inlet flange connection and filter mesh ratings for Monoblock burners?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8
+      },
+      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
+      "citations": [
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 17.9055
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 12.0509
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 9.4545
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 6.7522
+        },
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 5.0177
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-013",
+      "category": "standards_compliance",
+      "question": "Which European standard governs the design, manufacturing, and safety requirements of Selnikel shell boilers?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
+      "citations": [
+        {
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 19.0836
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 8.002
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 5.3008
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 4.6476
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 4.2314
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-014",
+      "category": "standards_compliance",
+      "question": "What Pressure Equipment Directive conformity module and category applies to the industrial boiler commissioning guide?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
+      "citations": [
+        {
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
+          "score": null
+        },
+        {
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 21.8519
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 19.4301
+        },
+        {
+          "chunk_id": "470ed543-dc8b-4143-85be-bad72e400e6b",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits > Table: 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits | Type: Table]\n\n### Table: 1. Pre-Commissioning Electrical Limits\n\n| Terminal | Signal ",
+          "score": 7.8783
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 5.7065
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 5.3008
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-015",
+      "category": "standards_compliance",
+      "question": "Which European standard regulates automatic forced draught burners for gaseous fuels in Selnikel systems?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
+      "citations": [
+        {
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
+          "score": null
+        },
+        {
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 22.2876
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 6.5784
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 6.1893
+        },
+        {
+          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nDocument: TOH-SPEC-2026 | Revision: REV-03 | Dept: ",
+          "score": 4.5725
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 3.5426
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-016",
+      "category": "revision_conflicts",
+      "question": "What was the design pressure for model SB-500 in baseline revision REV-01 compared to current REV-02?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.3
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 12.1129
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 9.1234
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 5.7995
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 4.7734
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 4.1742
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-017",
+      "category": "revision_conflicts",
+      "question": "What steam capacity was specified for SB-1000 in datasheet revision REV-01?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.3
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 9.0646
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 6.2329
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 4.9277
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 3.6674
+        },
+        {
+          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking Press. (bar)\nDesign Press. (bar)\nSteam Temp. (°C)",
+          "score": 3.1213
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-018",
+      "category": "revision_conflicts",
+      "question": "What was the primary safety relief valve set pressure in REV-01 baseline datasheet?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 0.6309,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.7077
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConn",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safety Valv",
+          "score": 11.3433
+        },
+        {
+          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safet",
+          "score": 11.3433
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 11.0037
+        },
+        {
+          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | Dischar",
+          "score": 10.9072
+        },
+        {
+          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | D",
+          "score": 10.9072
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-019",
+      "category": "out_of_domain",
+      "question": "What is the authentic Italian recipe for making traditional Neapolitan pizza dough?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "citations": [],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 3.2078
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 2.2737
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 2.2048
+        },
+        {
+          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directive: PED 2014/68/EU Category IV conformity module H1",
+          "score": 1.7693
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 1.5576
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-020",
+      "category": "out_of_domain",
+      "question": "What were the quarterly financial earnings and stock dividend payout for Apple Inc in 2024?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "citations": [],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 4.9696
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 3.2896
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 2.9333
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 2.7915
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 2.2737
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-021",
+      "category": "out_of_domain",
+      "question": "How many moons does Jupiter have and what are the geological features of Europa?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "citations": [],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 4.2939
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 3.9112
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 2.2737
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 2.2048
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 2.2043
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-022",
+      "category": "out_of_domain",
+      "question": "What are the offside rules in FIFA football and how does VAR review penalty decisions?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "citations": [],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 4.2939
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 3.9112
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 2.2737
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 2.2048
+        },
+        {
+          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenance Schedule & Intervals\n\n| Component | Inspection A",
+          "score": 2.2043
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-023",
+      "category": "out_of_domain",
+      "question": "What is the 7-day weather forecast and average precipitation for Istanbul next week?",
+      "metrics": {
+        "recall_at_5": 0.0,
+        "ndcg_at_5": 0.0,
+        "numerical_unit_accuracy": 1.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
+      },
+      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "citations": [],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 4.9696
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 3.2896
+        },
+        {
+          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts Compatibility\n\nMechanical connection standards for ",
+          "score": 2.9333
+        },
+        {
+          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
+          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+          "page_number": 1,
+          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
+          "content_snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE\n\nSite Installation, Electrical Verific",
+          "score": 2.7915
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 2.2737
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question_id": "selnikel-bench-024",
+      "category": "safety_critical",
+      "question": "What is the maximum safety limit for thermal oil flow temperature and the emergency shutdown trip threshold?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.45
+      },
+      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
+      "citations": [
+        {
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nDocument: TOH-SPEC-2026 | Revision: REV-03 | Dept: ",
+          "score": 15.9196
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 13.3034
+        },
+        {
+          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks > Table: Table: Thermal Oil Operational Limits",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n\n| Parameter | Minimum Value | Nominal Value | Max",
+          "score": 12.6413
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 8.1733
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 5.6152
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-025",
+      "category": "safety_critical",
+      "question": "What are the minimum and maximum safety pressure limits for the thermal oil heating system?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.45
+      },
+      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n",
+      "citations": [
+        {
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks > Table: Table: Thermal Oil Operational Limits",
+          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n",
+          "score": null
+        },
+        {
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks > Table: Table: Thermal Oil Operational Limits",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n\n| Parameter | Minimum Value | Nominal Value | Max",
+          "score": 13.4563
+        },
+        {
+          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nDocument: TOH-SPEC-2026 | Revision: REV-03 | Dept: ",
+          "score": 12.7106
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 8.8218
+        },
+        {
+          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 1,
+          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechnical Maintenance and Fault Diagnostic Manual | Rev",
+          "score": 6.0834
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 5.6152
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-026",
+      "category": "safety_critical",
+      "question": "What is the minimum circulating flow rate required to prevent thermal oil cracking and heater tube burnout?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.45
+      },
+      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
+      "citations": [
+        {
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
+          "score": null
+        },
+        {
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nDocument: TOH-SPEC-2026 | Revision: REV-03 | Dept: ",
+          "score": 11.7952
+        },
+        {
+          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Codes & Troubleshooting Matrix\n\nWhen a burner safety",
+          "score": 10.9349
+        },
+        {
+          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks > Table: Table: Thermal Oil Operational Limits",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n\n| Parameter | Minimum Value | Nominal Value | Max",
+          "score": 10.3509
+        },
+        {
+          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
+          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+          "page_number": 2,
+          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
+          "content_snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Table: 3. Diagnostic Fault Codes & Troubleshooting Mat",
+          "score": 9.8874
+        },
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 3.3415
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-027",
+      "category": "safety_critical",
+      "question": "What is the set lift pressure and connection size for the primary safety relief valve on SB-Series steam boilers (REV-02)?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 0.6309,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.3946
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 13.2835
+        },
+        {
+          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safety Valv",
+          "score": 12.8345
+        },
+        {
+          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection DN (mm)\nDischarge Cap. (kg/h)\nPrimary Safet",
+          "score": 12.8345
+        },
+        {
+          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | Dischar",
+          "score": 12.3227
+        },
+        {
+          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 3,
+          "section": "3. Safety Relief Valves & Auxiliary Limits > Table: 3. Safety Relief Valves & Auxiliary Limits",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits | Type: Table]\n\n### Table: 3. Safety Relief Valves & Auxiliary Limits\n\n| Safety Device | Set Pressure (bar) | Connection DN (mm) | D",
+          "score": 12.3227
+        }
+      ],
+      "passed": false
+    },
+    {
+      "question_id": "selnikel-bench-028",
+      "category": "safety_critical",
+      "question": "What is the maximum allowed continuous working pressure for model SB-2000 under REV-02 datasheet?",
+      "metrics": {
+        "recall_at_5": 1.0,
+        "ndcg_at_5": 0.4307,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 1.0,
+        "faithfulness_score": 1.0,
+        "abstention_accuracy": 1.0,
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.3646
+      },
+      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+      "citations": [
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
+          "score": null
+        },
+        {
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
+          "score": null
+        }
+      ],
+      "retrieved_evidence": [
+        {
+          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDocument Code: SB-DS-2026 | Revision: REV-02 | Depart",
+          "score": 8.2506
+        },
+        {
+          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 1,
+          "section": "1. General Overview & Design Standards",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet (REV-01)\nDocument Code: SB-DS-2025 | Revision: ",
+          "score": 4.8037
+        },
+        {
+          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+          "page_number": 1,
+          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
+          "content_snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nDocument: TOH-SPEC-2026 | Revision: REV-03 | Dept: ",
+          "score": 4.6222
+        },
+        {
+          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking Press. (bar)\nDesign Press. (bar)\nSteam Temp. (°C)",
+          "score": 4.5068
+        },
+        {
+          "chunk_id": "c56bbdc1-d1c4-4906-953c-2febb920c86f",
+          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
+          "page_number": 2,
+          "section": "2. Technical Operating Parameters & Capacities",
+          "content_snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking Press. (bar)\nDesign Press. (bar)\nSteam Temp",
+          "score": 4.5068
+        }
+      ],
+      "passed": false
+    }
+  ]
+}

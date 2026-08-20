@@ -35,7 +35,7 @@ class RAGBenchmarkEvaluator:
         """Load and validate benchmark questions from JSON dataset file."""
         if not path.exists():
             raise FileNotFoundError(f"Benchmark dataset not found at '{path}'")
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
         return [BenchmarkQuestion(**item) for item in data]
 
@@ -93,19 +93,39 @@ class RAGBenchmarkEvaluator:
     def generate_run_report(
         self,
         results: List[EvaluationItemResult],
+        execution_mode: str = "self-check",
+        status: str = "COMPLETED",
         dataset_version: str = "1.0.0",
-        model_name: str = "gpt-4o-mini",
+        model_name: str = "evaluator",
         prompt_version: str = PROMPT_VERSION,
+        prompt_sha256: Optional[str] = None,
+        dataset_sha256: Optional[str] = None,
+        manifest_sha256: Optional[str] = None,
+        git_commit: Optional[str] = None,
+        oracle_mock_used: bool = False,
+        network_access: str = "disabled",
+        duration_seconds: float = 0.0,
+        run_id: Optional[str] = None,
     ) -> EvaluationRunReport:
         """Aggregate item results into a structured EvaluationRunReport."""
+        rid = run_id or str(uuid.uuid4())
         total = len(results)
         if total == 0:
             return EvaluationRunReport(
-                run_id=str(uuid.uuid4()),
+                run_id=rid,
+                execution_mode=execution_mode,
+                status=status,
                 dataset_version=dataset_version,
                 prompt_version=prompt_version,
+                prompt_sha256=prompt_sha256,
+                dataset_sha256=dataset_sha256,
+                manifest_sha256=manifest_sha256,
+                git_commit=git_commit,
                 model_name=model_name,
+                oracle_mock_used=oracle_mock_used,
+                network_access=network_access,
                 executed_at=datetime.now(timezone.utc).isoformat(),
+                duration_seconds=duration_seconds,
                 total_questions=0,
                 passed_questions=0,
                 mean_recall_at_5=0.0,
@@ -140,11 +160,20 @@ class RAGBenchmarkEvaluator:
         )
 
         return EvaluationRunReport(
-            run_id=str(uuid.uuid4()),
+            run_id=rid,
+            execution_mode=execution_mode,
+            status=status,
             dataset_version=dataset_version,
             prompt_version=prompt_version,
+            prompt_sha256=prompt_sha256,
+            dataset_sha256=dataset_sha256,
+            manifest_sha256=manifest_sha256,
+            git_commit=git_commit,
             model_name=model_name,
+            oracle_mock_used=oracle_mock_used,
+            network_access=network_access,
             executed_at=datetime.now(timezone.utc).isoformat(),
+            duration_seconds=round(duration_seconds, 2),
             total_questions=total,
             passed_questions=passed,
             mean_recall_at_5=round(mean_recall, 4),

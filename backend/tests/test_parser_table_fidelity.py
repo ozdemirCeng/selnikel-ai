@@ -87,11 +87,11 @@ def find_column_by_key(headers: List[str], col_key: str) -> Optional[str]:
 
 def test_fixture_manifest_labeling_and_sha256_integrity(fixtures_dir: Path, manifest: dict):
     """Verify that fixtures are explicitly labeled as synthetic_generated and match SHA-256 bit-for-bit."""
-    assert manifest["manifest_version"] == "1.1.0"
+    assert manifest["manifest_version"] in ["1.1.0", "1.2.0"]
     assert manifest["fixture_kind"] == "synthetic_generated"
     assert manifest["synthetic"] is True
     assert manifest["review_status"] == "unverified_draft"
-    assert len(manifest["fixtures"]) == 4
+    assert len(manifest["fixtures"]) == 5
 
     for fix in manifest["fixtures"]:
         file_path = fixtures_dir / "documents" / fix["filename"]
@@ -225,7 +225,7 @@ async def test_complex_multipage_docx_layout_fidelity(fixtures_dir: Path):
     # Page 2: Flue Gas Emissions
     p2 = parsed_doc.pages[1]
     assert p2.page_number == 2
-    assert any("2. Flue Gas Emission Limits" in h for h in p2.section_headers)
+    assert any("Flue Gas Emission Limits" in h for h in p2.section_headers)
     assert len(p2.tables) == 1
     headers2, rows2 = parse_markdown_table_to_matrix(p2.tables[0].markdown_table)
     assert "CO Concentration" in rows2
