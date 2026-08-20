@@ -33,6 +33,7 @@ class QdrantVectorRepository:
                 port=self.port,
                 api_key=self.api_key,
                 timeout=10.0,
+                check_compatibility=False,
             )
         return self._async_client
 

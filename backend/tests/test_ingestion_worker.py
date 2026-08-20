@@ -187,7 +187,9 @@ def test_ingestion_job_exponential_backoff_and_dead_letter():
 @pytest.mark.asyncio
 async def test_worker_daemon_lifecycle_and_graceful_shutdown():
     """Verify worker daemon initialization, execution, and graceful shutdown."""
-    worker = IngestionWorkerDaemon(worker_id="test-worker-01", poll_interval_seconds=0.05)
+    mock_queue = MagicMock(spec=PostgresIngestionQueue)
+    mock_queue.claim_next_job = AsyncMock(return_value=None)
+    worker = IngestionWorkerDaemon(worker_id="test-worker-01", queue=mock_queue, poll_interval_seconds=0.05)
     assert worker.is_running is False
     assert worker.worker_id == "test-worker-01"
 
