@@ -73,10 +73,12 @@ class FastFallbackParser(BaseDocumentParser):
             blocks: List[ParsedBlock] = []
             all_text_parts: List[str] = []
             all_tables: List[ParsedTable] = []
+            all_rejected_rows: List[Dict[str, Any]] = []
 
             for idx, page in enumerate(reader.pages, start=1):
-                page_tables, page_text, section_headers = self._extract_pdf_page_content(page, page_number=idx)
+                page_tables, page_text, section_headers, rejected_rows = self._extract_pdf_page_content(page, page_number=idx)
                 all_tables.extend(page_tables)
+                all_rejected_rows.extend(rejected_rows)
 
                 all_text_parts.append(f"<!-- Page {idx} -->\n{page_text}")
 
@@ -98,6 +100,11 @@ class FastFallbackParser(BaseDocumentParser):
                         )
                     )
 
+            if all_rejected_rows:
+                logger.warning(
+                    f"FastFallbackParser detected {len(all_rejected_rows)} non-conforming table rows across {path.name}: {all_rejected_rows}"
+                )
+
             full_markdown = "\n\n".join(all_text_parts)
             return ParsedDocument(
                 filename=path.name,
@@ -110,6 +117,11 @@ class FastFallbackParser(BaseDocumentParser):
                     "file_size_bytes": path.stat().st_size,
                     "ocr_applied": False,
                     "parser_name": "fast_fallback_pypdf",
+                    "rejected_table_rows": all_rejected_rows,
+                    "table_parsing_warnings": [
+                        f"Page {r['page_number']}: {r['reason']} (expected {r['expected_cols']}, got {r['actual_cols']})"
+                        for r in all_rejected_rows
+                    ],
                 },
                 parser_name="fast_fallback_pypdf",
             )
@@ -117,10 +129,11 @@ class FastFallbackParser(BaseDocumentParser):
             logger.error(f"FastFallbackParser PDF extraction failed: {e}")
             raise
 
-    def _extract_pdf_page_content(self, page, page_number: int) -> Tuple[List[ParsedTable], str, List[str]]:
-        """Extracts spatial text elements, detects sections and tabular layouts from PDF pages."""
+    def _extract_pdf_page_content(self, page, page_number: int) -> Tuple[List[ParsedTable], str, List[str], List[Dict[str, Any]]]:
+        """Extracts spatial text elements, detects sections and tabular layouts from PDF pages with zero silent loss."""
         raw_text = page.extract_text() or ""
         section_headers: List[str] = []
+        rejected_rows: List[Dict[str, Any]] = []
 
         # 1. Extract Section Headers reliably from page text (excluding model codes and table values)
         for line in raw_text.splitlines():
@@ -156,7 +169,7 @@ class FastFallbackParser(BaseDocumentParser):
             elements = []
 
         if not elements:
-            return [], raw_text.strip(), section_headers
+            return [], raw_text.strip(), section_headers, []
 
         # Group elements by y-coordinate within vertical tolerance (3.0 points)
         lines_dict = defaultdict(list)
@@ -186,27 +199,60 @@ class FastFallbackParser(BaseDocumentParser):
                 multi_col_rows.append((y, line_texts))
 
         # Spatial table clustering: group multi-column rows by vertical proximity (dy <= 35 pt)
+        # Robust against intervening mismatched rows: does not shred subsequent valid rows
         table_clusters: List[List[Tuple[float, List[str]]]] = []
         curr_cluster: List[Tuple[float, List[str]]] = []
+        last_y: Optional[float] = None
 
         for y, row in multi_col_rows:
             if not curr_cluster:
                 curr_cluster.append((y, row))
+                last_y = y
             else:
                 hdr_col_count = len(curr_cluster[0][1])
-                last_y = curr_cluster[-1][0]
-                dy = abs(last_y - y)
+                dy = abs(last_y - y) if last_y is not None else 0.0
 
-                # Row belongs to current cluster if column count matches and vertical gap is within table pitch
-                if len(row) == hdr_col_count and dy <= 35.0:
-                    curr_cluster.append((y, row))
-                else:
+                if dy > 35.0:
                     if len(curr_cluster) >= 2:
                         table_clusters.append(curr_cluster)
+                    elif len(curr_cluster) == 1:
+                        rejected_rows.append({
+                            "page_number": page_number,
+                            "y": curr_cluster[0][0],
+                            "row_cells": curr_cluster[0][1],
+                            "expected_cols": len(curr_cluster[0][1]),
+                            "actual_cols": len(curr_cluster[0][1]),
+                            "reason": "orphan_single_row_no_table_body",
+                        })
                     curr_cluster = [(y, row)]
+                    last_y = y
+                else:
+                    if len(row) == hdr_col_count:
+                        curr_cluster.append((y, row))
+                        last_y = y
+                    else:
+                        # Record rejected row with structured diagnostic and continue active cluster
+                        rejected_rows.append({
+                            "page_number": page_number,
+                            "y": y,
+                            "row_cells": row,
+                            "expected_cols": hdr_col_count,
+                            "actual_cols": len(row),
+                            "reason": "column_count_mismatch",
+                        })
+                        last_y = y
 
         if len(curr_cluster) >= 2:
             table_clusters.append(curr_cluster)
+        elif len(curr_cluster) == 1:
+            rejected_rows.append({
+                "page_number": page_number,
+                "y": curr_cluster[0][0],
+                "row_cells": curr_cluster[0][1],
+                "expected_cols": len(curr_cluster[0][1]),
+                "actual_cols": len(curr_cluster[0][1]),
+                "reason": "orphan_single_row_no_table_body",
+            })
 
         # Reconstruct clean GFM tables from clusters
         tables: List[ParsedTable] = []
@@ -236,7 +282,7 @@ class FastFallbackParser(BaseDocumentParser):
                 )
 
         page_text = raw_text.strip()
-        return tables, page_text, section_headers
+        return tables, page_text, section_headers, rejected_rows
 
     def _parse_docx(self, path: Path) -> ParsedDocument:
         """Parses DOCX preserving document flow order, page breaks, and tabular layout."""
@@ -415,14 +461,22 @@ class FastFallbackParser(BaseDocumentParser):
             lines = [l.strip() for l in table_md.splitlines() if l.strip()]
             if len(lines) >= 3:
                 headers = [c.strip() for c in lines[0].split("|")[1:-1]]
+                preceding_text = content[:match.start()].strip()
+                preceding_lines = [l.strip() for l in preceding_text.splitlines() if l.strip()]
+                caption = None
+                if preceding_lines:
+                    last_line = preceding_lines[-1]
+                    caption = last_line.lstrip("#").strip()
+
                 tables.append(
                     ParsedTable(
-                        table_id=str(uuid.uuid4()),
+                        table_id=f"txt_tab_{page_number}_{len(tables)+1}",
                         page_number=page_number,
                         markdown_table=table_md,
                         num_rows=len(lines) - 2,
                         num_cols=len(headers),
                         headers=headers,
+                        caption=caption or f"Table Page {page_number}",
                     )
                 )
         return tables

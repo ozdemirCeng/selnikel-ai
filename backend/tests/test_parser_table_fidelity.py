@@ -144,14 +144,15 @@ async def test_parametric_manifest_table_and_cell_coordinate_fidelity(fixtures_d
             page_tables = [t for t in parsed_doc.tables if t.page_number == page_no]
             assert len(page_tables) > 0, f"No tables parsed on page {page_no} of {fix['filename']}"
 
-            # Strict Table Identification: match by exact header signature or title
+            # Strict Table Identification: match by exact header signature AND title
             matching_tables = [
                 pt for pt in page_tables
-                if pt.headers == expected_tab["headers"] or pt.caption == expected_tab["title"]
+                if pt.headers == expected_tab["headers"]
+                and (pt.caption == expected_tab["title"] or expected_tab["title"] in (pt.caption or ""))
             ]
             assert len(matching_tables) == 1, (
-                f"Expected exactly 1 matching table on page {page_no} for title='{expected_tab['title']}', "
-                f"found {len(matching_tables)}. Available headers: {[pt.headers for pt in page_tables]}"
+                f"Expected exactly 1 matching table on page {page_no} for title='{expected_tab['title']}' "
+                f"AND headers={expected_tab['headers']}. Found {len(matching_tables)}. Available tables: {[(pt.headers, pt.caption) for pt in page_tables]}"
             )
             target_table = matching_tables[0]
 
@@ -286,3 +287,62 @@ async def test_deterministic_fallback_parser_and_factory(fixtures_dir: Path):
     assert parsed_pdf.parser_name == "fast_fallback_pypdf"
     assert parsed_pdf.metadata["ocr_applied"] is False
     assert len(parsed_pdf.tables) == 2
+    assert "rejected_table_rows" in parsed_pdf.metadata
+
+
+@pytest.mark.asyncio
+async def test_zero_silent_data_loss_and_adversarial_row_recovery():
+    """
+    CRITICAL ADVERSARIAL TEST:
+    Verifies that when a malformed/non-conforming row appears in a spatial table block:
+    1. Subsequent valid conforming rows are NOT shredded or lost.
+    2. The non-conforming row is explicitly captured in metadata['rejected_table_rows'] with structured reasons.
+    3. Zero silent truncation invariant is maintained.
+    """
+    parser = FastFallbackParser()
+
+    # Simulate mock page with spatial visitor delivering:
+    # H1 | H2 | H3 (3 cols)
+    # a  | b  | c  (3 cols)
+    # lost row has four (4 cols - non-conforming)
+    # d  | e  | f  (3 cols - conforming subsequent row)
+    class MockPDFPage:
+        def extract_text(self, visitor_text=None):
+            if visitor_text is None:
+                return "1. General Test Section\nSection 1.1: Operating limits"
+            # Simulate visitor calls
+            # Header row at y=100
+            for idx, text in enumerate(["H1", "H2", "H3"]):
+                visitor_text(text, None, [1, 0, 0, 1, 50.0 + idx * 100, 100.0], None, 10)
+            # Row 1 at y=80
+            for idx, text in enumerate(["a", "b", "c"]):
+                visitor_text(text, None, [1, 0, 0, 1, 50.0 + idx * 100, 80.0], None, 10)
+            # Row 2 (malformed 4 cols) at y=60
+            for idx, text in enumerate(["lost", "row", "has", "four"]):
+                visitor_text(text, None, [1, 0, 0, 1, 50.0 + idx * 80, 60.0], None, 10)
+            # Row 3 (conforming 3 cols) at y=40
+            for idx, text in enumerate(["d", "e", "f"]):
+                visitor_text(text, None, [1, 0, 0, 1, 50.0 + idx * 100, 40.0], None, 10)
+            return "1. General Test Section"
+
+    mock_page = MockPDFPage()
+    tables, page_text, section_headers, rejected_rows = parser._extract_pdf_page_content(mock_page, page_number=1)
+
+    # 1. Verify table extraction
+    assert len(tables) == 1, "Expected 1 recovered table despite intervening non-conforming row"
+    recovered_table = tables[0]
+    assert recovered_table.num_cols == 3
+    assert recovered_table.num_rows == 2  # rows 'a|b|c' and 'd|e|f'
+    assert recovered_table.headers == ["H1", "H2", "H3"]
+    assert "a | b | c" in recovered_table.markdown_table
+    assert "d | e | f" in recovered_table.markdown_table
+
+    # 2. Verify zero silent loss: non-conforming row was captured with structured reason
+    assert len(rejected_rows) == 1
+    rej = rejected_rows[0]
+    assert rej["page_number"] == 1
+    assert rej["expected_cols"] == 3
+    assert rej["actual_cols"] == 4
+    assert rej["reason"] == "column_count_mismatch"
+    assert rej["row_cells"] == ["lost", "row", "has", "four"]
+
