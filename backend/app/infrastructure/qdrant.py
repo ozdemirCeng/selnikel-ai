@@ -138,13 +138,17 @@ class QdrantVectorRepository:
         chunks: List[Any],
         vectors: Optional[List[List[float]]] = None,
     ) -> bool:
-        """Upsert chunk vectors and their rich metadata into Qdrant idempotently."""
+        """Upsert chunk vectors and their rich metadata into Qdrant idempotently using deterministic IDs."""
         if vectors is None:
             points = []
             for chk in chunks:
-                chk_id = getattr(chk, "id", None) or getattr(chk, "metadata", {}).get("chunk_id", str(uuid4()))
+                chk_id = getattr(chk, "id", None) or getattr(chk, "metadata", {}).get("chunk_id")
+                if not chk_id:
+                    raise ValueError("Her parçacık (chunk) için deterministik ve benzersiz bir chunk_id sağlanmalıdır.")
                 meta = dict(getattr(chk, "metadata", {}))
-                vec = meta.pop("vector", None) or getattr(chk, "vector", None) or [0.0] * 1024
+                vec = meta.pop("vector", None) or getattr(chk, "vector", None)
+                if vec is None:
+                    raise ValueError(f"Parçacık '{chk_id}' için embedding vektörü bulunamadı.")
                 payload = {
                     "content": getattr(chk, "content", ""),
                     "document_id": getattr(chk, "document_id", ""),
@@ -164,29 +168,33 @@ class QdrantVectorRepository:
             if len(chunks) != len(vectors):
                 raise ValueError("Chunks and vectors lists must be equal in length.")
 
-            points = [
-                rest_models.PointStruct(
-                    id=chunk.metadata.chunk_id,
-                    vector=vector,
-                    payload={
-                        "content": chunk.content,
-                        "document_id": chunk.metadata.document_id,
-                        "document_version": chunk.metadata.document_version,
-                        "filename": chunk.metadata.filename,
-                        "page_number": chunk.metadata.page_number,
-                        "section": chunk.metadata.section,
-                        "document_type": chunk.metadata.document_type,
-                        "department": chunk.metadata.department,
-                        "equipment_ids": getattr(chunk.metadata, "equipment_ids", []),
-                        "classification": getattr(chunk.metadata, "classification", "public_internal"),
-                        "approval_status": getattr(chunk.metadata, "approval_status", "approved"),
-                        "language": chunk.metadata.language,
-                        "chunk_index": chunk.metadata.chunk_index,
-                        "token_count": chunk.metadata.token_count,
-                    },
+            points = []
+            for chunk, vector in zip(chunks, vectors):
+                chk_id = chunk.metadata.chunk_id if (hasattr(chunk, "metadata") and hasattr(chunk.metadata, "chunk_id")) else None
+                if not chk_id:
+                    raise ValueError("Her DomainChunk için deterministik chunk.metadata.chunk_id tanımlanmalıdır.")
+                points.append(
+                    rest_models.PointStruct(
+                        id=chk_id,
+                        vector=vector,
+                        payload={
+                            "content": chunk.content,
+                            "document_id": chunk.metadata.document_id,
+                            "document_version": chunk.metadata.document_version,
+                            "filename": chunk.metadata.filename,
+                            "page_number": chunk.metadata.page_number,
+                            "section": chunk.metadata.section,
+                            "document_type": chunk.metadata.document_type,
+                            "department": chunk.metadata.department,
+                            "equipment_ids": getattr(chunk.metadata, "equipment_ids", []),
+                            "classification": getattr(chunk.metadata, "classification", "public_internal"),
+                            "approval_status": getattr(chunk.metadata, "approval_status", "approved"),
+                            "language": chunk.metadata.language,
+                            "chunk_index": chunk.metadata.chunk_index,
+                            "token_count": chunk.metadata.token_count,
+                        },
+                    )
                 )
-                for chunk, vector in zip(chunks, vectors)
-            ]
 
         try:
             await self.client.upsert(

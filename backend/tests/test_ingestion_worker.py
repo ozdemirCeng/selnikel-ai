@@ -222,10 +222,10 @@ async def test_worker_pipeline_qdrant_outage_fails_fast():
         mock_job.filename = "test_doc.txt"
         mock_job.department_id = "dept-service"
 
-        mock_session = AsyncMock()
+        mock_session = _DummyAsyncSession()
 
         # Mock Qdrant offline
-        with patch.object(qdrant_repo, "check_health", new_callable=AsyncMock, return_value=False):
+        with patch.object(qdrant_repo, "check_health", AsyncMock(return_value=False)):
             with pytest.raises(RuntimeError) as exc_info:
                 await worker.execute_pipeline(mock_session, mock_job)
             assert "Qdrant" in str(exc_info.value)
@@ -256,9 +256,20 @@ async def test_worker_pipeline_missing_file_hard_error():
     mock_queue.complete_job.assert_not_awaited()
 
 
+class _DummyAsyncSession:
+    async def commit(self):
+        pass
+
+    async def rollback(self):
+        pass
+
+    async def close(self):
+        pass
+
+
 class _MockAsyncSessionContext:
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, session=None):
+        self.session = session or _DummyAsyncSession()
 
     async def __aenter__(self):
         return self.session
@@ -275,7 +286,7 @@ async def test_worker_heartbeat_loop():
 
     worker = IngestionWorkerDaemon(worker_id="worker-hb-01", queue=mock_queue, heartbeat_interval_seconds=0.05)
 
-    mock_session = AsyncMock()
+    mock_session = _DummyAsyncSession()
     mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     lease_lost_event = asyncio.Event()
@@ -305,7 +316,7 @@ async def test_worker_heartbeat_lease_loss_aborts_pipeline():
 
     worker = IngestionWorkerDaemon(worker_id="worker-lost-01", queue=mock_queue, heartbeat_interval_seconds=0.02)
 
-    mock_session = AsyncMock()
+    mock_session = _DummyAsyncSession()
     mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     lease_lost_event = asyncio.Event()
@@ -343,7 +354,7 @@ async def test_worker_heartbeat_db_exception_fails_closed_and_cancels_pipeline()
 
     worker = IngestionWorkerDaemon(worker_id="worker-err-01", queue=mock_queue, heartbeat_interval_seconds=0.02)
 
-    mock_session = AsyncMock()
+    mock_session = _DummyAsyncSession()
     mock_session_factory = lambda: _MockAsyncSessionContext(mock_session)
 
     lease_lost_event = asyncio.Event()
