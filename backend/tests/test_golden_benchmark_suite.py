@@ -4,16 +4,18 @@ Tests:
   1. Schema, dataset integrity, and category distribution (28 items).
   2. Physical fixture grounding, SHA-256 verification, and locator coordinate validity.
   3. Strict OOD and Safety-Critical domain invariants.
-  4. Fail-fast coordinate validator against corrupted revision/page/table/text locators.
+  4. Fail-fast coordinate validator against corrupted revision/page/table/column/row/section/phrase locators.
   5. Multi-mode CLI execution (self-check, offline-retrieval, full-rag).
   6. Profile-based retriever dispatch (memory vs qdrant-local health check).
-  7. Atomic report immutability guarantee (FileExistsError).
-  8. RBAC security enforcement on /api/v1/evaluation/benchmark with isolated temp report dir.
+  7. Full-RAG end-to-end engine contract and live/skipped execution paths.
+  8. Runner-level atomic report immutability guarantee (FileExistsError).
+  9. RBAC security enforcement on /api/v1/evaluation/benchmark with isolated temp report dir.
 """
 import copy
 import json
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 import pytest
 from httpx import AsyncClient, ASGITransport
 
@@ -21,8 +23,13 @@ from app.main import app
 from app.api.v1.endpoints.evaluation import get_reports_dir
 from app.cli.benchmark_runner import run_benchmark, write_atomic_json
 from app.domain.contracts.evaluation import AbstentionReason, BenchmarkQuestion, LocatorType
+from app.domain.rag import Citation, GenerationOutput, RetrievalResult
 from app.services.evaluation.dataset_validator import validate_dataset_file
+from app.services.evaluation.evaluator import RAGBenchmarkEvaluator
 from app.services.evaluation.metrics import extract_parameters
+from app.services.llm.base import BaseLLMProvider
+from app.services.rag.engine import DeterministicRAGEngine
+from app.services.retrieval.in_memory_bm25 import InMemoryBM25Index
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 DATASET_PATH = BACKEND_DIR / "app" / "evaluation" / "datasets" / "golden_benchmark_v1.json"
@@ -107,11 +114,61 @@ def test_parametric_grounding_against_physical_manifest():
 
 
 def test_fail_fast_coordinate_mutations(tmp_path):
-    """Verify validator catches mutated revision_code, out-of-bounds page, fake table, and missing row_key."""
+    """Verify validator strictly catches fake_table, fake_column, fake_section, fake_row, fake_phrase."""
     with open(DATASET_PATH, "r", encoding="utf-8-sig") as f:
         base_data = json.load(f)
 
-    # 1. Mutate revision_code
+    # 1. Mutate table_id (fake_table)
+    mut_tab = copy.deepcopy(base_data)
+    mut_tab[0]["expected_evidence"]["locator"]["table_id"] = "fake_table_999"
+    p_tab = tmp_path / "mut_tab.json"
+    with open(p_tab, "w", encoding="utf-8") as f:
+        json.dump(mut_tab, f)
+    v_tab, err_tab = validate_dataset_file(p_tab, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_tab
+    assert any("table_id 'fake_table_999' not found" in e for e in err_tab)
+
+    # 2. Mutate column_name (fake_column)
+    mut_col = copy.deepcopy(base_data)
+    mut_col[0]["expected_evidence"]["locator"]["column_name"] = "fake_column_xyz"
+    p_col = tmp_path / "mut_col.json"
+    with open(p_col, "w", encoding="utf-8") as f:
+        json.dump(mut_col, f)
+    v_col, err_col = validate_dataset_file(p_col, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_col
+    assert any("column_name 'fake_column_xyz' not found" in e for e in err_col)
+
+    # 3. Mutate row_key (fake_row)
+    mut_row = copy.deepcopy(base_data)
+    mut_row[0]["expected_evidence"]["locator"]["row_key"] = "NONEXISTENT_ROW_KEY_XYZ"
+    p_row = tmp_path / "mut_row.json"
+    with open(p_row, "w", encoding="utf-8") as f:
+        json.dump(mut_row, f)
+    v_row, err_row = validate_dataset_file(p_row, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_row
+    assert any("row_key 'NONEXISTENT_ROW_KEY_XYZ' not found" in e for e in err_row)
+
+    # 4. Mutate section_header (fake_section)
+    mut_sec = copy.deepcopy(base_data)
+    mut_sec[9]["expected_evidence"]["locator"]["section_header"] = "Nonexistent Safety Section 999"
+    p_sec = tmp_path / "mut_sec.json"
+    with open(p_sec, "w", encoding="utf-8") as f:
+        json.dump(mut_sec, f)
+    v_sec, err_sec = validate_dataset_file(p_sec, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_sec
+    assert any("section_header 'Nonexistent Safety Section 999' not found" in e for e in err_sec)
+
+    # 5. Mutate key_phrase (fake_phrase)
+    mut_phr = copy.deepcopy(base_data)
+    mut_phr[9]["expected_evidence"]["locator"]["key_phrase"] = "Nonexistent Key Phrase XYZ 123"
+    p_phr = tmp_path / "mut_phr.json"
+    with open(p_phr, "w", encoding="utf-8") as f:
+        json.dump(mut_phr, f)
+    v_phr, err_phr = validate_dataset_file(p_phr, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_phr
+    assert any("key_phrase 'Nonexistent Key Phrase XYZ 123' not found" in e for e in err_phr)
+
+    # 6. Mutate revision_code
     mut_rev = copy.deepcopy(base_data)
     mut_rev[0]["expected_evidence"]["revision_code"] = "FAKE-REV"
     p_rev = tmp_path / "mut_rev.json"
@@ -121,7 +178,7 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_rev
     assert any("revision_code mismatch" in e for e in err_rev)
 
-    # 2. Mutate page_number (out of bounds)
+    # 7. Mutate page_number
     mut_pg = copy.deepcopy(base_data)
     mut_pg[0]["expected_evidence"]["page_number"] = 999
     p_pg = tmp_path / "mut_pg.json"
@@ -130,16 +187,6 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     v_pg, err_pg = validate_dataset_file(p_pg, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
     assert not v_pg
     assert any("exceeds manifest page_count" in e or "exceeds parsed document" in e for e in err_pg)
-
-    # 3. Mutate table row_key
-    mut_row = copy.deepcopy(base_data)
-    mut_row[0]["expected_evidence"]["locator"]["row_key"] = "NONEXISTENT_ROW_KEY_XYZ"
-    p_row = tmp_path / "mut_row.json"
-    with open(p_row, "w", encoding="utf-8") as f:
-        json.dump(mut_row, f)
-    v_row, err_row = validate_dataset_file(p_row, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
-    assert not v_row
-    assert any("row_key 'NONEXISTENT_ROW_KEY_XYZ' not found" in e for e in err_row)
 
 
 def test_out_of_domain_and_safety_critical_invariants():
@@ -200,11 +247,12 @@ def test_offline_retrieval_mode_execution(tmp_path):
     assert report.status == "COMPLETED"
     assert report.gate_status == "PASSED"
     assert report.total_questions == 28
+    assert report.passed_questions == 19  # Exactly 19 / 23 in-domain items passed (OOD not inflated)
     assert report.oracle_mock_used is False
     assert report.network_access == "disabled"
     assert report.model_name == "retrieval-memory-bm25"
-    assert report.mean_recall_at_5 >= 0.65
-    assert report.mean_citation_precision == 0.0  # Pure retrieval - no fake generation
+    assert report.mean_recall_at_5 >= 0.75  # In-domain recall is 0.8261
+    assert report.mean_citation_precision == 0.0  # Pure retrieval - zero fake generation
     assert report.mean_faithfulness == 0.0
     assert report.abstention_rate == 1.0
     assert out_file.exists()
@@ -219,8 +267,6 @@ def test_qdrant_local_profile_handling(tmp_path):
         output_path=out_file,
     )
 
-    # In host CI/offline test where Qdrant container is not running, must fail fast with exit code 1
-    # or pass if Qdrant container happens to be online
     if exit_code == 1:
         assert report.status == "FAILED"
         assert report.gate_status == "FAILED"
@@ -228,6 +274,37 @@ def test_qdrant_local_profile_handling(tmp_path):
     else:
         assert report.status == "COMPLETED"
         assert report.network_access == "local_only"
+
+
+class MockLLMProvider(BaseLLMProvider):
+    """Deterministic Mock LLM Provider for Full-RAG pipeline testing."""
+    async def generate(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
+        return "The SB-500 steam boiler has steam capacity of 0.5 t/h and design pressure of 16.0 bar. [Doc: SB_Series_Steam_Boiler_Datasheet.pdf, P. 2]"
+
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, **kwargs):
+        yield "The SB-500 steam boiler has steam capacity of 0.5 t/h and design pressure of 16.0 bar. [Doc: SB_Series_Steam_Boiler_Datasheet.pdf, P. 2]"
+
+    async def check_health(self) -> bool:
+        return True
+
+
+@pytest.mark.asyncio
+async def test_full_rag_pipeline_end_to_end():
+    """Verify DeterministicRAGEngine query_with_retrieval contract runs end-to-end with LLM provider."""
+    bm25 = InMemoryBM25Index()
+    llm = MockLLMProvider()
+    rag_engine = DeterministicRAGEngine(retriever=bm25, llm=llm)
+
+    output, retrieved = await rag_engine.query_with_retrieval("What is the design pressure for SB-500?", top_k=3)
+    assert isinstance(output, GenerationOutput)
+    assert "16.0 bar" in output.answer
+    assert isinstance(retrieved, list)
+
+    evaluator = RAGBenchmarkEvaluator(dataset_path=DATASET_PATH)
+    q0 = evaluator.questions[0]
+    item_res = evaluator.evaluate_single(q0, output, retrieved)
+    assert item_res.question_id == q0.id
+    assert item_res.metrics.numerical_unit_accuracy == 1.0
 
 
 def test_full_rag_mode_offline_skipped_invariant(tmp_path, monkeypatch):
@@ -252,14 +329,20 @@ def test_full_rag_mode_offline_skipped_invariant(tmp_path, monkeypatch):
     assert out_file.exists()
 
 
-def test_report_immutability_guarantee(tmp_path):
-    """Verify write_atomic_json raises FileExistsError when trying to overwrite without permission."""
-    target = tmp_path / "immutable_report.json"
-    write_atomic_json(target, {"run_id": "first-run"}, overwrite=False)
+def test_runner_report_immutability_guarantee(tmp_path):
+    """Verify run_benchmark enforces immutability at runner level and requires overwrite=True."""
+    target = tmp_path / "runner_immutable_report.json"
+    exit_code, report, _ = run_benchmark(mode="self-check", output_path=target, overwrite_report=False)
     assert target.exists()
+    assert exit_code == 0
 
+    # Running again without overwrite_report must raise FileExistsError
     with pytest.raises(FileExistsError):
-        write_atomic_json(target, {"run_id": "second-run"}, overwrite=False)
+        run_benchmark(mode="self-check", output_path=target, overwrite_report=False)
+
+    # Running with overwrite_report=True succeeds
+    exit_code2, report2, _ = run_benchmark(mode="self-check", output_path=target, overwrite_report=True)
+    assert exit_code2 == 0
 
 
 @pytest.mark.asyncio

@@ -117,9 +117,9 @@ class RAGBenchmarkEvaluator:
                 faithfulness_score=0.0,
                 safety_compliance_score=1.0,
                 abstention_accuracy=1.0,
-                overall_score=1.0,
+                overall_score=0.0,
             )
-            passed = True
+            passed = False  # OOD questions cannot pass evidence retrieval; in-domain items define retrieval pass count
         else:
             ev = question.expected_evidence
             recall_5 = compute_evidence_recall_at_k(ev, chunks, k=5)
@@ -207,12 +207,22 @@ class RAGBenchmarkEvaluator:
                 item_results=[],
             )
 
-        passed = sum(1 for r in results if r.passed)
-        mean_recall = sum(r.metrics.recall_at_5 for r in results) / total
-        mean_ndcg = sum(r.metrics.ndcg_at_5 for r in results) / total
-        mean_num_acc = sum(r.metrics.numerical_unit_accuracy for r in results) / total
-        mean_cit_prec = sum(r.metrics.citation_precision for r in results) / total
-        mean_faith = sum(r.metrics.faithfulness_score for r in results) / total
+        if execution_mode == "offline-retrieval":
+            in_domain_results = [r for r in results if not any(q.id == r.question_id and q.is_out_of_domain for q in self.questions)]
+            id_count = len(in_domain_results) if in_domain_results else total
+            passed = sum(1 for r in in_domain_results if r.passed)
+            mean_recall = sum(r.metrics.recall_at_5 for r in in_domain_results) / id_count
+            mean_ndcg = sum(r.metrics.ndcg_at_5 for r in in_domain_results) / id_count
+            mean_num_acc = 0.0
+            mean_cit_prec = 0.0
+            mean_faith = 0.0
+        else:
+            passed = sum(1 for r in results if r.passed)
+            mean_recall = sum(r.metrics.recall_at_5 for r in results) / total
+            mean_ndcg = sum(r.metrics.ndcg_at_5 for r in results) / total
+            mean_num_acc = sum(r.metrics.numerical_unit_accuracy for r in results) / total
+            mean_cit_prec = sum(r.metrics.citation_precision for r in results) / total
+            mean_faith = sum(r.metrics.faithfulness_score for r in results) / total
 
         safety_items = [r for r in results if any(q.id == r.question_id and q.is_safety_critical for q in self.questions)]
         safety_rate = (

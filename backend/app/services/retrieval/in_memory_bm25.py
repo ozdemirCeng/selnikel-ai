@@ -1,11 +1,12 @@
 import math
 import re
 from typing import Dict, List, Optional, Tuple
-from app.domain.rag import RetrievalResult
+from app.domain.rag import RetrievalFilter, RetrievalResult
 from app.domain.document import DomainChunk
+from app.services.retrieval.base import BaseRetriever
 
 
-class InMemoryBM25Index:
+class InMemoryBM25Index(BaseRetriever):
     """Okapi BM25 in-memory index for offline retrieval benchmarking."""
 
     def __init__(self, k1: float = 1.5, b: float = 0.75):
@@ -118,3 +119,13 @@ class InMemoryBM25Index:
             results.append(res)
 
         return results
+
+    async def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        filter_criteria: Optional[RetrievalFilter] = None,
+    ) -> List[RetrievalResult]:
+        """BaseRetriever async interface implementation."""
+        doc_filter = filter_criteria.document_id if filter_criteria else None
+        return self.search(query=query, top_k=top_k, document_filter=doc_filter)

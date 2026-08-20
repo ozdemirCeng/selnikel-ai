@@ -1,7 +1,7 @@
 import json
 import time
 import uuid
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
 from app.db.models.query_log import QueryLogModel
@@ -106,6 +106,83 @@ class DeterministicRAGEngine:
             answer=answer,
             citations=citations,
             sources_used=sources,
+        )
+
+    async def query_with_retrieval(
+        self,
+        query_text: str,
+        top_k: int = 4,
+        filter_criteria: Optional[RetrievalFilter] = None,
+        session: Optional[AsyncSession] = None,
+        user_id: Optional[str] = None,
+    ) -> Tuple[GenerationOutput, List[RetrievalResult]]:
+        """Execute deterministic RAG query and return both GenerationOutput and retrieved DomainChunks."""
+        start_time = time.perf_counter()
+        query_text = query_text.strip()
+
+        if not query_text:
+            return (
+                GenerationOutput(
+                    answer="Lütfen bir soru veya teknik parametre giriniz.",
+                    citations=[],
+                    sources_used=[],
+                ),
+                [],
+            )
+
+        # 1. Stage 1: Hybrid Retrieval
+        fetch_candidates = max(10, top_k * 3)
+        raw_candidates = await self.retriever.retrieve(
+            query=query_text,
+            top_k=fetch_candidates,
+            filter_criteria=filter_criteria,
+        )
+
+        # 2. Stage 2: Cross-Encoder Reranking
+        reranked_chunks = await self.reranker.rerank(
+            query=query_text,
+            results=raw_candidates,
+            top_n=top_k,
+        )
+
+        # 3. Build Grounded Prompt
+        user_prompt = build_rag_user_prompt(
+            query=query_text,
+            retrieved_chunks=reranked_chunks,
+        )
+
+        # 4. Generate Answer via LLM
+        answer = await self.llm.generate(
+            prompt=user_prompt,
+            system_prompt=SELNIKEL_RAG_SYSTEM_PROMPT,
+        )
+
+        # 5. Extract and Verify Citations
+        citations, sources = self.citation_engine.extract_and_verify_citations(
+            answer_text=answer,
+            retrieved_chunks=reranked_chunks,
+        )
+
+        latency_ms = (time.perf_counter() - start_time) * 1000.0
+
+        if session is not None:
+            await self._log_query(
+                session=session,
+                query=query_text,
+                answer=answer,
+                chunks=reranked_chunks,
+                citations=citations,
+                latency_ms=latency_ms,
+                user_id=user_id,
+            )
+
+        return (
+            GenerationOutput(
+                answer=answer,
+                citations=citations,
+                sources_used=sources,
+            ),
+            reranked_chunks,
         )
 
     async def query_stream(

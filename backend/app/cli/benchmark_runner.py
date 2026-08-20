@@ -70,7 +70,7 @@ def write_atomic_json(target_path: Path, data: dict, overwrite: bool = False) ->
     """
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if target_path.exists() and not overwrite:
-        raise FileExistsError(f"Immutable report file already exists: {target_path}")
+        raise FileExistsError(f"Immutable report file already exists: {target_path}. Specify --overwrite to replace.")
 
     temp_path = target_path.with_name(f".tmp_{uuid.uuid4().hex}_{target_path.name}")
     with open(temp_path, "w", encoding="utf-8") as f:
@@ -97,7 +97,6 @@ def check_local_llm_health(url: str) -> bool:
         with urllib.request.urlopen(req, timeout=2) as response:
             return response.status in [200, 204]
     except Exception:
-        # Try root endpoint
         try:
             req = urllib.request.Request(url.rstrip("/"), method="GET")
             with urllib.request.urlopen(req, timeout=2) as response:
@@ -141,13 +140,13 @@ def build_retrieval_index(
                 "Please start the Qdrant container or select '--profile memory'."
             )
 
-        from app.services.embedding.deterministic_hash import DeterministicHashEmbeddingProvider
-        from app.services.retrieval.qdrant_hybrid import QdrantHybridRetriever
-        from app.repositories.vector.qdrant_client import QdrantVectorRepository
+        from app.services.embedding.fallback import DeterministicHashEmbeddingProvider
+        from app.services.retrieval.hybrid import QdrantHybridRetriever
+        from app.infrastructure.qdrant import QdrantVectorRepository
 
         parser = FastFallbackParser()
         chunker = TableAwareChunker(max_chunk_chars=800, chunk_overlap_chars=100)
-        embedding_provider = DeterministicHashEmbeddingProvider(dimension=1024)
+        embed_provider = DeterministicHashEmbeddingProvider(dimension=1024)
         repo = QdrantVectorRepository(collection_name="selnikel_benchmark_test")
 
         all_chunks = []
@@ -161,9 +160,10 @@ def build_retrieval_index(
                     except Exception as pe:
                         print(f"[!] Error parsing fixture {fix_file.name}: {pe}")
 
-        asyncio.run(repo.recreate_collection_with_schema(dimension=1024))
-        asyncio.run(repo.upsert_chunks(all_chunks, embedding_provider))
-        retriever = QdrantHybridRetriever(vector_repo=repo, embedding_provider=embedding_provider)
+        asyncio.run(repo.ensure_collection(dimension=1024))
+        vectors = asyncio.run(embed_provider.embed_documents([c.content for c in all_chunks]))
+        asyncio.run(repo.upsert_chunks(all_chunks, vectors=vectors))
+        retriever = QdrantHybridRetriever(embed_provider=embed_provider, vector_repo=repo)
         print(f"[*] Ingested {len(all_chunks)} chunks into local Qdrant collection 'selnikel_benchmark_test'.")
         return retriever, "retrieval-qdrant-local-hybrid", "local_only"
 
@@ -178,10 +178,10 @@ def run_benchmark(
     category_filter: Optional[str] = None,
     output_path: Optional[Path] = None,
     base_dir: Optional[Path] = None,
-    overwrite_report: bool = True,
+    overwrite_report: bool = False,
 ) -> Tuple[int, EvaluationRunReport, Path]:
     """
-    Core benchmark execution function.
+    Core benchmark execution function with runner-level immutability.
     Returns (exit_code, report, report_path).
     """
     start_time = time.time()
@@ -208,6 +208,10 @@ def run_benchmark(
         final_output_path = Path(output_path)
     else:
         final_output_path = reports_dir / f"benchmark_report_{mode}_{profile}_{run_id[:8]}_{timestamp_str}.json"
+
+    # Strict runner-level immutability enforcement
+    if final_output_path.exists() and not overwrite_report:
+        raise FileExistsError(f"Immutable report file already exists: {final_output_path}. Specify overwrite_report=True to replace.")
 
     # Metadata capture
     dataset_sha = sha256_file(ds_file)
@@ -344,10 +348,9 @@ def run_benchmark(
                 retrieved = retriever.search_sync(q.question, top_k=5)
             elif hasattr(retriever, "search"):
                 res = retriever.search(q.question, top_k=5)
-                if asyncio.iscoroutine(res):
-                    retrieved = asyncio.run(res)
-                else:
-                    retrieved = res
+                retrieved = asyncio.run(res) if asyncio.iscoroutine(res) else res
+            elif hasattr(retriever, "retrieve"):
+                retrieved = asyncio.run(retriever.retrieve(q.question, top_k=5))
             else:
                 retrieved = []
 
@@ -376,7 +379,6 @@ def run_benchmark(
         return exit_code, report, final_output_path
 
     elif mode == "full-rag":
-        # Check if real generator is available and healthy
         openai_key = os.environ.get("OPENAI_API_KEY")
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
         local_llm_url = os.environ.get("LOCAL_LLM_URL")
@@ -432,15 +434,15 @@ def run_benchmark(
         # Live generator is available -> Execute full RAG pipeline
         try:
             from app.services.rag.engine import DeterministicRAGEngine
-            from app.services.llm.factory import get_llm_provider
+            from app.services.llm.factory import LLMProviderFactory
 
             retriever, _, _ = build_retrieval_index(profile, fixtures_dir)
-            llm_provider = get_llm_provider()
-            rag_engine = DeterministicRAGEngine(retriever=retriever, llm_provider=llm_provider)
+            llm = LLMProviderFactory.get_provider()
+            rag_engine = DeterministicRAGEngine(retriever=retriever, llm=llm)
 
             results = []
             for q in questions:
-                gen_output, chunks = asyncio.run(rag_engine.query_with_retrieval(q.question))
+                gen_output, chunks = asyncio.run(rag_engine.query_with_retrieval(q.question, top_k=5))
                 item_res = evaluator.evaluate_single(q, gen_output, chunks)
                 results.append(item_res)
 
@@ -515,6 +517,7 @@ def main():
     parser.add_argument("--dataset", type=str, default=None, help="Path to golden benchmark JSON dataset")
     parser.add_argument("--category", type=str, default=None, help="Filter evaluation to a specific category")
     parser.add_argument("--output", type=str, default=None, help="Path to save evaluation report JSON")
+    parser.add_argument("--overwrite", action="store_true", default=False, help="Explicitly allow overwriting existing report file")
     args = parser.parse_args()
 
     exit_code, report, report_path = run_benchmark(
@@ -523,6 +526,7 @@ def main():
         dataset_path=Path(args.dataset) if args.dataset else None,
         category_filter=args.category,
         output_path=Path(args.output) if args.output else None,
+        overwrite_report=args.overwrite,
     )
 
     if report:
