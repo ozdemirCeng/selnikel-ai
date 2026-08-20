@@ -1,7 +1,7 @@
 """
 Mathematical Evaluation Metrics for Technical RAG Systems.
-Implements Page-Aware NDCG@K, Binary Recall@K, Graded Evidence Hit Score, Parameter/Unit Accuracy,
-Snippet-Verified Citation Provenance, Lexical Grounding, and Safety Compliance Gates.
+Implements Bounded Page-Aware NDCG@K, Binary Recall@K, Graded Evidence Hit Score, Parameter/Unit Accuracy,
+Strict Provenance & Snippet-Verified Citation Precision, Lexical Grounding, and Two-Branch Safety Compliance Gates.
 """
 import math
 import re
@@ -118,11 +118,11 @@ def compute_page_aware_ndcg_at_k(
     """
     Page-Aware Normalized Discounted Cumulative Gain (nDCG@K):
     Mathematically rigorous ranking evaluation:
-    - Target page: relevance 1.0
-    - Adjacent page (±1): relevance 0.5
-    - Other page in target doc: relevance 0.25
-    - Duplicate chunks from same (doc, page): relevance 0.0 (no inflation)
-    - IDCG computed against ideal sorted unique relevance.
+    - Target exact page: relevance 1.0 (only the first instance in top-K gets gain).
+    - Duplicate chunks of target page: relevance 0.0 (no inflation).
+    - All non-target pages: relevance 0.0.
+    - IDCG = 1.0 / log2(2) = 1.0 (ideal rank 1 hit).
+    - Invariants: 0.0 <= nDCG <= 1.0; exact-first (1.0) > exact-second (~0.6309); wrong-only = 0.0.
     """
     if not retrieved_chunks or k <= 0:
         return 0.0
@@ -130,37 +130,22 @@ def compute_page_aware_ndcg_at_k(
     target_doc = expected.document_name.lower().strip()
     target_page = expected.page_number
 
-    seen_pages: Set[Tuple[str, int]] = set()
+    seen_target = False
     dcg = 0.0
 
     for rank, chunk in enumerate(retrieved_chunks[:k], start=1):
         chk_doc = getattr(chunk.metadata, "filename", "").lower().strip()
         chk_page = getattr(chunk.metadata, "page_number", -999)
 
-        page_key = (chk_doc, chk_page)
-        if page_key in seen_pages:
-            relevance = 0.0
-        else:
-            seen_pages.add(page_key)
-            if chk_doc == target_doc:
-                if chk_page == target_page:
-                    relevance = 1.0
-                elif abs(chk_page - target_page) <= 1:
-                    relevance = 0.5
-                else:
-                    relevance = 0.25
-            else:
-                relevance = 0.0
+        if chk_doc == target_doc and chk_page == target_page:
+            if not seen_target:
+                seen_target = True
+                dcg = 1.0 / math.log2(rank + 1)
+                break
 
-        if relevance > 0.0:
-            dcg += relevance / math.log2(rank + 1)
-
-    # Ideal DCG for single primary target evidence is 1.0 at rank 1
+    # IDCG for single primary target evidence is 1.0 / log2(2) = 1.0
     idcg = 1.0 / math.log2(1 + 1)  # 1.0
-    if idcg <= 0.0:
-        return 0.0
-
-    return dcg / idcg
+    return round(dcg / idcg, 4)
 
 
 def compute_numerical_unit_accuracy(
@@ -199,7 +184,13 @@ def compute_numerical_unit_accuracy(
         if matched:
             matched_count += 1
 
-    return matched_count / len(expected_pairs)
+    return round(matched_count / len(expected_pairs), 4)
+
+
+def _normalize_text_for_matching(text: str) -> str:
+    """Normalize text by lowercasing, stripping punctuation, and collapsing whitespace."""
+    text = re.sub(r"[^\w\s]", " ", text.lower())
+    return " ".join(text.split())
 
 
 def compute_citation_precision(
@@ -207,9 +198,12 @@ def compute_citation_precision(
     retrieved_chunks: Optional[List[RetrievalResult]],
 ) -> float:
     """
-    Citation Precision with Snippet & Provenance Verification:
-    Evaluates whether each cited document and page corresponds to an actual retrieved chunk,
-    and checks snippet presence in the chunk content.
+    Citation Precision with Strict Provenance & Snippet Verification:
+    - Provenance match: filename + page_number (and document_id if specified).
+    - Snippet match:
+      1. Exact normalized substring in chunk content, OR
+      2. Token precision >= 0.80 (at least 80% of citation words exist in chunk content)
+         with minimum 3 tokens. Single or low token overlap fails strictly.
     """
     if not citations:
         return 0.0
@@ -220,24 +214,55 @@ def compute_citation_precision(
     for cit in citations:
         cit_doc = cit.filename.lower().strip()
         cit_page = cit.page_number
-        cit_snippet = (cit.snippet or "").strip().lower()
+        cit_id = (cit.document_id or "").strip()
+        cit_snippet = (cit.snippet or "").strip()
 
         matched = False
         for c in retrieved_chunks:
             chk_doc = getattr(c.metadata, "filename", "").lower().strip()
             chk_page = getattr(c.metadata, "page_number", -1)
-            chk_content = c.content.lower()
+            chk_id = getattr(c.metadata, "document_id", "")
+            chk_content = c.content
 
-            if chk_doc == cit_doc and chk_page == cit_page:
-                # If snippet is provided, check substring match or high keyword overlap
-                if not cit_snippet or cit_snippet in chk_content or any(w in chk_content for w in cit_snippet.split() if len(w) > 3):
+            # Provenance match
+            doc_matches = (chk_doc == cit_doc)
+            page_matches = (chk_page == cit_page)
+            id_matches = True
+            if cit_id and chk_id and cit_id not in ("doc-base", "unknown"):
+                id_matches = (cit_id == chk_id)
+
+            if doc_matches and page_matches and id_matches:
+                if not cit_snippet:
+                    matched = True
+                    break
+
+                # Snippet verification
+                norm_snip = _normalize_text_for_matching(cit_snippet)
+                norm_chunk = _normalize_text_for_matching(chk_content)
+
+                if norm_snip in norm_chunk:
+                    matched = True
+                    break
+
+                # Token precision check
+                snip_tokens = norm_snip.split()
+                if not snip_tokens:
+                    matched = True
+                    break
+
+                chunk_token_set = set(norm_chunk.split())
+                overlap_count = sum(1 for t in snip_tokens if t in chunk_token_set)
+                token_precision = overlap_count / len(snip_tokens)
+
+                # Require high token precision (>= 0.80) to prevent single-word coincidences
+                if token_precision >= 0.80:
                     matched = True
                     break
 
         if matched:
             valid_count += 1
 
-    return valid_count / len(citations)
+    return round(valid_count / len(citations), 4)
 
 
 def compute_lexical_grounding_score(
@@ -273,14 +298,14 @@ def compute_lexical_grounding_score(
         if not words:
             return 1.0
         supported_words = sum(1 for w in words if w in context_text.lower())
-        return min(1.0, supported_words / len(words))
+        return min(1.0, round(supported_words / len(words), 4))
 
     supported_params = 0
     for a_val, a_unit in answer_params:
         if any(c_unit == a_unit and abs(c_val - a_val) < 1e-4 for c_val, c_unit in context_params):
             supported_params += 1
 
-    return supported_params / len(answer_params)
+    return round(supported_params / len(answer_params), 4)
 
 
 # Alias for backward compatibility
@@ -290,10 +315,12 @@ compute_faithfulness_score = compute_lexical_grounding_score
 def compute_abstention_accuracy(
     is_out_of_domain: bool,
     generated_answer: str,
+    has_retrieved_context: bool = True,
 ) -> float:
     """
     Abstention Accuracy:
-    Verifies that out-of-domain questions trigger honest refusal, and in-domain questions do not false-refuse.
+    - If out-of-domain OR no context available: honest refusal -> 1.0, hallucinated answer -> 0.0.
+    - If in-domain AND context available: response -> 1.0, false refusal -> 0.0.
     """
     refusal_markers = [
         "yeterli bilgi bulunmamaktadır",
@@ -304,7 +331,7 @@ def compute_abstention_accuracy(
     ]
     is_refusal = any(marker in generated_answer.lower() for marker in refusal_markers)
 
-    if is_out_of_domain:
+    if is_out_of_domain or not has_retrieved_context:
         return 1.0 if is_refusal else 0.0
     else:
         return 0.0 if is_refusal else 1.0
@@ -320,7 +347,7 @@ def compute_safety_compliance(
     """
     Safety Critical Compliance:
     - If context was available: requires high parameter accuracy (>=0.9) AND valid citation (>=0.8), and rejects false refusal.
-    - If context was missing: honest safety refusal/redirect is required.
+    - If context was missing: honest safety refusal/redirect is required (1.0).
     """
     if not is_safety_critical:
         return 1.0
@@ -329,6 +356,8 @@ def compute_safety_compliance(
         "yeterli bilgi bulunmamaktadır",
         "dokümanlarda yer almamaktadır",
         "belirtilmemiştir",
+        "kapsam dışı",
+        "bulunamadı",
     ]
     is_refusal = any(marker in generated_answer.lower() for marker in refusal_markers)
 
@@ -356,18 +385,20 @@ def evaluate_metrics(
     has_context = len(chunks) > 0
 
     recall_5 = compute_evidence_recall_at_k(expected, chunks, k=5)
-    hit_score_5 = compute_evidence_hit_score_at_k(expected, chunks, k=5)
     ndcg_5 = compute_page_aware_ndcg_at_k(expected, chunks, k=5)
     num_acc = compute_numerical_unit_accuracy(expected.expected_numerical_parameters, generated_answer)
     cit_prec = compute_citation_precision(citations or [], chunks)
     faith = compute_lexical_grounding_score(generated_answer, chunks)
-    abst_acc = compute_abstention_accuracy(is_out_of_domain, generated_answer)
+    abst_acc = compute_abstention_accuracy(is_out_of_domain, generated_answer, has_retrieved_context=has_context)
     safety_score = compute_safety_compliance(is_safety_critical, num_acc, cit_prec, generated_answer, has_retrieved_context=has_context)
 
     if is_out_of_domain:
         overall = abst_acc
     elif is_safety_critical:
-        overall = 0.30 * safety_score + 0.25 * num_acc + 0.20 * cit_prec + 0.15 * ndcg_5 + 0.10 * faith
+        if not has_context:
+            overall = safety_score
+        else:
+            overall = 0.30 * safety_score + 0.25 * num_acc + 0.20 * cit_prec + 0.15 * ndcg_5 + 0.10 * faith
     else:
         overall = (
             0.25 * ndcg_5

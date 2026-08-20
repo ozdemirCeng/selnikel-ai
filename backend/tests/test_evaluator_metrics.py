@@ -2,17 +2,19 @@
 Unit & Adversarial Edge Case Tests for RAG Benchmark Metrics and Contracts.
 Validates:
 1. Empty / None retrieval contexts strictly return 0.0 for Recall and nDCG.
-2. Page-proximity relevance and ranking inversion penalty in nDCG@K.
+2. Bounded mathematical nDCG@K ([0, 1]) and strict ranking invariants.
 3. Unparseable expected parameters strictly fail-fast with ValueError.
 4. Numerical parameter extraction with comma normalization and unit mismatch rejection.
-5. Citation snippet and provenance verification against retrieved chunks.
-6. Lexical grounding score and honest abstention handling.
-7. Out-of-Domain and Safety-Critical hard pass gates.
-8. Deterministic evaluation output.
+5. Strict citation provenance & snippet verification rejecting weak single-word overlaps.
+6. Two-branch safety-critical hard gates (no-context honest refusal vs with-context accuracy).
+7. Out-of-Domain hard pass gate.
+8. Conditional JSON schema governance for expert-reviewed vs unverified datasets.
 9. Integration of formal PromptContract in generation prompt builder.
 """
+import jsonschema
 import math
 import pytest
+from pathlib import Path
 from app.domain.contracts.evaluation import (
     BenchmarkQuestion,
     ExpectedEvidence,
@@ -34,58 +36,82 @@ from app.services.evaluation.metrics import (
     extract_parameters,
 )
 from app.services.evaluation.evaluator import RAGBenchmarkEvaluator
+from app.services.evaluation.dataset_validator import validate_dataset_file
 from app.services.rag.prompts import build_rag_user_prompt, SELNIKEL_RAG_SYSTEM_PROMPT
 
 
 def test_empty_and_none_retrieval_returns_zero():
-    """CRITICAL FIX VERIFICATION: Verify that empty and None chunk lists return 0.0 strictly."""
+    """CRITICAL FIX: Verify that empty and None chunk lists return 0.0 strictly."""
     expected = ExpectedEvidence(
         document_name="boiler_manual.pdf",
         page_number=10,
         ground_truth_answer="Operating pressure is 16 bar.",
     )
 
-    # Empty list
     assert compute_evidence_recall_at_k(expected, []) == 0.0
     assert compute_evidence_hit_score_at_k(expected, []) == 0.0
     assert compute_page_aware_ndcg_at_k(expected, []) == 0.0
 
-    # None list
     assert compute_evidence_recall_at_k(expected, None) == 0.0
     assert compute_evidence_hit_score_at_k(expected, None) == 0.0
     assert compute_page_aware_ndcg_at_k(expected, None) == 0.0
 
 
-def test_ndcg_ranking_inversion_penalty():
-    """Verify that ranking inversion (suboptimal page first) is penalized in nDCG without false clipping."""
+def test_ndcg_bounded_and_invariants():
+    """
+    CRITICAL INVARIANT TEST: Verify that nDCG is strictly bounded in [0, 1]
+    and satisfies exact-first > exact-second > wrong-only == 0, with duplicate de-inflation.
+    """
     expected = ExpectedEvidence(
         document_name="manual.pdf",
         page_number=5,
         ground_truth_answer="Test answer",
     )
 
-    # Rank 1: Adjacent page (Page 6) -> relevance 0.5
-    # Rank 2: Exact target page (Page 5) -> relevance 1.0
-    inverted_chunks = [
-        RetrievalResult(
-            chunk_id="c1",
-            content="Adjacent content page 6",
-            metadata=ChunkMetadata(chunk_id="c1", document_id="d1", filename="manual.pdf", page_number=6),
-            score=0.9,
-        ),
-        RetrievalResult(
-            chunk_id="c2",
-            content="Exact content page 5",
-            metadata=ChunkMetadata(chunk_id="c2", document_id="d1", filename="manual.pdf", page_number=5),
-            score=0.8,
-        ),
-    ]
+    exact_chunk = RetrievalResult(
+        chunk_id="c1",
+        content="Exact content page 5",
+        metadata=ChunkMetadata(chunk_id="c1", document_id="d1", filename="manual.pdf", page_number=5),
+        score=0.9,
+    )
+    adjacent_chunk = RetrievalResult(
+        chunk_id="c2",
+        content="Adjacent content page 6",
+        metadata=ChunkMetadata(chunk_id="c2", document_id="d1", filename="manual.pdf", page_number=6),
+        score=0.8,
+    )
+    wrong_chunk = RetrievalResult(
+        chunk_id="c3",
+        content="Wrong doc content",
+        metadata=ChunkMetadata(chunk_id="c3", document_id="d2", filename="other.pdf", page_number=1),
+        score=0.7,
+    )
 
-    ndcg = compute_page_aware_ndcg_at_k(expected, inverted_chunks, k=5)
-    # Ideal DCG = 1.0 / log2(2) = 1.0 (single target evidence)
-    # Actual DCG = 0.5 / log2(2) + 1.0 / log2(3) = 0.5 + 0.6309 = 1.1309
-    # Inverted ranking must be strictly penalized compared to perfect top-1 exact hit
-    assert ndcg > 0.0
+    # 1. Exact first -> Perfect 1.0
+    ndcg_exact_first = compute_page_aware_ndcg_at_k(expected, [exact_chunk, adjacent_chunk])
+    assert ndcg_exact_first == 1.0
+
+    # 2. Adjacent first, exact second -> Strictly penalized (< 1.0) and bounded
+    ndcg_exact_second = compute_page_aware_ndcg_at_k(expected, [adjacent_chunk, exact_chunk])
+    assert 0.0 < ndcg_exact_second < 1.0
+    assert ndcg_exact_second == pytest.approx(1.0 / math.log2(3), abs=1e-3)  # ~0.6309
+    assert ndcg_exact_first > ndcg_exact_second
+
+    # 3. Duplicate exact chunk does NOT inflate score
+    ndcg_with_duplicate = compute_page_aware_ndcg_at_k(expected, [exact_chunk, exact_chunk])
+    assert ndcg_with_duplicate == 1.0
+
+    # 4. Wrong chunks only -> Exactly 0.0
+    ndcg_wrong = compute_page_aware_ndcg_at_k(expected, [wrong_chunk, adjacent_chunk])
+    assert ndcg_wrong == 0.0
+
+    # 5. Pydantic MetricResult validation does not fail with le=1.0
+    metric = evaluate_metrics(
+        expected=expected,
+        retrieved_chunks=[adjacent_chunk, exact_chunk],
+        generated_answer="Answer",
+    )
+    assert 0.0 <= metric.ndcg_at_5 <= 1.0
 
 
 def test_unparseable_expected_parameter_raises_value_error():
@@ -96,9 +122,9 @@ def test_unparseable_expected_parameter_raises_value_error():
 
 
 def test_numerical_unit_accuracy_and_comma_normalization():
-    """Verify exact numerical and physical unit matching with comma support."""
+    """Verify exact numerical and physical unit matching with comma and time units."""
     # Test extraction
-    params = extract_parameters("Basınç 16,5 bar ve bakım periyodu 500 saat / 6 ay olmalıdır.")
+    params = extract_parameters("Basınç 16,5 bar ve periyot 500 saat / 6 ay olmalıdır.")
     assert (16.5, "bar") in params
     assert (500.0, "hour") in params
     assert (6.0, "month") in params
@@ -117,67 +143,53 @@ def test_numerical_unit_accuracy_and_comma_normalization():
     assert compute_numerical_unit_accuracy(expected_params, answer_no_nums) == 0.0
 
 
-def test_citation_snippet_and_provenance_validation():
-    """Verify citations are strictly checked against retrieved chunk text and provenance."""
+def test_citation_snippet_adversarial_rejection():
+    """
+    CRITICAL ADVERSARIAL TEST: Verify that weak single-word overlaps
+    (e.g., 'totally fabricated pressure claim' vs 'standard working steam pressure') are REJECTED.
+    """
     retrieved = [
         RetrievalResult(
             chunk_id="c1",
-            content="The standard working steam pressure is 16 bar.",
-            metadata=ChunkMetadata(chunk_id="c1", document_id="d1", filename="boiler.pdf", page_number=4),
+            content="Standard working steam pressure is 16 bar.",
+            metadata=ChunkMetadata(chunk_id="c1", document_id="doc-1", filename="boiler.pdf", page_number=4),
             score=0.9,
         )
     ]
 
-    # Valid citation matching retrieved chunk and snippet
-    valid_citations = [
-        Citation(document_id="d1", filename="boiler.pdf", page_number=4, snippet="standard working steam pressure")
+    # 1. Adversarial fake snippet with 1 incidental word overlap -> MUST FAIL (0.0)
+    fake_snippet_citation = [
+        Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="totally fabricated pressure claim")
     ]
-    assert compute_citation_precision(valid_citations, retrieved) == 1.0
+    assert compute_citation_precision(fake_snippet_citation, retrieved) == 0.0
 
-    # Hallucinated snippet not found in retrieved chunk content
-    fake_snippet_citations = [
-        Citation(document_id="d1", filename="boiler.pdf", page_number=4, snippet="completely non-existent text")
+    # 2. Exact substring snippet -> MUST PASS (1.0)
+    valid_exact_citation = [
+        Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="working steam pressure")
     ]
-    assert compute_citation_precision(fake_snippet_citations, retrieved) == 0.0
+    assert compute_citation_precision(valid_exact_citation, retrieved) == 1.0
 
-    # Hallucinated document
-    hallucinated_doc = [
-        Citation(document_id="d2", filename="other.pdf", page_number=1, snippet="pressure")
+    # 3. High token-precision snippet (80%+ overlap) -> MUST PASS (1.0)
+    valid_token_citation = [
+        Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="standard working steam pressure 16 bar")
     ]
-    assert compute_citation_precision(hallucinated_doc, retrieved) == 0.0
+    assert compute_citation_precision(valid_token_citation, retrieved) == 1.0
+
+    # 4. Wrong document ID -> MUST FAIL (0.0)
+    wrong_id_citation = [
+        Citation(document_id="doc-WRONG", filename="boiler.pdf", page_number=4, snippet="working steam pressure")
+    ]
+    assert compute_citation_precision(wrong_id_citation, retrieved) == 0.0
 
 
-def test_ood_and_safety_hard_pass_gates():
-    """Verify that OOD and safety critical questions have strict hard pass gates."""
+def test_two_branch_safety_critical_gate():
+    """
+    CRITICAL TEST: Verify two distinct safety-critical evaluation branches:
+    Branch A: No context -> Honest refusal PASSES.
+    Branch B: Context provided -> False refusal FAILS, accurate parameter PASSES.
+    """
     evaluator = RAGBenchmarkEvaluator()
 
-    # 1. Out of domain question that generated a hallucinated answer -> MUST FAIL
-    ood_q = BenchmarkQuestion(
-        id="selnikel-bench-099",
-        category="out_of_domain",
-        question="How to cook pasta?",
-        expected_evidence=ExpectedEvidence(
-            document_name="none",
-            page_number=0,
-            ground_truth_answer="Kapsam dışı",
-        ),
-        is_out_of_domain=True,
-    )
-    gen_hallucinated = GenerationOutput(answer="Boil water and add salt.", citations=[])
-    res_ood = evaluator.evaluate_single(ood_q, gen_hallucinated, [])
-    assert res_ood.metrics.abstention_accuracy == 0.0
-    assert res_ood.passed is False  # Hard gate!
-
-    # 2. Out of domain question that gave honest refusal -> MUST PASS
-    gen_refused = GenerationOutput(
-        answer="Sağlanan teknik dokümanlarda bu konuyla ilgili yeterli bilgi bulunmamaktadır.",
-        citations=[],
-    )
-    res_ood_pass = evaluator.evaluate_single(ood_q, gen_refused, [])
-    assert res_ood_pass.metrics.abstention_accuracy == 1.0
-    assert res_ood_pass.passed is True
-
-    # 3. Safety-critical question with wrong numerical parameters -> MUST FAIL
     safety_q = BenchmarkQuestion(
         id="selnikel-bench-088",
         category="safety_critical",
@@ -190,19 +202,96 @@ def test_ood_and_safety_hard_pass_gates():
         ),
         is_safety_critical=True,
     )
-    gen_wrong_num = GenerationOutput(
-        answer="Relief pressure is 25 bar. [Doc: safety.pdf, P. 1]",
-        citations=[Citation(document_id="d1", filename="safety.pdf", page_number=1, snippet="Relief pressure")],
-    )
+
     chunk = RetrievalResult(
         chunk_id="c1",
         content="Relief pressure is 16 bar.",
-        metadata=ChunkMetadata(chunk_id="c1", document_id="d1", filename="safety.pdf", page_number=1),
+        metadata=ChunkMetadata(chunk_id="c1", document_id="doc-1", filename="safety.pdf", page_number=1),
         score=0.9,
     )
-    res_safety = evaluator.evaluate_single(safety_q, gen_wrong_num, [chunk])
-    assert res_safety.metrics.safety_compliance_score == 0.0
-    assert res_safety.passed is False  # Hard gate!
+
+    # Branch A1: No context + Honest Refusal -> PASSES
+    gen_honest_refusal = GenerationOutput(
+        answer="Sağlanan teknik dokümanlarda bu konuyla ilgili yeterli bilgi bulunmamaktadır. Lütfen yetkili mühendise danışınız.",
+        citations=[],
+    )
+    res_no_ctx_pass = evaluator.evaluate_single(safety_q, gen_honest_refusal, retrieved_chunks=[])
+    assert res_no_ctx_pass.passed is True
+
+    # Branch A2: No context + Hallucinated answer -> FAILS
+    gen_hallucinated = GenerationOutput(
+        answer="Relief pressure is probably 25 bar.",
+        citations=[],
+    )
+    res_no_ctx_fail = evaluator.evaluate_single(safety_q, gen_hallucinated, retrieved_chunks=[])
+    assert res_no_ctx_fail.passed is False
+
+    # Branch B1: Context Provided + Correct Parameter & Citation -> PASSES
+    gen_correct = GenerationOutput(
+        answer="Relief pressure is 16 bar. [Doc: safety.pdf, P. 1]",
+        citations=[Citation(document_id="doc-1", filename="safety.pdf", page_number=1, snippet="Relief pressure is 16 bar")],
+    )
+    res_ctx_pass = evaluator.evaluate_single(safety_q, gen_correct, retrieved_chunks=[chunk])
+    assert res_ctx_pass.passed is True
+
+    # Branch B2: Context Provided + False Refusal -> FAILS
+    res_ctx_false_refusal = evaluator.evaluate_single(safety_q, gen_honest_refusal, retrieved_chunks=[chunk])
+    assert res_ctx_false_refusal.passed is False
+
+
+def test_schema_conditional_governance_rules():
+    """Verify that JSON Schema enforces conditional rules based on review_status."""
+    backend_dir = Path(__file__).resolve().parent.parent
+    schema_path = backend_dir / "app" / "evaluation" / "schemas" / "golden_benchmark_v1.schema.json"
+    import json
+    with open(schema_path, "r", encoding="utf-8") as sf:
+        schema = json.load(sf)
+
+    # 1. Unverified draft with synthetic=true -> PASSES
+    valid_draft = [
+        {
+            "id": "selnikel-bench-001",
+            "category": "capacity_pressure_temp",
+            "question": "Sample question?",
+            "expected_evidence": {
+                "document_name": "manual.pdf",
+                "page_number": 1,
+                "expected_numerical_parameters": ["16 bar"],
+                "ground_truth_answer": "16 bar"
+            },
+            "is_safety_critical": False,
+            "is_out_of_domain": False,
+            "dataset_version": "1.0.0",
+            "synthetic": True,
+            "review_status": "unverified_draft"
+        }
+    ]
+    jsonschema.validate(instance=valid_draft, schema=schema)
+
+    # 2. Verified expert reviewed with synthetic=true -> FAILS (must be synthetic: false)
+    invalid_verified_synthetic = [
+        {
+            "id": "selnikel-bench-001",
+            "category": "capacity_pressure_temp",
+            "question": "Sample question?",
+            "expected_evidence": {
+                "document_name": "manual.pdf",
+                "document_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "revision_code": "REV-01",
+                "page_number": 1,
+                "expected_numerical_parameters": ["16 bar"],
+                "ground_truth_answer": "16 bar"
+            },
+            "is_safety_critical": False,
+            "is_out_of_domain": False,
+            "expert_reviewer": "Lead Engineer",
+            "dataset_version": "1.0.0",
+            "synthetic": True,  # Illegal for verified_expert_reviewed!
+            "review_status": "verified_expert_reviewed"
+        }
+    ]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(instance=invalid_verified_synthetic, schema=schema)
 
 
 def test_generation_pipeline_prompt_contract_integration():

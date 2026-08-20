@@ -47,7 +47,8 @@
         ],
         "properties": {
           "document_name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "document_sha256": {
             "type": ["string", "null"]
@@ -69,7 +70,8 @@
             }
           },
           "ground_truth_answer": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "additionalProperties": false
@@ -104,6 +106,47 @@
         ]
       }
     },
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "review_status": { "const": "verified_expert_reviewed" }
+          }
+        },
+        "then": {
+          "properties": {
+            "synthetic": { "const": false },
+            "expert_reviewer": {
+              "type": "string",
+              "minLength": 3
+            },
+            "expected_evidence": {
+              "properties": {
+                "document_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{64}$"
+                },
+                "revision_code": {
+                  "type": "string",
+                  "minLength": 2
+                }
+              },
+              "required": [
+                "document_name",
+                "document_sha256",
+                "revision_code",
+                "page_number",
+                "ground_truth_answer",
+                "expected_numerical_parameters"
+              ]
+            }
+          },
+          "required": [
+            "expert_reviewer"
+          ]
+        }
+      }
+    ],
     "additionalProperties": false
   }
 }
