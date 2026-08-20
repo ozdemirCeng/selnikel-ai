@@ -1,0 +1,59 @@
+[
+  {
+    "id": "selnikel-bench-001",
+    "category": "capacity_pressure_temp",
+    "question": "What is the maximum operating steam pressure for the Selnikel SB-Series industrial boiler?",
+    "expected_evidence": {
+      "document_name": "SB_Series_Technical_Datasheet.pdf",
+      "document_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "revision_code": "REV-02",
+      "page_number": 4,
+      "section": "Operating Specifications",
+      "expected_numerical_parameters": ["16 bar"],
+      "ground_truth_answer": "The maximum operating steam pressure for the SB-Series boiler is 16 bar (gauge)."
+    },
+    "is_safety_critical": true,
+    "is_out_of_domain": false,
+    "expert_reviewer": "Lead Boiler Engineer (Mechanical)",
+    "dataset_version": "1.0.0",
+    "anonymized": true
+  },
+  {
+    "id": "selnikel-bench-002",
+    "category": "maintenance_intervals",
+    "question": "What is the recommended nozzle inspection interval for monoblock industrial burners?",
+    "expected_evidence": {
+      "document_name": "Monoblock_Burner_Service_Manual.pdf",
+      "document_sha256": "c4ca4238a0b923820dcc509a6f75849b28373b98c39e088ee89f2a44e578c772",
+      "revision_code": "REV-01",
+      "page_number": 12,
+      "section": "Periodic Maintenance Procedures",
+      "expected_numerical_parameters": ["500 hours"],
+      "ground_truth_answer": "Burner nozzles must be inspected and cleaned every 500 operating hours or at least every 6 months."
+    },
+    "is_safety_critical": false,
+    "is_out_of_domain": false,
+    "expert_reviewer": "Combustion Service Supervisor",
+    "dataset_version": "1.0.0",
+    "anonymized": true
+  },
+  {
+    "id": "selnikel-bench-003",
+    "category": "standards_compliance",
+    "question": "Which design code is applied for pressure vessel shell thickness calculations at Selnikel?",
+    "expected_evidence": {
+      "document_name": "Pressure_Vessel_Design_Standard.pdf",
+      "document_sha256": "1679091c5a880faf6fb5e6087eb1b2dc00000000000000000000000000000000",
+      "revision_code": "REV-03",
+      "page_number": 2,
+      "section": "Regulatory Design Codes",
+      "expected_numerical_parameters": [],
+      "ground_truth_answer": "Pressure vessel shells are calculated according to EN 12953 and ASME Section VIII Division 1 standards."
+    },
+    "is_safety_critical": true,
+    "is_out_of_domain": false,
+    "expert_reviewer": "Compliance & Certification Specialist",
+    "dataset_version": "1.0.0",
+    "anonymized": true
+  }
+]

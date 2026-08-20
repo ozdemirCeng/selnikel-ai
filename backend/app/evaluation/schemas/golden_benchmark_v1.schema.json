@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Selnikel Golden Benchmark Dataset v1.0 Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "category",
+      "question",
+      "expected_evidence",
+      "is_safety_critical",
+      "is_out_of_domain",
+      "dataset_version"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^selnikel-bench-\\d{3}$"
+      },
+      "category": {
+        "type": "string",
+        "enum": [
+          "capacity_pressure_temp",
+          "maintenance_intervals",
+          "fault_troubleshooting",
+          "parts_compatibility",
+          "standards_compliance",
+          "revision_conflicts",
+          "out_of_domain",
+          "safety_critical"
+        ]
+      },
+      "question": {
+        "type": "string",
+        "minLength": 5
+      },
+      "expected_evidence": {
+        "type": "object",
+        "required": [
+          "document_name",
+          "page_number",
+          "ground_truth_answer"
+        ],
+        "properties": {
+          "document_name": {
+            "type": "string"
+          },
+          "document_sha256": {
+            "type": ["string", "null"]
+          },
+          "revision_code": {
+            "type": ["string", "null"]
+          },
+          "page_number": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "section": {
+            "type": ["string", "null"]
+          },
+          "expected_numerical_parameters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ground_truth_answer": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "is_safety_critical": {
+        "type": "boolean"
+      },
+      "is_out_of_domain": {
+        "type": "boolean"
+      },
+      "expert_reviewer": {
+        "type": ["string", "null"]
+      },
+      "dataset_version": {
+        "type": "string",
+        "default": "1.0.0"
+      },
+      "anonymized": {
+        "type": "boolean",
+        "default": true
+      }
+    },
+    "additionalProperties": false
+  }
+}
