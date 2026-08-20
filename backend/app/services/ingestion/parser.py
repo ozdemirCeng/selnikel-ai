@@ -314,48 +314,90 @@ class FastFallbackParser(BaseDocumentParser):
             curr_page_tables: List[ParsedTable] = []
             curr_page_headers: List[str] = []
 
+            def finalize_page():
+                nonlocal curr_page_num, curr_page_text_lines, curr_page_tables, curr_page_headers
+                if curr_page_text_lines or curr_page_tables:
+                    page_full_text = "\n\n".join(curr_page_text_lines)
+                    pages.append(
+                        ParsedPage(
+                            page_number=curr_page_num,
+                            text_content=page_full_text,
+                            tables=curr_page_tables,
+                            section_headers=curr_page_headers,
+                        )
+                    )
+                    curr_page_num += 1
+                    curr_page_text_lines = []
+                    curr_page_tables = []
+                    curr_page_headers = []
+
+            W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
             for child in doc.element.body:
                 tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
 
                 if tag == "p":
                     p = docx.text.paragraph.Paragraph(child, doc)
-                    p_text = p.text.strip()
-                    has_page_break = any(
-                        'w:type="page"' in r._r.xml for r in p.runs if hasattr(r, "_r") and r._r is not None
-                    ) or (
-                        hasattr(p, "_p") and p._p is not None and "w:pageBreakBefore" in p._p.xml
+
+                    # 1. Check pageBreakBefore (must finalize page BEFORE adding paragraph content)
+                    has_page_break_before = False
+                    try:
+                        if p.paragraph_format.page_break_before:
+                            has_page_break_before = True
+                    except Exception:
+                        pass
+                    if not has_page_break_before:
+                        for pPr in child.iter(f"{{{W_NS}}}pPr"):
+                            if any(c.tag.endswith("pageBreakBefore") for c in pPr):
+                                has_page_break_before = True
+                                break
+
+                    if has_page_break_before:
+                        finalize_page()
+
+                    # 2. Extract segments separated by inline page breaks
+                    segments: List[str] = []
+                    current_parts: List[str] = []
+
+                    for elem in child.iter():
+                        elem_tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+                        if elem_tag == "br":
+                            br_type = elem.get(f"{{{W_NS}}}type") or elem.get("type") or elem.attrib.get("w:type")
+                            if br_type == "page":
+                                seg = "".join(current_parts).strip()
+                                segments.append(seg)
+                                current_parts = []
+                            else:
+                                current_parts.append("\n")
+                        elif elem_tag == "cr":
+                            current_parts.append("\n")
+                        elif elem_tag == "t" and elem.text:
+                            current_parts.append(elem.text)
+                        elif elem_tag == "tab":
+                            current_parts.append("\t")
+
+                    final_seg = "".join(current_parts).strip()
+                    segments.append(final_seg)
+
+                    is_heading = (p.style and p.style.name.startswith("Heading")) or bool(
+                        re.match(r"^\d+(\.\d+)*\.?\s+[A-Z]", p.text.strip())
                     )
 
-                    if p_text:
-                        is_heading = p.style.name.startswith("Heading") or re.match(
-                            r"^\d+(\.\d+)*\.?\s+[A-Z]", p_text
-                        )
-                        curr_page_text_lines.append(p_text)
-                        if is_heading and p_text not in curr_page_headers:
-                            curr_page_headers.append(p_text)
-
-                        blocks.append(
-                            ParsedBlock(
-                                content=p_text,
-                                block_type=ParsedBlockType.HEADING if is_heading else ParsedBlockType.PARAGRAPH,
-                                page_number=curr_page_num,
+                    for i, seg in enumerate(segments):
+                        if i > 0:
+                            # Crossed inline page break!
+                            finalize_page()
+                        if seg:
+                            curr_page_text_lines.append(seg)
+                            if is_heading and seg not in curr_page_headers:
+                                curr_page_headers.append(seg)
+                            blocks.append(
+                                ParsedBlock(
+                                    content=seg,
+                                    block_type=ParsedBlockType.HEADING if is_heading else ParsedBlockType.PARAGRAPH,
+                                    page_number=curr_page_num,
+                                )
                             )
-                        )
-
-                    if has_page_break:
-                        page_full_text = "\n\n".join(curr_page_text_lines)
-                        pages.append(
-                            ParsedPage(
-                                page_number=curr_page_num,
-                                text_content=page_full_text,
-                                tables=curr_page_tables,
-                                section_headers=curr_page_headers,
-                            )
-                        )
-                        curr_page_num += 1
-                        curr_page_text_lines = []
-                        curr_page_tables = []
-                        curr_page_headers = []
 
                 elif tag == "tbl":
                     tbl = docx.table.Table(child, doc)
@@ -394,14 +436,15 @@ class FastFallbackParser(BaseDocumentParser):
                         )
 
             # Finalize remaining page
-            if curr_page_text_lines or curr_page_tables:
-                page_full_text = "\n\n".join(curr_page_text_lines)
+            finalize_page()
+
+            if not pages:
                 pages.append(
                     ParsedPage(
-                        page_number=curr_page_num,
-                        text_content=page_full_text,
-                        tables=curr_page_tables,
-                        section_headers=curr_page_headers,
+                        page_number=1,
+                        text_content="",
+                        tables=[],
+                        section_headers=[],
                     )
                 )
 
