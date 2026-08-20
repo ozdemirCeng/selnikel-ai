@@ -356,3 +356,46 @@ async def test_zero_silent_data_loss_and_adversarial_row_recovery():
     assert rej["reason"] == "column_count_mismatch"
     assert rej["row_cells"] == ["lost", "row", "has", "four"]
 
+
+@pytest.mark.asyncio
+async def test_docx_soft_break_vs_hard_page_break_fidelity(tmp_path: Path):
+    """
+    CRITICAL REGRESSION TEST:
+    Verifies that:
+    1. Soft line breaks (WD_BREAK.LINE / <w:br/>) NEVER trigger a new ParsedPage (stays on Page 1).
+    2. Hard page breaks (WD_BREAK.PAGE / <w:br w:type="page"/>) correctly advance to Page 2.
+    """
+    import docx
+    from docx.enum.text import WD_BREAK
+
+    # 1. Document with soft line break (WD_BREAK.LINE)
+    soft_doc_path = tmp_path / "soft_break_doc.docx"
+    doc_soft = docx.Document()
+    p1 = doc_soft.add_paragraph("First line of text.")
+    p1.add_run().add_break(WD_BREAK.LINE)
+    p1.add_run("Second line of text on the SAME page.")
+    p2 = doc_soft.add_paragraph("Following paragraph also on the SAME page.")
+    doc_soft.save(str(soft_doc_path))
+
+    parser = FastFallbackParser()
+    parsed_soft = await parser.parse(str(soft_doc_path))
+    assert parsed_soft.total_pages == 1, f"Expected 1 page for soft line breaks, got {parsed_soft.total_pages}"
+    assert len(parsed_soft.pages) == 1
+    assert "First line of text." in parsed_soft.pages[0].text_content
+    assert "Following paragraph also on the SAME page." in parsed_soft.pages[0].text_content
+
+    # 2. Document with hard page break (WD_BREAK.PAGE)
+    hard_doc_path = tmp_path / "hard_break_doc.docx"
+    doc_hard = docx.Document()
+    p_page1 = doc_hard.add_paragraph("Content on Page 1.")
+    p_page1.add_run().add_break(WD_BREAK.PAGE)
+    p_page2 = doc_hard.add_paragraph("Content on Page 2.")
+    doc_hard.save(str(hard_doc_path))
+
+    parsed_hard = await parser.parse(str(hard_doc_path))
+    assert parsed_hard.total_pages == 2, f"Expected 2 pages for hard page break, got {parsed_hard.total_pages}"
+    assert len(parsed_hard.pages) == 2
+    assert "Content on Page 1." in parsed_hard.pages[0].text_content
+    assert "Content on Page 2." in parsed_hard.pages[1].text_content
+
+

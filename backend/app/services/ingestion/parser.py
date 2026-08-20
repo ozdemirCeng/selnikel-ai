@@ -321,7 +321,9 @@ class FastFallbackParser(BaseDocumentParser):
                     p = docx.text.paragraph.Paragraph(child, doc)
                     p_text = p.text.strip()
                     has_page_break = any(
-                        "w:type=\"page\"" in r._r.xml or "<w:br/>" in r._r.xml for r in p.runs if hasattr(r, "_r")
+                        'w:type="page"' in r._r.xml for r in p.runs if hasattr(r, "_r") and r._r is not None
+                    ) or (
+                        hasattr(p, "_p") and p._p is not None and "w:pageBreakBefore" in p._p.xml
                     )
 
                     if p_text:
