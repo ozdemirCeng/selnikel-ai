@@ -235,6 +235,7 @@ async def test_oidc_external_identity_table_resolution():
     Verify that user_external_identities table (issuer + subject + tenant_id)
     correctly resolves internal UserModel, roles, and permissions.
     """
+    settings.AUTH_MODE = "oidc"
     mock_db = AsyncMock()
 
     # Mock UserExternalIdentity
@@ -269,6 +270,78 @@ async def test_oidc_external_identity_table_resolution():
     assert user.role_codes == ["engineer"]
     assert "document.read" in user.permissions
     assert "dept-engineering" in user.department_ids
+
+
+@pytest.mark.asyncio
+async def test_oidc_mode_cannot_bypass_external_identity_with_internal_uuid():
+    """
+    CRITICAL SECURITY TEST:
+    In OIDC mode, an attacker token whose 'sub' matches an internal UserModel.id
+    MUST NOT resolve to that internal user if there is no corresponding row in user_external_identities table.
+    """
+    settings.AUTH_MODE = "oidc"
+    mock_db = AsyncMock()
+
+    # External identity lookup returns None (unmapped)
+    res_ext = MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=None))))
+    mock_db.execute = AsyncMock(return_value=res_ext)
+
+    user = await resolve_user_from_db_or_seed(
+        sub="internal-admin-uuid-999",  # Attacker tries using internal admin UUID
+        email="attacker@external.com",
+        display_name="Attacker",
+        issuer="https://foreign-idp.example.com",
+        tenant_id="foreign-tenant",
+        db=mock_db,
+    )
+
+    # Must strictly be Zero-Privilege user
+    assert user.role_codes == []
+    assert user.permissions == []
+    assert user.department_ids == []
+    assert user.has_permission("document.read") is False
+    assert user.has_permission("admin.users.write") is False
+
+
+@pytest.mark.asyncio
+async def test_passive_or_disabled_user_revoked_all_privileges():
+    """
+    Verify that an inactive/disabled/suspended user account has all permissions and department access revoked.
+    """
+    mock_db = AsyncMock()
+
+    # Mock UserExternalIdentity
+    mock_ext_ident = MagicMock(spec=UserExternalIdentityModel)
+    mock_ext_ident.user_id = "internal-usr-disabled-001"
+
+    # Mock UserModel with status="disabled"
+    mock_user = MagicMock(spec=UserModel)
+    mock_user.id = "internal-usr-disabled-001"
+    mock_user.email = "disabled_user@selnikel.com.tr"
+    mock_user.display_name = "Disabled User"
+    mock_user.status = "disabled"
+
+    res1 = MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_ext_ident))))
+    res2 = MagicMock(scalars=MagicMock(return_value=MagicMock(first=MagicMock(return_value=mock_user))))
+
+    mock_db.execute = AsyncMock(side_effect=[res1, res2])
+
+    settings.AUTH_MODE = "oidc"
+    user = await resolve_user_from_db_or_seed(
+        sub="ext-sub-disabled",
+        email="disabled_user@selnikel.com.tr",
+        display_name="Disabled User",
+        issuer="https://auth.selnikel.com.tr",
+        tenant_id="selnikel-tenant",
+        db=mock_db,
+    )
+
+    assert user.status == "disabled"
+    assert user.role_codes == []
+    assert user.permissions == []
+    assert user.department_ids == []
+    assert user.has_permission("document.read") is False
+    assert user.can_access_department("dept-engineering") is False
 
 
 @pytest.mark.asyncio

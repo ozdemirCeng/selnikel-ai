@@ -25,6 +25,7 @@ from app.infrastructure.ingestion_queue import PostgresIngestionQueue, ingestion
 from app.domain.ingestion.models import JobState
 from app.services.ingestion.parser import FastFallbackParser, DocumentParserFactory
 from app.services.ingestion.chunker import TableAwareChunker
+from app.services.embedding.factory import EmbeddingProviderFactory
 from app.services.embedding.fallback import DeterministicHashEmbeddingProvider
 from app.infrastructure.qdrant import qdrant_repo
 from app.domain.retrieval.models import RetrievalChunk
@@ -129,10 +130,12 @@ class IngestionWorkerDaemon:
     def is_running(self) -> bool:
         return self._is_running
 
-    async def _heartbeat_loop(self, session_maker, job_id: str):
-        """Periodically renews worker lease in background while processing long jobs."""
+    async def _heartbeat_loop(self, session_maker, job_id: str, lease_lost_event: asyncio.Event):
+        """Periodically renews worker lease in background while processing long jobs.
+        If lease extension fails (another worker stole or lease expired), triggers lease_lost_event to abort pipeline.
+        """
         try:
-            while True:
+            while not lease_lost_event.is_set():
                 await asyncio.sleep(self.heartbeat_interval_seconds)
                 try:
                     async with session_maker() as session:
@@ -141,18 +144,36 @@ class IngestionWorkerDaemon:
                         if extended:
                             logger.debug(f"Worker [{self.worker_id}] lease heartbeat renewed for job {job_id}.")
                         else:
-                            logger.warning(f"Worker [{self.worker_id}] heartbeat renewal failed for job {job_id} (lease lost).")
+                            logger.critical(
+                                f"Worker [{self.worker_id}] heartbeat renewal rejected for job {job_id}! "
+                                "Lease was lost or re-assigned. Triggering immediate pipeline cancellation."
+                            )
+                            lease_lost_event.set()
+                            break
                 except Exception as hb_err:
                     logger.warning(f"Heartbeat execution error for job {job_id}: {hb_err}")
         except asyncio.CancelledError:
             pass
 
-    async def execute_pipeline(self, session: AsyncSession, job) -> int:
+    async def execute_pipeline(
+        self,
+        session: AsyncSession,
+        job,
+        lease_lost_event: Optional[asyncio.Event] = None,
+    ) -> int:
         """Executes the complete document ingestion pipeline stages."""
         job_id = job.id
         file_path = getattr(job, "file_path", None)
         filename = getattr(job, "filename", "unnamed.pdf")
         dept_id = getattr(job, "department_id", "dept-engineering")
+
+        def _assert_lease_held():
+            if lease_lost_event is not None and lease_lost_event.is_set():
+                raise PermissionError(
+                    f"Worker [{self.worker_id}] lease lost for job {job_id}. Pipeline processing aborted to prevent duplicate writes."
+                )
+
+        _assert_lease_held()
 
         # 1. Validation Stage: Strictly require real file on disk (fail-closed, no fake content substitution)
         await self.queue.update_progress(session, job_id, self.worker_id, new_state="validating", progress=10, stage="validating")
@@ -166,10 +187,14 @@ class IngestionWorkerDaemon:
         if not val_result.is_valid:
             raise ValueError(val_result.error_message or "Dosya doğrulanamadı.")
 
+        _assert_lease_held()
+
         # 2. Parsing Stage
         await self.queue.update_progress(session, job_id, self.worker_id, new_state="parsing", progress=30, stage="parsing")
         parser = FastFallbackParser()
         parsed_doc = await parser.parse(file_path, val_result.mime_type)
+
+        _assert_lease_held()
 
         # 3. Chunking Stage
         await self.queue.update_progress(session, job_id, self.worker_id, new_state="chunking", progress=55, stage="chunking")
@@ -182,12 +207,15 @@ class IngestionWorkerDaemon:
         )
         total_chunks = len(chunks)
 
+        _assert_lease_held()
+
         # 4. Embedding & Indexing Stage
         await self.queue.update_progress(session, job_id, self.worker_id, new_state="indexing", progress=80, stage="indexing")
-        embedder = DeterministicHashEmbeddingProvider(dimension=1024)
+        embedder = EmbeddingProviderFactory.get_provider()
 
         retrieval_chunks = []
         for i, chk in enumerate(chunks):
+            _assert_lease_held()
             vectors = await embedder.embed_documents([chk.content])
             vector = vectors[0] if vectors else [0.0] * 1024
             chk_hash = hashlib.sha256(chk.content.encode("utf-8")).hexdigest()
@@ -213,6 +241,8 @@ class IngestionWorkerDaemon:
                 )
             )
 
+        _assert_lease_held()
+
         # Strict Qdrant Health and Upsert Verification (Fail-Closed on outage)
         is_qdrant_healthy = await qdrant_repo.check_health()
         if not is_qdrant_healthy:
@@ -221,6 +251,8 @@ class IngestionWorkerDaemon:
         upsert_ok = await qdrant_repo.upsert_chunks(retrieval_chunks)
         if not upsert_ok:
             raise RuntimeError("Vektör veritabanı (Qdrant) parçacık kaydı başarısız oldu.")
+
+        _assert_lease_held()
 
         # 5. Completion
         await self.queue.complete_job(session, job_id, self.worker_id, chunks_count=total_chunks)
@@ -238,20 +270,24 @@ class IngestionWorkerDaemon:
         job_id = job.id
         logger.info(f"[{self.worker_id}] Executing real ingestion pipeline for job {job_id} ({job.filename})...")
 
-        # Launch periodic background lease heartbeat
-        heartbeat_task = asyncio.create_task(self._heartbeat_loop(session_maker, job_id))
+        lease_lost_event = asyncio.Event()
+        heartbeat_task = asyncio.create_task(self._heartbeat_loop(session_maker, job_id, lease_lost_event))
 
         try:
             async with session_maker() as session:
-                chunks_count = await self.execute_pipeline(session, job)
+                chunks_count = await self.execute_pipeline(session, job, lease_lost_event=lease_lost_event)
                 await session.commit()
             logger.info(f"[{self.worker_id}] Job {job_id} completed successfully with {chunks_count} chunks.")
             return True
+        except PermissionError as pe:
+            logger.critical(f"[{self.worker_id}] Pipeline aborted for job {job_id}: {pe}")
+            return False
         except Exception as e:
             logger.error(f"[{self.worker_id}] Pipeline error on job {job_id}: {e}")
-            async with session_maker() as fail_session:
-                await self.queue.fail_job(fail_session, job_id, self.worker_id, error_code="PIPELINE_ERROR", error_message=str(e))
-                await fail_session.commit()
+            if not lease_lost_event.is_set():
+                async with session_maker() as fail_session:
+                    await self.queue.fail_job(fail_session, job_id, self.worker_id, error_code="PIPELINE_ERROR", error_message=str(e))
+                    await fail_session.commit()
             return False
         finally:
             heartbeat_task.cancel()

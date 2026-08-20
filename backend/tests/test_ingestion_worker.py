@@ -267,8 +267,8 @@ async def test_worker_heartbeat_loop():
     mock_session = AsyncMock()
     mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
 
-    # Run heartbeat loop for brief duration
-    hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-hb-100"))
+    lease_lost_event = asyncio.Event()
+    hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-hb-100", lease_lost_event))
     await asyncio.sleep(0.12)
     hb_task.cancel()
     try:
@@ -277,3 +277,42 @@ async def test_worker_heartbeat_loop():
         pass
 
     assert mock_queue.heartbeat.await_count >= 1
+    assert lease_lost_event.is_set() is False
+
+
+@pytest.mark.asyncio
+async def test_worker_heartbeat_lease_loss_aborts_pipeline():
+    """
+    Verify that if lease heartbeat renewal returns False (lease lost to competing worker),
+    the lease_lost_event triggers and the pipeline execution is immediately aborted with PermissionError.
+    """
+    mock_queue = MagicMock(spec=PostgresIngestionQueue)
+    # Heartbeat fails because lease was revoked or stolen
+    mock_queue.heartbeat = AsyncMock(return_value=False)
+    mock_queue.update_progress = AsyncMock()
+    mock_queue.complete_job = AsyncMock()
+
+    worker = IngestionWorkerDaemon(worker_id="worker-lost-01", queue=mock_queue, heartbeat_interval_seconds=0.02)
+
+    mock_session = AsyncMock()
+    mock_session_factory = MagicMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=mock_session), __aexit__=AsyncMock()))
+
+    lease_lost_event = asyncio.Event()
+    hb_task = asyncio.create_task(worker._heartbeat_loop(mock_session_factory, "job-lost-100", lease_lost_event))
+    await asyncio.sleep(0.06)
+
+    # Lease lost event must be set by heartbeat failure
+    assert lease_lost_event.is_set() is True
+
+    # Attempting pipeline execution with lost lease must raise PermissionError immediately
+    mock_job = MagicMock(id="job-lost-100")
+    with pytest.raises(PermissionError) as exc_info:
+        await worker.execute_pipeline(mock_session, mock_job, lease_lost_event=lease_lost_event)
+    assert "lease lost" in str(exc_info.value).lower()
+    mock_queue.complete_job.assert_not_awaited()
+
+    hb_task.cancel()
+    try:
+        await hb_task
+    except asyncio.CancelledError:
+        pass

@@ -20,9 +20,17 @@ from app.db.models.ingestion import IngestionJobModel
 from app.db.base import Base
 
 def get_engine():
-    pg_url = os.getenv("TEST_DATABASE_URL")
+    pg_url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL")
     if pg_url:
+        if pg_url.startswith("postgres://"):
+            pg_url = pg_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif pg_url.startswith("postgresql://") and "+asyncpg" not in pg_url:
+            pg_url = pg_url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return create_async_engine(pg_url, echo=False)
+
+    if os.getenv("REQUIRE_POSTGRES_QUEUE") == "true":
+        raise RuntimeError("REQUIRE_POSTGRES_QUEUE=true is set in CI but no PostgreSQL DATABASE_URL was provided!")
+
     return create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
@@ -207,21 +215,24 @@ async def test_queue_concurrent_workers_claim_isolation():
             await session.commit()
             return worker_id, claimed
 
-    pg_url = os.getenv("TEST_DATABASE_URL")
-    if pg_url:
+    pg_url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL")
+    if pg_url and engine.dialect.name == "postgresql":
         res1, res2 = await asyncio.gather(
             worker_claim("worker-1"),
             worker_claim("worker-2"),
         )
+        claims = [res for res in [res1, res2] if res[1] is not None]
+        nones = [res for res in [res1, res2] if res[1] is None]
+
+        assert len(claims) == 1, "In PostgreSQL, FOR UPDATE SKIP LOCKED ensures exactly one worker claims the job"
+        assert len(nones) == 1, "The competing worker must receive None"
+        assert claims[0][1].id == job_id
     else:
+        # SQLite in-memory dialect does not support row-level SKIP LOCKED; verify sequential claim isolation
         res1 = await worker_claim("worker-1")
         res2 = await worker_claim("worker-2")
-
-    claims = [res for res in [res1, res2] if res[1] is not None]
-    nones = [res for res in [res1, res2] if res[1] is None]
-
-    assert len(claims) == 1, "Exactly one worker must claim the single job"
-    assert len(nones) == 1, "The competing worker must receive None"
-    assert claims[0][1].id == job_id
+        assert res1[1] is not None, "First worker must claim the available job"
+        assert res2[1] is None, "Second worker must receive None as job is already claimed"
+        assert res1[1].id == job_id
 
     await engine.dispose()

@@ -215,24 +215,31 @@ async def resolve_user_from_db_or_seed(
         try:
             user_model = None
 
-            # 1a. Check UserExternalIdentityModel mapping (issuer + subject + tenant)
-            if issuer:
-                ext_query = select(UserExternalIdentityModel).where(
-                    and_(
-                        UserExternalIdentityModel.subject == sub,
-                        UserExternalIdentityModel.issuer == issuer,
+            # 1a. In OIDC mode, ONLY resolve through UserExternalIdentityModel
+            if settings.AUTH_MODE == "oidc":
+                if issuer:
+                    ext_query = select(UserExternalIdentityModel).where(
+                        and_(
+                            UserExternalIdentityModel.subject == sub,
+                            UserExternalIdentityModel.issuer == issuer,
+                        )
                     )
-                )
-                if tenant_id:
-                    ext_query = ext_query.where(UserExternalIdentityModel.tenant_id == tenant_id)
-                ext_res = await db.execute(ext_query)
-                ext_identity = ext_res.scalars().first()
-                if ext_identity:
-                    user_res = await db.execute(select(UserModel).where(UserModel.id == ext_identity.user_id))
-                    user_model = user_res.scalars().first()
+                    if tenant_id:
+                        ext_query = ext_query.where(UserExternalIdentityModel.tenant_id == tenant_id)
+                    ext_res = await db.execute(ext_query)
+                    ext_identity = ext_res.scalars().first()
+                    if ext_identity:
+                        user_res = await db.execute(select(UserModel).where(UserModel.id == ext_identity.user_id))
+                        user_model = user_res.scalars().first()
+                # Note: Unmapped external identities do NOT fall back to direct internal user ID lookup!
 
-            # 1b. Fallback to direct internal user id
-            if user_model is None:
+            elif settings.AUTH_MODE == "bff":
+                # In BFF mode, sub is server-side verified internal user ID
+                user_res = await db.execute(select(UserModel).where(UserModel.id == sub))
+                user_model = user_res.scalars().first()
+
+            else:
+                # In Development mode
                 user_res = await db.execute(select(UserModel).where(UserModel.id == sub))
                 user_model = user_res.scalars().first()
 
@@ -242,6 +249,18 @@ async def resolve_user_from_db_or_seed(
                 and isinstance(getattr(user_model, "email", None), str)
                 and isinstance(getattr(user_model, "status", None), str)
             ):
+                # Enforce active account status: passive / disabled users receive zero privileges
+                if user_model.status != "active":
+                    logger.warning(f"User account '{user_model.id}' ({user_model.email}) is not active (status='{user_model.status}'). Revoking all privileges.")
+                    return User(
+                        id=str(user_model.id),
+                        email=str(user_model.email),
+                        display_name=str(user_model.display_name),
+                        status=str(user_model.status),
+                        department_ids=[],
+                        role_codes=[],
+                        permissions=[],
+                    )
                 # Query user roles
                 roles_query = (
                     select(RoleModel.code)

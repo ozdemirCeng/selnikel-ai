@@ -89,10 +89,12 @@ jobs:
       - name: Run Pytest Test Suite
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/selnikel_ai
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/selnikel_ai
           QDRANT_HOST: localhost
           QDRANT_PORT: 6333
           AUTH_MODE: development
           REQUIRE_POSTGRES_MIGRATION: "true"
+          REQUIRE_POSTGRES_QUEUE: "true"
         run: |
           cd backend
           pytest -v --tb=short
