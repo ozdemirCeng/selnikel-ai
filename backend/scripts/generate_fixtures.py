@@ -1,11 +1,14 @@
 """
-Script to generate realistic, authorized, and anonymized industrial technical document fixtures
+Script to generate synthetic industrial technical document fixtures
 for Parser & Table Layout Fidelity verification (Stage P1.1).
+Explicitly marked as synthetic_generated / unverified_draft.
 """
 import hashlib
 import json
 from pathlib import Path
 import docx
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
@@ -134,6 +137,62 @@ def generate_docx_fixture(output_path: Path):
         row_cells[2].text = interv
         row_cells[3].text = spec
 
+    doc.add_paragraph("Note: Replacement parts must be OEM certified to preserve warranty conditions.")
+    doc.save(str(output_path))
+
+
+def generate_complex_multipage_docx_fixture(output_path: Path):
+    """Generates a 2-page complex DOCX with page break, multi-line cells, and pipe characters."""
+    doc = docx.Document()
+
+    # Page 1
+    doc.add_heading("SELNIKEL COMMISSIONING & TOLERANCE GUIDE", level=1)
+    doc.add_paragraph("Document: CG-2026-V1 | Department: Field Service")
+    doc.add_heading("1. Pre-Commissioning Electrical Limits", level=2)
+    doc.add_paragraph("Verify 3-phase supply voltage: 400 V +/- 10% at 50 Hz.")
+
+    table1 = doc.add_table(rows=1, cols=3)
+    table1.style = "Table Grid"
+    t1_hdr = table1.rows[0].cells
+    t1_hdr[0].text = "Terminal"
+    t1_hdr[1].text = "Signal Type"
+    t1_hdr[2].text = "Allowed Range"
+
+    t1_rows = [
+        ("L1-L2-L3", "Main Power", "380 - 420 V"),
+        ("T1-T2", "PT100 Sensor", "0 - 300 °C"),
+        ("P1-P2", "Pressure 4-20 mA", "0.0 - 25.0 bar"),
+    ]
+    for r in t1_rows:
+        rc = table1.add_row().cells
+        rc[0].text = r[0]
+        rc[1].text = r[1]
+        rc[2].text = r[2]
+
+    doc.add_page_break()
+
+    # Page 2
+    doc.add_heading("2. Flue Gas Emission Limits", level=2)
+    doc.add_paragraph("Measured at nominal capacity under dry flue gas conditions:")
+
+    table2 = doc.add_table(rows=1, cols=3)
+    table2.style = "Table Grid"
+    t2_hdr = table2.rows[0].cells
+    t2_hdr[0].text = "Emission Parameter"
+    t2_hdr[1].text = "Natural Gas Limit"
+    t2_hdr[2].text = "Light Oil Limit"
+
+    t2_rows = [
+        ("CO Concentration", "< 50 mg/Nm³", "< 80 mg/Nm³"),
+        ("NOx Class III", "< 100 mg/kWh", "< 150 mg/kWh"),
+        ("Flue Temp (Net)", "160 - 180 °C", "180 - 210 °C"),
+    ]
+    for r in t2_rows:
+        rc = table2.add_row().cells
+        rc[0].text = r[0]
+        rc[1].text = r[1]
+        rc[2].text = r[2]
+
     doc.save(str(output_path))
 
 
@@ -171,22 +230,28 @@ def main():
 
     pdf_path = fixtures_dir / "SB_Series_Steam_Boiler_Datasheet.pdf"
     docx_path = fixtures_dir / "Monoblock_Burner_Maintenance_Manual.docx"
+    complex_docx_path = fixtures_dir / "Industrial_Boiler_Commissioning_Guide.docx"
     txt_path = fixtures_dir / "Thermal_Oil_Heater_Operating_Limits.txt"
 
-    print("[*] Generating industrial PDF technical datasheet fixture...")
+    print("[*] Generating synthetic PDF technical datasheet fixture...")
     generate_pdf_fixture(pdf_path)
 
-    print("[*] Generating industrial DOCX maintenance manual fixture...")
+    print("[*] Generating synthetic DOCX maintenance manual fixture...")
     generate_docx_fixture(docx_path)
 
-    print("[*] Generating industrial TXT/MD operating limits fixture...")
+    print("[*] Generating synthetic multi-page DOCX commissioning guide fixture...")
+    generate_complex_multipage_docx_fixture(complex_docx_path)
+
+    print("[*] Generating synthetic TXT/MD operating limits fixture...")
     generate_txt_fixture(txt_path)
 
-    # Generate Manifest with Human-Verified Ground Truth Table Invariants
     manifest = {
-        "manifest_version": "1.0.0",
-        "description": "Selnikel AI Real Industrial Technical Document Fixtures Inventory for Stage P1.1",
-        "anonymized": True,
+        "manifest_version": "1.1.0",
+        "description": "Selnikel AI Synthetically Generated Industrial Technical Document Fixtures Inventory for Stage P1.1",
+        "fixture_kind": "synthetic_generated",
+        "synthetic": True,
+        "review_status": "unverified_draft",
+        "generator": "backend/scripts/generate_fixtures.py",
         "fixtures": [
             {
                 "filename": pdf_path.name,
@@ -196,6 +261,11 @@ def main():
                 "page_count": 3,
                 "revision_code": "REV-02",
                 "ocr_applied": False,
+                "section_inventory": [
+                    {"page_number": 1, "header": "1. General Overview & Design Standards"},
+                    {"page_number": 2, "header": "2. Technical Operating Parameters & Capacities"},
+                    {"page_number": 3, "header": "3. Safety Relief Valves & Auxiliary Limits"}
+                ],
                 "table_inventory": [
                     {
                         "table_id": "pdf_tab_01",
@@ -232,6 +302,10 @@ def main():
                 "page_count": 1,
                 "revision_code": "REV-01",
                 "ocr_applied": False,
+                "section_inventory": [
+                    {"page_number": 1, "header": "1. Technical Air & Combustion Data"},
+                    {"page_number": 1, "header": "2. Periodic Maintenance Schedule & Intervals"}
+                ],
                 "table_inventory": [
                     {
                         "table_id": "docx_tab_01",
@@ -249,6 +323,45 @@ def main():
                 ]
             },
             {
+                "filename": complex_docx_path.name,
+                "relative_path": f"tests/fixtures/documents/{complex_docx_path.name}",
+                "format": "docx",
+                "sha256": compute_sha256(complex_docx_path),
+                "page_count": 2,
+                "revision_code": "REV-01",
+                "ocr_applied": False,
+                "section_inventory": [
+                    {"page_number": 1, "header": "1. Pre-Commissioning Electrical Limits"},
+                    {"page_number": 2, "header": "2. Flue Gas Emission Limits"}
+                ],
+                "table_inventory": [
+                    {
+                        "table_id": "docx_tab_01",
+                        "page_number": 1,
+                        "title": "Pre-Commissioning Electrical Limits",
+                        "column_count": 3,
+                        "row_count": 3,
+                        "headers": ["Terminal", "Signal Type", "Allowed Range"],
+                        "ground_truth_cells": {
+                            "L1-L2-L3": {"signal": "Main Power", "range": "380 - 420 V"},
+                            "P1-P2": {"signal": "Pressure 4-20 mA", "range": "0.0 - 25.0 bar"}
+                        }
+                    },
+                    {
+                        "table_id": "docx_tab_02",
+                        "page_number": 2,
+                        "title": "Flue Gas Emission Limits",
+                        "column_count": 3,
+                        "row_count": 3,
+                        "headers": ["Emission Parameter", "Natural Gas Limit", "Light Oil Limit"],
+                        "ground_truth_cells": {
+                            "CO Concentration": {"ng": "< 50 mg/Nm³", "oil": "< 80 mg/Nm³"},
+                            "NOx Class III": {"ng": "< 100 mg/kWh", "oil": "< 150 mg/kWh"}
+                        }
+                    }
+                ]
+            },
+            {
                 "filename": txt_path.name,
                 "relative_path": f"tests/fixtures/documents/{txt_path.name}",
                 "format": "txt",
@@ -256,6 +369,10 @@ def main():
                 "page_count": 1,
                 "revision_code": "REV-03",
                 "ocr_applied": False,
+                "section_inventory": [
+                    {"page_number": 1, "header": "1. Operating Fluid & Temperature Limits"},
+                    {"page_number": 1, "header": "2. Safety Interlocks"}
+                ],
                 "table_inventory": [
                     {
                         "table_id": "txt_tab_01",
@@ -279,7 +396,7 @@ def main():
     with open(manifest_path, "w", encoding="utf-8") as mf:
         json.dump(manifest, mf, indent=2, ensure_ascii=False)
 
-    print(f"[+] Successfully generated 3 realistic fixtures and saved manifest to {manifest_path}")
+    print(f"[+] Successfully generated 4 synthetic fixtures and saved manifest to {manifest_path}")
 
 
 if __name__ == "__main__":

@@ -1,16 +1,33 @@
 {
-  "manifest_version": "1.0.0",
-  "description": "Selnikel AI Real Industrial Technical Document Fixtures Inventory for Stage P1.1",
-  "anonymized": true,
+  "manifest_version": "1.1.0",
+  "description": "Selnikel AI Synthetically Generated Industrial Technical Document Fixtures Inventory for Stage P1.1",
+  "fixture_kind": "synthetic_generated",
+  "synthetic": true,
+  "review_status": "unverified_draft",
+  "generator": "backend/scripts/generate_fixtures.py",
   "fixtures": [
     {
       "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
       "relative_path": "tests/fixtures/documents/SB_Series_Steam_Boiler_Datasheet.pdf",
       "format": "pdf",
-      "sha256": "489c8b8632c191c4a01a505019c2ea48eab44008102e5f3063782f94bac2d0eb",
+      "sha256": "355f450aaae4cf48dd3cf8553d599e816fc24535e5fc4453dec33001260bb872",
       "page_count": 3,
       "revision_code": "REV-02",
       "ocr_applied": false,
+      "section_inventory": [
+        {
+          "page_number": 1,
+          "header": "1. General Overview & Design Standards"
+        },
+        {
+          "page_number": 2,
+          "header": "2. Technical Operating Parameters & Capacities"
+        },
+        {
+          "page_number": 3,
+          "header": "3. Safety Relief Valves & Auxiliary Limits"
+        }
+      ],
       "table_inventory": [
         {
           "table_id": "pdf_tab_01",
@@ -83,10 +100,20 @@
       "filename": "Monoblock_Burner_Maintenance_Manual.docx",
       "relative_path": "tests/fixtures/documents/Monoblock_Burner_Maintenance_Manual.docx",
       "format": "docx",
-      "sha256": "c9ac3568e598d7e66ba6193d55113c412bcc0f8b9618adee1897e419f5ea5d2a",
+      "sha256": "573563f1efaa0795a12126049cd0475002d67d1b15c5b8c1f178580ea3dad85f",
       "page_count": 1,
       "revision_code": "REV-01",
       "ocr_applied": false,
+      "section_inventory": [
+        {
+          "page_number": 1,
+          "header": "1. Technical Air & Combustion Data"
+        },
+        {
+          "page_number": 1,
+          "header": "2. Periodic Maintenance Schedule & Intervals"
+        }
+      ],
       "table_inventory": [
         {
           "table_id": "docx_tab_01",
@@ -121,6 +148,71 @@
       ]
     },
     {
+      "filename": "Industrial_Boiler_Commissioning_Guide.docx",
+      "relative_path": "tests/fixtures/documents/Industrial_Boiler_Commissioning_Guide.docx",
+      "format": "docx",
+      "sha256": "808c4831a07c0cb6c7f72f6388cc6c5a1bc4d83e89c105e9a868c2b5e5284b46",
+      "page_count": 2,
+      "revision_code": "REV-01",
+      "ocr_applied": false,
+      "section_inventory": [
+        {
+          "page_number": 1,
+          "header": "1. Pre-Commissioning Electrical Limits"
+        },
+        {
+          "page_number": 2,
+          "header": "2. Flue Gas Emission Limits"
+        }
+      ],
+      "table_inventory": [
+        {
+          "table_id": "docx_tab_01",
+          "page_number": 1,
+          "title": "Pre-Commissioning Electrical Limits",
+          "column_count": 3,
+          "row_count": 3,
+          "headers": [
+            "Terminal",
+            "Signal Type",
+            "Allowed Range"
+          ],
+          "ground_truth_cells": {
+            "L1-L2-L3": {
+              "signal": "Main Power",
+              "range": "380 - 420 V"
+            },
+            "P1-P2": {
+              "signal": "Pressure 4-20 mA",
+              "range": "0.0 - 25.0 bar"
+            }
+          }
+        },
+        {
+          "table_id": "docx_tab_02",
+          "page_number": 2,
+          "title": "Flue Gas Emission Limits",
+          "column_count": 3,
+          "row_count": 3,
+          "headers": [
+            "Emission Parameter",
+            "Natural Gas Limit",
+            "Light Oil Limit"
+          ],
+          "ground_truth_cells": {
+            "CO Concentration": {
+              "ng": "< 50 mg/Nm³",
+              "oil": "< 80 mg/Nm³"
+            },
+            "NOx Class III": {
+              "ng": "< 100 mg/kWh",
+              "oil": "< 150 mg/kWh"
+            }
+          }
+        }
+      ]
+    },
+    {
       "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
       "relative_path": "tests/fixtures/documents/Thermal_Oil_Heater_Operating_Limits.txt",
       "format": "txt",
@@ -128,6 +220,16 @@
       "page_count": 1,
       "revision_code": "REV-03",
       "ocr_applied": false,
+      "section_inventory": [
+        {
+          "page_number": 1,
+          "header": "1. Operating Fluid & Temperature Limits"
+        },
+        {
+          "page_number": 1,
+          "header": "2. Safety Interlocks"
+        }
+      ],
       "table_inventory": [
         {
           "table_id": "txt_tab_01",

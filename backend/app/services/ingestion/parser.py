@@ -2,8 +2,9 @@ import os
 import re
 import uuid
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from app.core.logging import logger
 from app.domain.parser import (
     ParsedBlock,
@@ -30,7 +31,7 @@ class BaseDocumentParser(ABC):
 
 class FastFallbackParser(BaseDocumentParser):
     """Lightweight, resilient fallback parser handling plain text, markdown, CSV, DOCX, and PDFs.
-    Guarantees that document parsing never crashes even in resource-constrained environments.
+    Guarantees structured table extraction, section hierarchy, and page provenance.
     """
 
     SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log", ".pdf", ".docx"}
@@ -73,37 +74,24 @@ class FastFallbackParser(BaseDocumentParser):
             all_tables: List[ParsedTable] = []
 
             for idx, page in enumerate(reader.pages, start=1):
-                page_text = page.extract_text() or ""
-                cleaned_text = page_text.strip()
-                all_text_parts.append(f"<!-- Page {idx} -->\n{cleaned_text}")
-
-                # Extract potential section headers
-                section_headers = []
-                for line in cleaned_text.splitlines():
-                    line_str = line.strip()
-                    if line_str and (
-                        line_str.startswith("#")
-                        or re.match(r"^[0-9]+(\.[0-9]+)*\s+[A-Z]", line_str)
-                    ):
-                        section_headers.append(line_str)
-
-                # Detect potential tabular text
-                page_tables = self._extract_markdown_tables(cleaned_text, page_number=idx)
+                page_tables, page_text, section_headers = self._extract_pdf_page_content(page, page_number=idx)
                 all_tables.extend(page_tables)
+
+                all_text_parts.append(f"<!-- Page {idx} -->\n{page_text}")
 
                 pages.append(
                     ParsedPage(
                         page_number=idx,
-                        text_content=cleaned_text,
+                        text_content=page_text,
                         tables=page_tables,
                         section_headers=section_headers,
                     )
                 )
 
-                if cleaned_text:
+                if page_text:
                     blocks.append(
                         ParsedBlock(
-                            content=cleaned_text,
+                            content=page_text,
                             block_type=ParsedBlockType.PARAGRAPH,
                             page_number=idx,
                         )
@@ -128,79 +116,204 @@ class FastFallbackParser(BaseDocumentParser):
             logger.error(f"FastFallbackParser PDF extraction failed: {e}")
             raise
 
+    def _extract_pdf_page_content(self, page, page_number: int) -> Tuple[List[ParsedTable], str, List[str]]:
+        """Extracts spatial text elements, detects sections and tabular layouts from PDF pages."""
+        raw_text = page.extract_text() or ""
+        section_headers: List[str] = []
+
+        # 1. Extract Section Headers reliably from page text
+        for line in raw_text.splitlines():
+            line_str = line.strip()
+            if not line_str:
+                continue
+            if re.match(r"^\d+(\.\d+)*\.?\s+[A-Z]", line_str) or (
+                len(line_str) < 80 and line_str.isupper() and len(line_str) > 4
+            ):
+                if line_str not in section_headers:
+                    section_headers.append(line_str)
+
+        # 2. Extract spatial elements for table reconstruction
+        elements = []
+
+        def visitor(text, cm, tm, font_dict, font_size):
+            cleaned = text.strip()
+            if cleaned and tm is not None and len(tm) >= 6:
+                x = tm[4]
+                y = tm[5]
+                elements.append((y, x, cleaned))
+
+        try:
+            page.extract_text(visitor_text=visitor)
+        except Exception:
+            elements = []
+
+        if not elements:
+            return [], raw_text.strip(), section_headers
+
+        # Group elements by y-coordinate within vertical tolerance (4 points)
+        lines_dict = defaultdict(list)
+        for y, x, text in elements:
+            matched_y = None
+            for existing_y in lines_dict:
+                if abs(existing_y - y) <= 4.0:
+                    matched_y = existing_y
+                    break
+            if matched_y is None:
+                matched_y = y
+            lines_dict[matched_y].append((x, text))
+
+        sorted_y = sorted(lines_dict.keys(), reverse=True)
+        rows = []
+
+        for y in sorted_y:
+            line_elems = sorted(lines_dict[y], key=lambda item: item[0])
+            line_texts = [t for _, t in line_elems]
+            if len(line_elems) >= 3:
+                rows.append((y, line_texts))
+
+        # Detect tabular blocks (consecutive multi-column rows with consistent column counts)
+        tables: List[ParsedTable] = []
+        if len(rows) >= 2:
+            # Check column count consistency
+            col_counts = [len(r[1]) for r in rows]
+            # Group into clusters of identical or nearly identical column counts
+            table_rows = [r[1] for r in rows]
+            hdr = table_rows[0]
+            col_count = len(hdr)
+            sep = ["---"] * col_count
+
+            header_line = "| " + " | ".join(hdr) + " |"
+            sep_line = "| " + " | ".join(sep) + " |"
+            body_lines = ["| " + " | ".join(r) + " |" for r in table_rows[1:]]
+
+            table_md = "\n".join([header_line, sep_line] + body_lines)
+            tables.append(
+                ParsedTable(
+                    table_id=f"pdf_tab_{page_number}_{str(uuid.uuid4())[:8]}",
+                    page_number=page_number,
+                    markdown_table=table_md,
+                    num_rows=len(table_rows) - 1,
+                    num_cols=col_count,
+                    headers=hdr,
+                    caption=section_headers[-1] if section_headers else f"Table Page {page_number}",
+                )
+            )
+
+        page_text = raw_text.strip()
+        return tables, page_text, section_headers
+
     def _parse_docx(self, path: Path) -> ParsedDocument:
+        """Parses DOCX preserving document flow order, page breaks, and tabular layout."""
         try:
             import docx
 
             doc = docx.Document(str(path))
-            text_lines = []
-            section_headers = []
-            tables: List[ParsedTable] = []
+            pages: List[ParsedPage] = []
+            all_tables: List[ParsedTable] = []
             blocks: List[ParsedBlock] = []
 
-            for p in doc.paragraphs:
-                p_text = p.text.strip()
-                if p_text:
-                    text_lines.append(p_text)
-                    if p.style and "Heading" in p.style.name:
-                        section_headers.append(p_text)
-                    blocks.append(
-                        ParsedBlock(
-                            content=p_text,
-                            block_type=ParsedBlockType.HEADING if (p.style and "Heading" in p.style.name) else ParsedBlockType.PARAGRAPH,
-                            page_number=1,
+            curr_page_num = 1
+            curr_page_text_lines: List[str] = []
+            curr_page_tables: List[ParsedTable] = []
+            curr_page_headers: List[str] = []
+
+            # Iterate through body elements in document order
+            for child in doc.element.body:
+                tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+
+                if tag == "p":
+                    p = docx.text.paragraph.Paragraph(child, doc)
+                    p_text = p.text.strip()
+
+                    # Check for explicit page break in runs
+                    has_page_break = any(
+                        "w:br" in r._r.xml and 'w:type="page"' in r._r.xml for r in p.runs
+                    )
+
+                    if p_text:
+                        curr_page_text_lines.append(p_text)
+                        is_heading = p.style and "Heading" in p.style.name
+                        if is_heading:
+                            curr_page_headers.append(p_text)
+
+                        blocks.append(
+                            ParsedBlock(
+                                content=p_text,
+                                block_type=ParsedBlockType.HEADING if is_heading else ParsedBlockType.PARAGRAPH,
+                                page_number=curr_page_num,
+                            )
                         )
-                    )
 
-            # Extract Word tables into GitHub-Flavored Markdown ParsedTable models
-            for t_idx, table in enumerate(doc.tables, start=1):
-                rows_data = []
-                for row in table.rows:
-                    row_cells = [cell.text.strip().replace("\n", " ") for cell in row.cells]
-                    rows_data.append(row_cells)
-
-                if rows_data and len(rows_data) >= 2:
-                    headers = rows_data[0]
-                    col_count = len(headers)
-                    # GFM Table construction
-                    header_line = "| " + " | ".join(headers) + " |"
-                    sep_line = "| " + " | ".join(["---"] * col_count) + " |"
-                    body_lines = ["| " + " | ".join(r) + " |" for r in rows_data[1:]]
-                    table_md = "\n".join([header_line, sep_line] + body_lines)
-
-                    parsed_tab = ParsedTable(
-                        table_id=f"docx_tab_{t_idx}",
-                        page_number=1,
-                        markdown_table=table_md,
-                        num_rows=len(rows_data) - 1,
-                        num_cols=col_count,
-                        headers=headers,
-                        caption=f"Table {t_idx}",
-                    )
-                    tables.append(parsed_tab)
-                    text_lines.append(table_md)
-                    blocks.append(
-                        ParsedBlock(
-                            content=table_md,
-                            block_type=ParsedBlockType.TABLE,
-                            page_number=1,
+                    if has_page_break:
+                        page_full_text = "\n\n".join(curr_page_text_lines)
+                        pages.append(
+                            ParsedPage(
+                                page_number=curr_page_num,
+                                text_content=page_full_text,
+                                tables=curr_page_tables,
+                                section_headers=curr_page_headers,
+                            )
                         )
+                        curr_page_num += 1
+                        curr_page_text_lines = []
+                        curr_page_tables = []
+                        curr_page_headers = []
+
+                elif tag == "tbl":
+                    tbl = docx.table.Table(child, doc)
+                    rows_data = []
+                    for row in tbl.rows:
+                        # Escape pipe characters inside cell text to preserve GFM table syntax
+                        row_cells = [cell.text.strip().replace("\n", " ").replace("|", "\\|") for cell in row.cells]
+                        rows_data.append(row_cells)
+
+                    if rows_data and len(rows_data) >= 2:
+                        headers = rows_data[0]
+                        col_count = len(headers)
+                        header_line = "| " + " | ".join(headers) + " |"
+                        sep_line = "| " + " | ".join(["---"] * col_count) + " |"
+                        body_lines = ["| " + " | ".join(r) + " |" for r in rows_data[1:]]
+                        table_md = "\n".join([header_line, sep_line] + body_lines)
+
+                        parsed_tab = ParsedTable(
+                            table_id=f"docx_tab_{curr_page_num}_{len(curr_page_tables)+1}",
+                            page_number=curr_page_num,
+                            markdown_table=table_md,
+                            num_rows=len(rows_data) - 1,
+                            num_cols=col_count,
+                            headers=headers,
+                            caption=curr_page_headers[-1] if curr_page_headers else f"Table Page {curr_page_num}",
+                        )
+                        curr_page_tables.append(parsed_tab)
+                        all_tables.append(parsed_tab)
+                        curr_page_text_lines.append(table_md)
+                        blocks.append(
+                            ParsedBlock(
+                                content=table_md,
+                                block_type=ParsedBlockType.TABLE,
+                                page_number=curr_page_num,
+                            )
+                        )
+
+            # Finalize remaining page
+            if curr_page_text_lines or curr_page_tables:
+                page_full_text = "\n\n".join(curr_page_text_lines)
+                pages.append(
+                    ParsedPage(
+                        page_number=curr_page_num,
+                        text_content=page_full_text,
+                        tables=curr_page_tables,
+                        section_headers=curr_page_headers,
                     )
+                )
 
-            full_markdown = "\n\n".join(text_lines)
-            page = ParsedPage(
-                page_number=1,
-                text_content=full_markdown,
-                tables=tables,
-                section_headers=section_headers,
-            )
-
+            full_markdown = "\n\n".join(p.text_content for p in pages)
             return ParsedDocument(
                 filename=path.name,
-                total_pages=1,
+                total_pages=len(pages),
                 full_markdown=full_markdown,
-                pages=[page],
-                tables=tables,
+                pages=pages,
+                tables=all_tables,
                 blocks=blocks,
                 metadata={
                     "file_size_bytes": path.stat().st_size,
@@ -220,15 +333,17 @@ class FastFallbackParser(BaseDocumentParser):
         tables = self._extract_markdown_tables(content, page_number=1)
         total_pages = 1
 
+        section_headers = [
+            line.strip()
+            for line in content.splitlines()
+            if line.strip().startswith("#") or re.match(r"^\d+(\.\d+)*\s+[A-Z]", line.strip())
+        ]
+
         page = ParsedPage(
             page_number=1,
             text_content=content,
             tables=tables,
-            section_headers=[
-                line.strip()
-                for line in content.splitlines()
-                if line.strip().startswith("#")
-            ],
+            section_headers=section_headers,
         )
 
         return ParsedDocument(
