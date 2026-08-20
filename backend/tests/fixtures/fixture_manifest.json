@@ -1,0 +1,166 @@
+{
+  "manifest_version": "1.0.0",
+  "description": "Selnikel AI Real Industrial Technical Document Fixtures Inventory for Stage P1.1",
+  "anonymized": true,
+  "fixtures": [
+    {
+      "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
+      "relative_path": "tests/fixtures/documents/SB_Series_Steam_Boiler_Datasheet.pdf",
+      "format": "pdf",
+      "sha256": "489c8b8632c191c4a01a505019c2ea48eab44008102e5f3063782f94bac2d0eb",
+      "page_count": 3,
+      "revision_code": "REV-02",
+      "ocr_applied": false,
+      "table_inventory": [
+        {
+          "table_id": "pdf_tab_01",
+          "page_number": 2,
+          "title": "Technical Operating Parameters & Capacities",
+          "column_count": 6,
+          "row_count": 4,
+          "headers": [
+            "Model Code",
+            "Steam Cap. (t/h)",
+            "Working Press. (bar)",
+            "Design Press. (bar)",
+            "Steam Temp. (°C)",
+            "Thermal Power (kW)"
+          ],
+          "ground_truth_cells": {
+            "SB-500": {
+              "steam_cap": "0.5 t/h",
+              "working_press": "12.0 bar",
+              "design_press": "16.0 bar",
+              "steam_temp": "191.6 °C",
+              "thermal_power": "350 kW"
+            },
+            "SB-1000": {
+              "steam_cap": "1.0 t/h",
+              "working_press": "16.0 bar",
+              "design_press": "18.0 bar",
+              "steam_temp": "204.3 °C",
+              "thermal_power": "700 kW"
+            },
+            "SB-2000": {
+              "steam_cap": "2.0 t/h",
+              "working_press": "16.0 bar",
+              "design_press": "20.0 bar",
+              "steam_temp": "204.3 °C",
+              "thermal_power": "1400 kW"
+            },
+            "SB-5000": {
+              "steam_cap": "5.0 t/h",
+              "working_press": "16.0 bar",
+              "design_press": "25.0 bar",
+              "steam_temp": "204.3 °C",
+              "thermal_power": "3500 kW"
+            }
+          }
+        },
+        {
+          "table_id": "pdf_tab_02",
+          "page_number": 3,
+          "title": "Safety Relief Valves & Auxiliary Limits",
+          "column_count": 4,
+          "row_count": 3,
+          "headers": [
+            "Safety Device",
+            "Set Pressure (bar)",
+            "Connection DN (mm)",
+            "Discharge Cap. (kg/h)"
+          ],
+          "ground_truth_cells": {
+            "Primary Safety Valve": {
+              "set_pressure": "16.5 bar",
+              "dn": "32 mm",
+              "discharge_cap": "1250 kg/h"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "filename": "Monoblock_Burner_Maintenance_Manual.docx",
+      "relative_path": "tests/fixtures/documents/Monoblock_Burner_Maintenance_Manual.docx",
+      "format": "docx",
+      "sha256": "c9ac3568e598d7e66ba6193d55113c412bcc0f8b9618adee1897e419f5ea5d2a",
+      "page_count": 1,
+      "revision_code": "REV-01",
+      "ocr_applied": false,
+      "table_inventory": [
+        {
+          "table_id": "docx_tab_01",
+          "page_number": 1,
+          "title": "Periodic Maintenance Schedule & Intervals",
+          "column_count": 4,
+          "row_count": 5,
+          "headers": [
+            "Component",
+            "Inspection Action",
+            "Service Interval",
+            "Torque / Spec"
+          ],
+          "ground_truth_cells": {
+            "Burner Nozzles": {
+              "action": "Clean and inspect spray pattern",
+              "interval": "500 hour",
+              "torque": "25 Nm"
+            },
+            "Gas Valve Train": {
+              "action": "Tightness and leak test",
+              "interval": "6 month",
+              "torque": "No bubble at 100 mbar"
+            },
+            "Complete Blower Overhaul": {
+              "action": "Bearing lubrication and dynamic balancing",
+              "interval": "1 year",
+              "torque": "ISO 1940 G2.5"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
+      "relative_path": "tests/fixtures/documents/Thermal_Oil_Heater_Operating_Limits.txt",
+      "format": "txt",
+      "sha256": "6e6d5f7c0834a9fe88fbefda9d6233235cd64a5bca57ffcdd27cb59a2cc9003e",
+      "page_count": 1,
+      "revision_code": "REV-03",
+      "ocr_applied": false,
+      "table_inventory": [
+        {
+          "table_id": "txt_tab_01",
+          "page_number": 1,
+          "title": "Thermal Oil Operational Limits",
+          "column_count": 5,
+          "row_count": 5,
+          "headers": [
+            "Parameter",
+            "Minimum Value",
+            "Nominal Value",
+            "Maximum Safety Limit",
+            "Unit"
+          ],
+          "ground_truth_cells": {
+            "Flow Temperature": {
+              "min": "180 °C",
+              "nom": "280 °C",
+              "max": "320 °C"
+            },
+            "System Operating Pressure": {
+              "min": "2.5 bar",
+              "nom": "4.0 bar",
+              "max": "6.0 bar"
+            },
+            "Minimum Circulating Flow": {
+              "min": "25 m³/h",
+              "nom": "45 m³/h",
+              "max": "80 m³/h"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

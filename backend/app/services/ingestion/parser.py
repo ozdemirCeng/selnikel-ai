@@ -29,11 +29,11 @@ class BaseDocumentParser(ABC):
 
 
 class FastFallbackParser(BaseDocumentParser):
-    """Lightweight, resilient fallback parser handling plain text, markdown, CSV, and PDFs.
+    """Lightweight, resilient fallback parser handling plain text, markdown, CSV, DOCX, and PDFs.
     Guarantees that document parsing never crashes even in resource-constrained environments.
     """
 
-    SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log", ".pdf"}
+    SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log", ".pdf", ".docx"}
 
     def supports(self, file_path: str, content_type: Optional[str] = None) -> bool:
         ext = Path(file_path).suffix.lower()
@@ -41,7 +41,7 @@ class FastFallbackParser(BaseDocumentParser):
             return True
         if content_type and any(
             t in content_type.lower()
-            for t in ["text/plain", "text/markdown", "text/csv", "application/pdf"]
+            for t in ["text/plain", "text/markdown", "text/csv", "application/pdf", "wordprocessingml"]
         ):
             return True
         return False
@@ -56,6 +56,8 @@ class FastFallbackParser(BaseDocumentParser):
 
         if ext == ".pdf" or (content_type and "pdf" in content_type.lower()):
             return self._parse_pdf(path)
+        elif ext == ".docx" or (content_type and "word" in content_type.lower()):
+            return self._parse_docx(path)
         else:
             return self._parse_text(path)
 
@@ -68,13 +70,14 @@ class FastFallbackParser(BaseDocumentParser):
             pages: List[ParsedPage] = []
             blocks: List[ParsedBlock] = []
             all_text_parts: List[str] = []
+            all_tables: List[ParsedTable] = []
 
             for idx, page in enumerate(reader.pages, start=1):
                 page_text = page.extract_text() or ""
                 cleaned_text = page_text.strip()
                 all_text_parts.append(f"<!-- Page {idx} -->\n{cleaned_text}")
 
-                # Extract potential section headers (lines starting with uppercase/numbers)
+                # Extract potential section headers
                 section_headers = []
                 for line in cleaned_text.splitlines():
                     line_str = line.strip()
@@ -84,11 +87,15 @@ class FastFallbackParser(BaseDocumentParser):
                     ):
                         section_headers.append(line_str)
 
+                # Detect potential tabular text
+                page_tables = self._extract_markdown_tables(cleaned_text, page_number=idx)
+                all_tables.extend(page_tables)
+
                 pages.append(
                     ParsedPage(
                         page_number=idx,
                         text_content=cleaned_text,
-                        tables=[],
+                        tables=page_tables,
                         section_headers=section_headers,
                     )
                 )
@@ -108,21 +115,109 @@ class FastFallbackParser(BaseDocumentParser):
                 total_pages=max(1, total_pages),
                 full_markdown=full_markdown,
                 pages=pages,
-                tables=[],
+                tables=all_tables,
                 blocks=blocks,
-                metadata={"file_size_bytes": path.stat().st_size},
+                metadata={
+                    "file_size_bytes": path.stat().st_size,
+                    "ocr_applied": False,
+                    "parser_name": "fast_fallback_pypdf",
+                },
                 parser_name="fast_fallback_pypdf",
             )
         except Exception as e:
             logger.error(f"FastFallbackParser PDF extraction failed: {e}")
             raise
 
+    def _parse_docx(self, path: Path) -> ParsedDocument:
+        try:
+            import docx
+
+            doc = docx.Document(str(path))
+            text_lines = []
+            section_headers = []
+            tables: List[ParsedTable] = []
+            blocks: List[ParsedBlock] = []
+
+            for p in doc.paragraphs:
+                p_text = p.text.strip()
+                if p_text:
+                    text_lines.append(p_text)
+                    if p.style and "Heading" in p.style.name:
+                        section_headers.append(p_text)
+                    blocks.append(
+                        ParsedBlock(
+                            content=p_text,
+                            block_type=ParsedBlockType.HEADING if (p.style and "Heading" in p.style.name) else ParsedBlockType.PARAGRAPH,
+                            page_number=1,
+                        )
+                    )
+
+            # Extract Word tables into GitHub-Flavored Markdown ParsedTable models
+            for t_idx, table in enumerate(doc.tables, start=1):
+                rows_data = []
+                for row in table.rows:
+                    row_cells = [cell.text.strip().replace("\n", " ") for cell in row.cells]
+                    rows_data.append(row_cells)
+
+                if rows_data and len(rows_data) >= 2:
+                    headers = rows_data[0]
+                    col_count = len(headers)
+                    # GFM Table construction
+                    header_line = "| " + " | ".join(headers) + " |"
+                    sep_line = "| " + " | ".join(["---"] * col_count) + " |"
+                    body_lines = ["| " + " | ".join(r) + " |" for r in rows_data[1:]]
+                    table_md = "\n".join([header_line, sep_line] + body_lines)
+
+                    parsed_tab = ParsedTable(
+                        table_id=f"docx_tab_{t_idx}",
+                        page_number=1,
+                        markdown_table=table_md,
+                        num_rows=len(rows_data) - 1,
+                        num_cols=col_count,
+                        headers=headers,
+                        caption=f"Table {t_idx}",
+                    )
+                    tables.append(parsed_tab)
+                    text_lines.append(table_md)
+                    blocks.append(
+                        ParsedBlock(
+                            content=table_md,
+                            block_type=ParsedBlockType.TABLE,
+                            page_number=1,
+                        )
+                    )
+
+            full_markdown = "\n\n".join(text_lines)
+            page = ParsedPage(
+                page_number=1,
+                text_content=full_markdown,
+                tables=tables,
+                section_headers=section_headers,
+            )
+
+            return ParsedDocument(
+                filename=path.name,
+                total_pages=1,
+                full_markdown=full_markdown,
+                pages=[page],
+                tables=tables,
+                blocks=blocks,
+                metadata={
+                    "file_size_bytes": path.stat().st_size,
+                    "ocr_applied": False,
+                    "parser_name": "fast_fallback_docx",
+                },
+                parser_name="fast_fallback_docx",
+            )
+        except Exception as e:
+            logger.error(f"FastFallbackParser DOCX extraction failed: {e}")
+            raise
+
     def _parse_text(self, path: Path) -> ParsedDocument:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
-        # Detect markdown tables in text
-        tables = self._extract_markdown_tables(content)
+        tables = self._extract_markdown_tables(content, page_number=1)
         total_pages = 1
 
         page = ParsedPage(
@@ -149,11 +244,15 @@ class FastFallbackParser(BaseDocumentParser):
                     page_number=1,
                 )
             ],
-            metadata={"file_size_bytes": path.stat().st_size},
+            metadata={
+                "file_size_bytes": path.stat().st_size,
+                "ocr_applied": False,
+                "parser_name": "fast_fallback_text",
+            },
             parser_name="fast_fallback_text",
         )
 
-    def _extract_markdown_tables(self, content: str) -> List[ParsedTable]:
+    def _extract_markdown_tables(self, content: str, page_number: int = 1) -> List[ParsedTable]:
         tables: List[ParsedTable] = []
         table_pattern = re.compile(
             r"(\|[^\n]+\|\r?\n\|[-:\s|]+\|\r?\n(?:\|[^\n]+\|\r?\n?)+)", re.MULTILINE
@@ -166,7 +265,7 @@ class FastFallbackParser(BaseDocumentParser):
                 tables.append(
                     ParsedTable(
                         table_id=str(uuid.uuid4()),
-                        page_number=1,
+                        page_number=page_number,
                         markdown_table=table_md,
                         num_rows=len(lines) - 2,
                         num_cols=len(headers),
@@ -224,13 +323,10 @@ class DoclingParser(BaseDocumentParser):
             return await fallback.parse(file_path, content_type)
 
         try:
-            from docling.datamodel.base_models import InputFormat
-
             conv_result = self._converter.convert(str(path))
             doc = conv_result.document
 
             full_markdown = doc.export_to_markdown()
-            pages_dict: Dict[int, List[str]] = {}
             tables: List[ParsedTable] = []
             blocks: List[ParsedBlock] = []
 
@@ -248,98 +344,66 @@ class DoclingParser(BaseDocumentParser):
                             page_number=page_no,
                             markdown_table=table_md,
                             caption=getattr(table_item, "caption", None),
+                            num_rows=getattr(table_item, "num_rows", 0),
+                            num_cols=getattr(table_item, "num_cols", 0),
                         )
                     )
-
-            # Extract hierarchical items with page attribution
-            total_pages = 1
-            if hasattr(doc, "pages") and doc.pages:
-                total_pages = len(doc.pages)
-
-            if hasattr(doc, "iterate_items"):
-                for item, level in doc.iterate_items():
-                    text = getattr(item, "text", "") or ""
-                    page_no = 1
-                    if hasattr(item, "prov") and item.prov:
-                        page_no = getattr(item.prov[0], "page_no", 1)
-                        total_pages = max(total_pages, page_no)
-
-                    if page_no not in pages_dict:
-                        pages_dict[page_no] = []
-                    pages_dict[page_no].append(text)
-
-                    b_type = ParsedBlockType.PARAGRAPH
-                    item_type = type(item).__name__.lower()
-                    if "header" in item_type or "title" in item_type or "heading" in item_type:
-                        b_type = ParsedBlockType.HEADING
-                    elif "table" in item_type:
-                        b_type = ParsedBlockType.TABLE
-                    elif "list" in item_type:
-                        b_type = ParsedBlockType.LIST_ITEM
-                    elif "code" in item_type:
-                        b_type = ParsedBlockType.CODE
-
                     blocks.append(
                         ParsedBlock(
-                            content=text,
-                            block_type=b_type,
+                            content=table_md,
+                            block_type=ParsedBlockType.TABLE,
                             page_number=page_no,
                         )
                     )
 
-            # Assemble pages
-            pages: List[ParsedPage] = []
-            for p_num in range(1, total_pages + 1):
-                p_text = "\n".join(pages_dict.get(p_num, []))
-                p_tables = [t for t in tables if t.page_number == p_num]
-                pages.append(
-                    ParsedPage(
-                        page_number=p_num,
-                        text_content=p_text,
-                        tables=p_tables,
-                    )
-                )
+            total_pages = 1
+            if hasattr(doc, "pages") and doc.pages:
+                total_pages = len(doc.pages)
+
+            page = ParsedPage(
+                page_number=1,
+                text_content=full_markdown,
+                tables=tables,
+                section_headers=[],
+            )
 
             return ParsedDocument(
                 filename=path.name,
                 total_pages=total_pages,
                 full_markdown=full_markdown,
-                pages=pages,
+                pages=[page],
                 tables=tables,
                 blocks=blocks,
-                metadata={"file_size_bytes": path.stat().st_size},
-                parser_name="docling_layout_parser",
+                metadata={
+                    "file_size_bytes": path.stat().st_size,
+                    "ocr_applied": False,
+                    "parser_name": "docling",
+                },
+                parser_name="docling",
             )
-
         except Exception as e:
-            logger.warning(f"Docling parsing failed for {path.name}: {e}. Falling back to FastFallbackParser.")
+            logger.error(f"Docling parsing failed for {path.name}: {e}. Routing to fallback parser.")
             fallback = FastFallbackParser()
             return await fallback.parse(file_path, content_type)
 
 
 class DocumentParserFactory:
-    """Factory to resolve and provide the optimal document parser."""
+    """Factory selecting the optimal parser (Docling vs FastFallback) based on file type and availability."""
 
-    _docling_parser: Optional[DoclingParser] = None
-    _fallback_parser: Optional[FastFallbackParser] = None
-
-    @classmethod
+    @staticmethod
     def get_parser(
-        cls,
         file_path: str,
         content_type: Optional[str] = None,
-        prefer_docling: bool = True,
+        force_fallback: bool = False,
     ) -> BaseDocumentParser:
-        if prefer_docling:
-            if cls._docling_parser is None:
-                cls._docling_parser = DoclingParser()
-            if cls._docling_parser.supports(file_path, content_type):
-                return cls._docling_parser
+        if force_fallback:
+            return FastFallbackParser()
 
-        if cls._fallback_parser is None:
-            cls._fallback_parser = FastFallbackParser()
-        return cls._fallback_parser
+        docling = DoclingParser()
+        if docling.is_available and docling.supports(file_path, content_type):
+            return docling
+
+        return FastFallbackParser()
 
 
-# Default singleton instance
-document_parser_factory = DocumentParserFactory
+document_parser_factory = DocumentParserFactory()

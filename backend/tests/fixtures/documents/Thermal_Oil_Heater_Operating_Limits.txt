@@ -1,0 +1,17 @@
+# SELNIKEL THERMAL OIL HEATERS
+Document: TOH-SPEC-2026 | Revision: REV-03 | Department: Project Engineering
+
+## 1. Operating Fluid & Temperature Limits
+Thermal oil heaters are designed for closed-loop thermal fluid systems utilizing synthetic or mineral heat transfer oils.
+
+### Table: Thermal Oil Operational Limits
+| Parameter | Minimum Value | Nominal Value | Maximum Safety Limit | Unit |
+| :--- | :--- | :--- | :--- | :--- |
+| Flow Temperature | 180 °C | 280 °C | 320 °C | °C |
+| Return Temperature | 150 °C | 240 °C | 290 °C | °C |
+| System Operating Pressure | 2.5 bar | 4.0 bar | 6.0 bar | bar |
+| Minimum Circulating Flow | 25 m³/h | 45 m³/h | 80 m³/h | m³/h |
+| Expansion Tank Pre-charge | 0.5 bar | 1.0 bar | 1.5 bar | bar |
+
+## 2. Safety Interlocks
+If thermal fluid circulation drops below 25 m³/h, the burner controller must trigger an emergency lockout within 2.0 seconds.

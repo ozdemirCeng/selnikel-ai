@@ -10,6 +10,10 @@ from app.domain.parser import ParsedBlockType, ParsedDocument, ParsedPage, Parse
 class TableAwareChunker:
     """Structure-aware chunker that preserves Markdown table integrity,
     inherits hierarchical section headings, and tracks exact page provenance.
+    Guarantees:
+    - Tables are NEVER split mid-row.
+    - Large tables that span multiple chunks repeat their header rows and context.
+    - Every chunk preserves document_id, filename, revision, page_number, and section breadcrumbs.
     """
 
     def __init__(
@@ -87,43 +91,32 @@ class TableAwareChunker:
         chunks: List[DomainChunk] = []
         current_index = start_index
 
-        # 1. Process Page Tables as Atomic Chunks First
+        # Extract current section header context for page
+        current_section = "General"
+        if page.section_headers:
+            current_section = " > ".join(page.section_headers[:2])
+
+        # 1. Process Page Tables with Layout Fidelity
         for table in page.tables:
-            table_content = table.markdown_table
-            if table.caption:
-                table_content = f"### Table: {table.caption}\n\n{table_content}"
-
-            section_context = (
-                f"[Document: {parsed_doc.filename} | Page: {page.page_number} | Type: Table]\n\n"
-            )
-            full_content = section_context + table_content
-
-            chunk_id = str(uuid.uuid4())
-            metadata = ChunkMetadata(
-                chunk_id=chunk_id,
+            table_chunks = self._chunk_table_atomic(
+                table=table,
+                page_number=page.page_number,
+                filename=parsed_doc.filename,
+                section=current_section,
                 document_id=document_id,
                 document_version=document_version,
-                filename=parsed_doc.filename,
-                page_number=page.page_number,
-                section="Table: " + (table.caption or "Data Table"),
                 document_type=document_type,
                 department=department,
                 language=language,
-                chunk_index=current_index,
-                token_count=math.ceil(len(full_content) / 4),
+                start_index=current_index,
             )
-            chunks.append(DomainChunk(content=full_content, metadata=metadata))
-            current_index += 1
+            chunks.extend(table_chunks)
+            current_index += len(table_chunks)
 
         # 2. Process Page Text Content
         text = page.text_content.strip()
         if not text:
             return chunks
-
-        # Extract current section header context
-        current_section = "General"
-        if page.section_headers:
-            current_section = " > ".join(page.section_headers[:2])
 
         # Split text into paragraphs
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
@@ -198,6 +191,110 @@ class TableAwareChunker:
 
         return chunks
 
+    def _chunk_table_atomic(
+        self,
+        table: ParsedTable,
+        page_number: int,
+        filename: str,
+        section: str,
+        document_id: str,
+        document_version: int,
+        document_type: str,
+        department: str,
+        language: str,
+        start_index: int,
+    ) -> List[DomainChunk]:
+        """
+        Chunks a Markdown table preserving header rows and never splitting mid-row.
+        If table is smaller than max_chunk_chars, emits 1 atomic chunk.
+        If oversized, slices rows with header repetition.
+        """
+        chunks: List[DomainChunk] = []
+        table_lines = [l.strip() for l in table.markdown_table.strip().splitlines() if l.strip()]
+
+        header_prefix = f"### Table: {table.caption or 'Technical Parameters'}\n\n" if table.caption else ""
+        section_context = f"[Document: {filename} | Page: {page_number} | Section: {section} | Type: Table]\n\n"
+
+        full_table_content = section_context + header_prefix + table.markdown_table
+
+        # Case 1: Fits comfortably in a single chunk
+        if len(full_table_content) <= self.max_chunk_chars or len(table_lines) <= 2:
+            chunk_id = str(uuid.uuid4())
+            metadata = ChunkMetadata(
+                chunk_id=chunk_id,
+                document_id=document_id,
+                document_version=document_version,
+                filename=filename,
+                page_number=page_number,
+                section=f"{section} > Table: {table.caption or 'Data Table'}",
+                document_type=document_type,
+                department=department,
+                language=language,
+                chunk_index=start_index,
+                token_count=math.ceil(len(full_table_content) / 4),
+            )
+            return [DomainChunk(content=full_table_content, metadata=metadata)]
+
+        # Case 2: Multi-row table exceeding max_chunk_chars -> Slice rows with header repetition
+        header_line = table_lines[0]
+        sep_line = table_lines[1]
+        body_rows = table_lines[2:]
+
+        current_rows: List[str] = []
+        part_num = 1
+        idx = start_index
+
+        for row in body_rows:
+            test_table = "\n".join([header_line, sep_line] + current_rows + [row])
+            test_content = section_context + f"{header_prefix}(Part {part_num})\n\n" + test_table
+
+            if len(test_content) > self.max_chunk_chars and current_rows:
+                slice_table_str = "\n".join([header_line, sep_line] + current_rows)
+                slice_content = section_context + f"{header_prefix}(Part {part_num})\n\n" + slice_table_str
+
+                chunk_id = str(uuid.uuid4())
+                metadata = ChunkMetadata(
+                    chunk_id=chunk_id,
+                    document_id=document_id,
+                    document_version=document_version,
+                    filename=filename,
+                    page_number=page_number,
+                    section=f"{section} > Table: {table.caption or 'Data Table'} (Part {part_num})",
+                    document_type=document_type,
+                    department=department,
+                    language=language,
+                    chunk_index=idx,
+                    token_count=math.ceil(len(slice_content) / 4),
+                )
+                chunks.append(DomainChunk(content=slice_content, metadata=metadata))
+                idx += 1
+                part_num += 1
+                current_rows = [row]
+            else:
+                current_rows.append(row)
+
+        if current_rows:
+            slice_table_str = "\n".join([header_line, sep_line] + current_rows)
+            slice_content = section_context + f"{header_prefix}(Part {part_num})\n\n" + slice_table_str
+
+            chunk_id = str(uuid.uuid4())
+            metadata = ChunkMetadata(
+                chunk_id=chunk_id,
+                document_id=document_id,
+                document_version=document_version,
+                filename=filename,
+                page_number=page_number,
+                section=f"{section} > Table: {table.caption or 'Data Table'} (Part {part_num})",
+                document_type=document_type,
+                department=department,
+                language=language,
+                chunk_index=idx,
+                token_count=math.ceil(len(slice_content) / 4),
+            )
+            chunks.append(DomainChunk(content=slice_content, metadata=metadata))
+
+        return chunks
+
     def _create_text_chunk(
         self,
         raw_text: str,
@@ -211,15 +308,14 @@ class TableAwareChunker:
         language: str,
         chunk_index: int,
     ) -> DomainChunk:
+        """Helper to create a standard text chunk with structured contextual header."""
+        header = ""
         if self.prepend_section_headers:
-            header_prefix = (
-                f"[Document: {filename} | Page: {page_number} | Section: {section}]\n\n"
-            )
-            full_content = header_prefix + raw_text
-        else:
-            full_content = raw_text
+            header = f"[Document: {filename} | Page: {page_number} | Section: {section}]\n\n"
 
+        full_content = header + raw_text
         chunk_id = str(uuid.uuid4())
+
         metadata = ChunkMetadata(
             chunk_id=chunk_id,
             document_id=document_id,
@@ -236,31 +332,23 @@ class TableAwareChunker:
         return DomainChunk(content=full_content, metadata=metadata)
 
     def _split_oversized_text(self, text: str, max_chars: int) -> List[str]:
-        """Split an excessively long paragraph at sentence boundaries."""
+        """Safely split an oversized paragraph by sentences or word boundaries."""
         sentences = re.split(r"(?<=[.!?])\s+", text)
         slices: List[str] = []
-        current = ""
+        curr = ""
 
         for s in sentences:
-            if len(current) + len(s) + 1 > max_chars:
-                if current:
-                    slices.append(current)
-                    current = s
-                else:
-                    # Single sentence exceeds max_chars: hard slice
-                    for i in range(0, len(s), max_chars):
-                        slices.append(s[i : i + max_chars])
-                    current = ""
+            if len(curr) + len(s) + 1 > max_chars:
+                if curr:
+                    slices.append(curr.strip())
+                curr = s
             else:
-                if current:
-                    current += " " + s
-                else:
-                    current = s
+                curr = f"{curr} {s}".strip() if curr else s
 
-        if current.strip():
-            slices.append(current)
-        return slices
+        if curr.strip():
+            slices.append(curr.strip())
+
+        return slices or [text[:max_chars]]
 
 
-# Default singleton instance
 table_aware_chunker = TableAwareChunker()
