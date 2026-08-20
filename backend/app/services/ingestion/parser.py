@@ -47,7 +47,7 @@ class FastFallbackParser(BaseDocumentParser):
             return True
         return False
 
-    async def parse(self, file_path: str, content_type: Optional[str] = None) -> ParsedDocument:
+    def parse_sync(self, file_path: str, content_type: Optional[str] = None) -> ParsedDocument:
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Document file not found: {file_path}")
@@ -61,6 +61,9 @@ class FastFallbackParser(BaseDocumentParser):
             return self._parse_docx(path)
         else:
             return self._parse_text(path)
+
+    async def parse(self, file_path: str, content_type: Optional[str] = None) -> ParsedDocument:
+        return self.parse_sync(file_path, content_type=content_type)
 
     def _parse_pdf(self, path: Path) -> ParsedDocument:
         path = Path(path)

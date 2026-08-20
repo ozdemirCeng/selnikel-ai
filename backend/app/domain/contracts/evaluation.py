@@ -105,6 +105,8 @@ class EvaluationRunReport(BaseModel):
     run_id: str
     execution_mode: str = "self-check"
     status: str = "COMPLETED"
+    gate_status: str = "PENDING"  # PASSED, FAILED, SKIPPED
+    gate_failure_reasons: List[str] = Field(default_factory=list)
     dataset_version: str = "1.0.0"
     prompt_version: str = "1.2.0"
     prompt_sha256: Optional[str] = None

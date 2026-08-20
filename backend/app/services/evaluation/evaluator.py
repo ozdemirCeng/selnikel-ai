@@ -90,6 +90,73 @@ class RAGBenchmarkEvaluator:
             passed=passed,
         )
 
+    def evaluate_retrieval_only(
+        self,
+        question: BenchmarkQuestion,
+        retrieved_chunks: Optional[List[RetrievalResult]] = None,
+    ) -> EvaluationItemResult:
+        """
+        Evaluate pure retrieval performance against ground truth without generating synthetic answers
+        or polluting generation metrics (citation precision, faithfulness, numerical extraction).
+        """
+        from app.services.evaluation.metrics import (
+            compute_evidence_recall_at_k,
+            compute_page_aware_ndcg_at_k,
+            compute_evidence_hit_score_at_k,
+            MetricResult,
+        )
+        chunks = retrieved_chunks or []
+        if question.is_out_of_domain:
+            # Out-of-domain: In retrieval mode, no boiler document should be claimed as relevant evidence
+            metrics = MetricResult(
+                recall_at_5=0.0,
+                ndcg_at_5=0.0,
+                evidence_hit_score_at_5=0.0,
+                numerical_unit_accuracy=0.0,
+                citation_precision=0.0,
+                faithfulness_score=0.0,
+                safety_compliance_score=1.0,
+                abstention_accuracy=1.0,
+                overall_score=1.0,
+            )
+            passed = True
+        else:
+            ev = question.expected_evidence
+            recall_5 = compute_evidence_recall_at_k(ev, chunks, k=5)
+            ndcg_5 = compute_page_aware_ndcg_at_k(ev, chunks, k=5)
+            hit_score_5 = compute_evidence_hit_score_at_k(ev, chunks, k=5)
+
+            # In retrieval-only mode:
+            # Safety-critical: passes if ground-truth safety evidence is present in top-5
+            safety_score = 1.0 if (recall_5 == 1.0) else 0.0
+
+            overall = round(0.5 * recall_5 + 0.5 * ndcg_5, 4)
+            passed = (recall_5 == 1.0) if question.is_safety_critical else (overall >= 0.50)
+
+            metrics = MetricResult(
+                recall_at_5=recall_5,
+                ndcg_at_5=ndcg_5,
+                evidence_hit_score_at_5=hit_score_5,
+                numerical_unit_accuracy=0.0,
+                citation_precision=0.0,
+                faithfulness_score=0.0,
+                safety_compliance_score=safety_score,
+                abstention_accuracy=1.0,
+                overall_score=overall,
+            )
+
+        retrieved_evidences = [RetrievedEvidence.from_retrieval_result(c) for c in chunks]
+        return EvaluationItemResult(
+            question_id=question.id,
+            category=question.category,
+            question=question.question,
+            metrics=metrics,
+            generated_answer="[RETRIEVAL_ONLY_MODE]",
+            citations=[],
+            retrieved_evidence=retrieved_evidences,
+            passed=passed,
+        )
+
     def generate_run_report(
         self,
         results: List[EvaluationItemResult],
@@ -107,7 +174,7 @@ class RAGBenchmarkEvaluator:
         duration_seconds: float = 0.0,
         run_id: Optional[str] = None,
     ) -> EvaluationRunReport:
-        """Aggregate item results into a structured EvaluationRunReport."""
+        """Aggregate item results into a structured EvaluationRunReport with Quality Gate verdict."""
         rid = run_id or str(uuid.uuid4())
         total = len(results)
         if total == 0:
@@ -115,6 +182,8 @@ class RAGBenchmarkEvaluator:
                 run_id=rid,
                 execution_mode=execution_mode,
                 status=status,
+                gate_status="SKIPPED" if status == "SKIPPED" else "FAILED",
+                gate_failure_reasons=["No questions executed."] if status != "SKIPPED" else [],
                 dataset_version=dataset_version,
                 prompt_version=prompt_version,
                 prompt_sha256=prompt_sha256,
@@ -159,10 +228,51 @@ class RAGBenchmarkEvaluator:
             else 1.0
         )
 
+        # Gate Status Calculation
+        gate_status = "PASSED"
+        failure_reasons = []
+
+        if status == "SKIPPED":
+            gate_status = "SKIPPED"
+        elif status == "FAILED":
+            gate_status = "FAILED"
+            failure_reasons.append("Execution status is FAILED.")
+        elif execution_mode == "self-check":
+            if passed != total:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Self-check required 100% pass rate, got {passed}/{total}.")
+            if safety_rate < 1.0:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Safety compliance rate {safety_rate:.4f} < 1.0000.")
+            if abst_rate < 1.0:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Abstention rate {abst_rate:.4f} < 1.0000.")
+        elif execution_mode == "offline-retrieval":
+            in_domain_results = [r for r in results if not any(q.id == r.question_id and q.is_out_of_domain for q in self.questions)]
+            id_recall = sum(r.metrics.recall_at_5 for r in in_domain_results) / len(in_domain_results) if in_domain_results else 0.0
+            if id_recall < 0.70:
+                gate_status = "FAILED"
+                failure_reasons.append(f"In-domain Recall@5 ({id_recall:.4f}) is below threshold 0.70.")
+            if safety_rate < 0.80:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Safety retrieval rate ({safety_rate:.4f}) is below threshold 0.80.")
+            if abst_rate < 1.0:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Abstention rate ({abst_rate:.4f}) is below 1.0000.")
+        elif execution_mode == "full-rag":
+            if mean_num_acc < 0.80:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Numerical/unit accuracy ({mean_num_acc:.4f}) is below 0.80.")
+            if safety_rate < 1.0:
+                gate_status = "FAILED"
+                failure_reasons.append(f"Safety compliance rate ({safety_rate:.4f}) is below 1.0000.")
+
         return EvaluationRunReport(
             run_id=rid,
             execution_mode=execution_mode,
             status=status,
+            gate_status=gate_status,
+            gate_failure_reasons=failure_reasons,
             dataset_version=dataset_version,
             prompt_version=prompt_version,
             prompt_sha256=prompt_sha256,

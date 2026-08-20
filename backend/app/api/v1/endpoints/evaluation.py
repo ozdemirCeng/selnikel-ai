@@ -4,6 +4,8 @@ Provides role-gated access to RAG Golden Benchmark execution and historical repo
 Enforces system.manage RBAC permission.
 """
 import json
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,6 +17,14 @@ from app.domain.contracts.evaluation import EvaluationRunReport
 from app.domain.identity.models import User
 
 router = APIRouter(prefix="/evaluation", tags=["Evaluation & Benchmarks"])
+
+
+def get_reports_dir() -> Path:
+    """Dependency provider for reports directory. Overridable in tests."""
+    backend_dir = Path(__file__).resolve().parent.parent.parent.parent
+    d = backend_dir / "app" / "evaluation" / "reports"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
 
 
 class BenchmarkRunRequest(BaseModel):
@@ -49,15 +59,20 @@ class BenchmarkRunSummaryResponse(BaseModel):
 async def trigger_benchmark_run(
     payload: BenchmarkRunRequest,
     user: User = Depends(require_permission("system.manage")),
+    reports_dir: Path = Depends(get_reports_dir),
 ) -> EvaluationRunReport:
     """
     Execute golden benchmark suite.
     Restricted to system administrators with 'system.manage' permission.
     """
+    timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    out_path = reports_dir / f"benchmark_report_{payload.mode}_{payload.profile}_{uuid.uuid4().hex[:8]}_{timestamp_str}.json"
+
     exit_code, report, report_path = run_benchmark(
         mode=payload.mode,
         profile=payload.profile,
         category_filter=payload.category,
+        output_path=out_path,
     )
 
     if not report:
@@ -78,14 +93,12 @@ async def trigger_benchmark_run(
 async def list_benchmark_reports(
     limit: int = Query(20, ge=1, le=100),
     user: User = Depends(require_permission("system.manage")),
+    reports_dir: Path = Depends(get_reports_dir),
 ) -> List[BenchmarkRunSummaryResponse]:
     """
     Retrieve history of executed benchmark reports.
     Requires 'system.manage' permission.
     """
-    backend_dir = Path(__file__).resolve().parent.parent.parent.parent
-    reports_dir = backend_dir / "app" / "evaluation" / "reports"
-
     if not reports_dir.exists():
         return []
 

@@ -1,26 +1,28 @@
 {
-  "run_id": "ad9cd92b-dc4c-4af9-a916-e925a5ff66a7",
+  "run_id": "8a7c8823-42c5-4a7e-bbf6-5ea28502ee71",
   "execution_mode": "offline-retrieval",
   "status": "COMPLETED",
+  "gate_status": "PASSED",
+  "gate_failure_reasons": [],
   "dataset_version": "1.0.0",
   "prompt_version": "1.2.0",
   "prompt_sha256": "97bdda7d0493ebda9c667f6f9e650f430ecbed82ede53dc7d0ea1f4382719389",
-  "dataset_sha256": "f58909fc2f4174a751d92171bcdef3edd422d5e22d6a389b2b69b19376cdb9da",
-  "manifest_sha256": "4dc2a35587019f1547b952ab050399160639ccde5ffbd76618f0dbb99f3ce388",
-  "git_commit": "036395d07f19682630fd58002f92d1f33b5da943",
+  "dataset_sha256": "6157cef3d5e43087af654625efe341df054e81a96074804fa77facd18ecff949",
+  "manifest_sha256": "6069682da8396ed8c10733ffdb6d94746db8b71cdbd741dda23e5303e40c526a",
+  "git_commit": "65cdf2df336aac488b516e514b4edd4309032491",
   "model_name": "retrieval-memory-bm25",
   "oracle_mock_used": false,
   "network_access": "disabled",
-  "executed_at": "2026-08-20T12:45:55.399913+00:00",
-  "duration_seconds": 0.3,
+  "executed_at": "2026-08-20T13:14:42.839890+00:00",
+  "duration_seconds": 0.34,
   "total_questions": 28,
-  "passed_questions": 19,
+  "passed_questions": 24,
   "mean_recall_at_5": 0.6786,
   "mean_ndcg_at_5": 0.6187,
-  "mean_numerical_unit_accuracy": 0.4286,
-  "mean_citation_precision": 1.0,
-  "mean_faithfulness": 1.0,
-  "safety_compliance_rate": 0.0,
+  "mean_numerical_unit_accuracy": 0.0,
+  "mean_citation_precision": 0.0,
+  "mean_faithfulness": 0.0,
+  "safety_compliance_rate": 1.0,
   "abstention_rate": 1.0,
   "item_results": [
     {
@@ -31,34 +33,17 @@
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 1.0,
-        "overall_score": 0.3
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.0
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -67,7 +52,7 @@
           "score": 17.246
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -76,7 +61,7 @@
           "score": 17.0218
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -85,7 +70,7 @@
           "score": 11.0638
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -94,7 +79,7 @@
           "score": 8.4563
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -113,34 +98,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.8
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 2,
-          "section": "2. Technical Operating Parameters & Capacities",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nWorking",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 2,
-          "section": "2. Technical Operating Parameters & Capacities",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 2 | Section: 2. Technical Operating Parameters & Capacities]\n\n2. Technical Operating Parameters & Capacities\nModel Code\nSteam Cap. (t/h)\nW",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "chunk_id": "64c5d9a4-1043-481b-912a-5459afaedb9f",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 2,
@@ -149,7 +117,7 @@
           "score": 8.3109
         },
         {
-          "chunk_id": "c56bbdc1-d1c4-4906-953c-2febb920c86f",
+          "chunk_id": "6b8daefa-4567-4733-9cae-fc9d4eceae53",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 2,
@@ -158,7 +126,7 @@
           "score": 8.3109
         },
         {
-          "chunk_id": "a1195b52-0617-4dcc-bf64-e4889b41536f",
+          "chunk_id": "9e7ff5c8-5012-4ce5-b491-635bf820bb29",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 2,
@@ -167,7 +135,7 @@
           "score": 7.9178
         },
         {
-          "chunk_id": "01b6c1e1-43af-45d9-8cd0-5ea71c4a8da3",
+          "chunk_id": "b1043bc1-499b-44e4-8eaf-8ac29efa6a03",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 2,
@@ -176,7 +144,7 @@
           "score": 7.9178
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -195,34 +163,17 @@
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 1.0,
-        "overall_score": 0.3
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -231,7 +182,7 @@
           "score": 9.8807
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -240,7 +191,7 @@
           "score": 9.3995
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -249,7 +200,7 @@
           "score": 9.3953
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -258,7 +209,7 @@
           "score": 9.2583
         },
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -277,34 +228,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 0.6309,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.7077
+        "overall_score": 0.8155
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -313,7 +247,7 @@
           "score": 11.2975
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -322,7 +256,7 @@
           "score": 10.3796
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -331,7 +265,7 @@
           "score": 8.4872
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -340,7 +274,7 @@
           "score": 7.06
         },
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -359,34 +293,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.8
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -395,7 +312,7 @@
           "score": 14.0681
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -404,7 +321,7 @@
           "score": 13.4238
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -413,7 +330,7 @@
           "score": 11.471
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -422,7 +339,7 @@
           "score": 6.4036
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -441,34 +358,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.8
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data > Table: 2. Periodic Maintenance Schedule & Intervals",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data | Type: Table]\n\n### Table: 2. Periodic Maintenanc",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -477,7 +377,7 @@
           "score": 18.2664
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -486,7 +386,7 @@
           "score": 16.8739
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -495,7 +395,7 @@
           "score": 8.2555
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -504,7 +404,7 @@
           "score": 4.5474
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -522,35 +422,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -559,7 +442,7 @@
           "score": 14.9277
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -568,7 +451,7 @@
           "score": 10.856
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -577,7 +460,7 @@
           "score": 7.4223
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -586,7 +469,7 @@
           "score": 6.9773
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -604,35 +487,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -641,7 +507,7 @@
           "score": 15.791
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -650,7 +516,7 @@
           "score": 12.9247
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -659,7 +525,7 @@
           "score": 7.0729
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -668,7 +534,7 @@
           "score": 6.4853
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -686,35 +552,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility > Table: 3. Diagnostic Fault Codes & Troubleshooting Matrix",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility | Type: Table]\n\n### Tabl",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -723,7 +572,7 @@
           "score": 16.6017
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -732,7 +581,7 @@
           "score": 8.8474
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -741,7 +590,7 @@
           "score": 4.8711
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -750,7 +599,7 @@
           "score": 4.6616
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -768,35 +617,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -805,7 +637,7 @@
           "score": 14.0569
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -814,7 +646,7 @@
           "score": 10.594
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -823,7 +655,7 @@
           "score": 9.302
         },
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -832,7 +664,7 @@
           "score": 5.0177
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -851,34 +683,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.8
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 3,
-          "section": "3. Safety Relief Valves & Auxiliary Limits",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 3,
-          "section": "3. Safety Relief Valves & Auxiliary Limits",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConn",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "chunk_id": "3862b90b-269f-437a-ad7d-4e34c11ce223",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -887,7 +702,7 @@
           "score": 13.9416
         },
         {
-          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "chunk_id": "6c962f01-73d3-4b22-bdf6-188381ef4cc9",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -896,7 +711,7 @@
           "score": 13.9416
         },
         {
-          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "chunk_id": "8868ce5d-3471-4f55-bb0d-dd802ff74e81",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -905,7 +720,7 @@
           "score": 13.3738
         },
         {
-          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "chunk_id": "6590c767-afc3-4435-bd52-38b5429d6f7e",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -914,7 +729,7 @@
           "score": 13.3738
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -933,34 +748,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.8
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
-      "citations": [
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\ne & Mechanical Parts C",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 1,
-          "section": "SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 1 | Section: SELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER > 1. Technical Air & Combustion Data]\n\nSELNIKEL MONOBLOCK INDUSTRIAL GAS BURNER\n\nTechn",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -969,7 +767,7 @@
           "score": 17.9055
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -978,7 +776,7 @@
           "score": 12.0509
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -987,7 +785,7 @@
           "score": 9.4545
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -996,7 +794,7 @@
           "score": 6.7522
         },
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1014,35 +812,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
-      "citations": [
-        {
-          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
-          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
-          "page_number": 1,
-          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
-          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1051,7 +832,7 @@
           "score": 19.0836
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1060,7 +841,7 @@
           "score": 8.002
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1069,7 +850,7 @@
           "score": 5.3008
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1078,7 +859,7 @@
           "score": 4.6476
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1096,35 +877,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
-      "citations": [
-        {
-          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
-          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
-          "page_number": 1,
-          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
-          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
-          "score": null
-        },
-        {
-          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
-          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
-          "page_number": 1,
-          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
-          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1133,7 +897,7 @@
           "score": 21.8519
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1142,7 +906,7 @@
           "score": 19.4301
         },
         {
-          "chunk_id": "470ed543-dc8b-4143-85be-bad72e400e6b",
+          "chunk_id": "959fd97c-a616-4a53-978f-21b0a3eedb3a",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1151,7 +915,7 @@
           "score": 7.8783
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1160,7 +924,7 @@
           "score": 5.7065
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1178,35 +942,18 @@
       "metrics": {
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
-      "citations": [
-        {
-          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
-          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
-          "page_number": 1,
-          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
-          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nments.\n\nPressure Equipment Directiv",
-          "score": null
-        },
-        {
-          "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
-          "filename": "Industrial_Boiler_Commissioning_Guide.docx",
-          "page_number": 1,
-          "section": "SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits",
-          "snippet": "[Document: Industrial_Boiler_Commissioning_Guide.docx | Page: 1 | Section: SELNIKEL INDUSTRIAL BOILER COMMISSIONING GUIDE > 1. Pre-Commissioning Electrical Limits]\n\nSELNIKEL INDUSTRIAL BOILER COMMISSI",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1215,7 +962,7 @@
           "score": 22.2876
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1224,7 +971,7 @@
           "score": 6.5784
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1233,7 +980,7 @@
           "score": 6.1893
         },
         {
-          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "chunk_id": "9cfebc7f-191b-4393-9447-884daeeb84c0",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -1242,7 +989,7 @@
           "score": 4.5725
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1261,34 +1008,17 @@
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 1.0,
-        "overall_score": 0.3
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.0
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1297,7 +1027,7 @@
           "score": 12.1129
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1306,7 +1036,7 @@
           "score": 9.1234
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1315,7 +1045,7 @@
           "score": 5.7995
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1324,7 +1054,7 @@
           "score": 4.7734
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1343,34 +1073,17 @@
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 1.0,
-        "overall_score": 0.3
+        "safety_compliance_score": 0.0,
+        "overall_score": 0.0
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1379,7 +1092,7 @@
           "score": 9.0646
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1388,7 +1101,7 @@
           "score": 6.2329
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1397,7 +1110,7 @@
           "score": 4.9277
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1406,7 +1119,7 @@
           "score": 3.6674
         },
         {
-          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "chunk_id": "64c5d9a4-1043-481b-912a-5459afaedb9f",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 2,
@@ -1425,34 +1138,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 0.6309,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
-        "overall_score": 0.7077
+        "overall_score": 0.8155
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 3,
-          "section": "3. Safety Relief Valves & Auxiliary Limits",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 3,
-          "section": "3. Safety Relief Valves & Auxiliary Limits",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConn",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "chunk_id": "3862b90b-269f-437a-ad7d-4e34c11ce223",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -1461,7 +1157,7 @@
           "score": 11.3433
         },
         {
-          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "chunk_id": "6c962f01-73d3-4b22-bdf6-188381ef4cc9",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -1470,7 +1166,7 @@
           "score": 11.3433
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1479,7 +1175,7 @@
           "score": 11.0037
         },
         {
-          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "chunk_id": "8868ce5d-3471-4f55-bb0d-dd802ff74e81",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -1488,7 +1184,7 @@
           "score": 10.9072
         },
         {
-          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "chunk_id": "6590c767-afc3-4435-bd52-38b5429d6f7e",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -1506,18 +1202,18 @@
       "metrics": {
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
       "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1526,7 +1222,7 @@
           "score": 3.2078
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1535,7 +1231,7 @@
           "score": 2.2737
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1544,7 +1240,7 @@
           "score": 2.2048
         },
         {
-          "chunk_id": "808dfc7a-9000-4361-be74-7cddad0009f9",
+          "chunk_id": "e8940e79-dd0c-40b4-b38d-894a569f3b1c",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1553,7 +1249,7 @@
           "score": 1.7693
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1571,18 +1267,18 @@
       "metrics": {
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
       "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1591,7 +1287,7 @@
           "score": 4.9696
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1600,7 +1296,7 @@
           "score": 3.2896
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1609,7 +1305,7 @@
           "score": 2.9333
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1618,7 +1314,7 @@
           "score": 2.7915
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1636,18 +1332,18 @@
       "metrics": {
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
       "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1656,7 +1352,7 @@
           "score": 4.2939
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1665,7 +1361,7 @@
           "score": 3.9112
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1674,7 +1370,7 @@
           "score": 2.2737
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1683,7 +1379,7 @@
           "score": 2.2048
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1701,18 +1397,18 @@
       "metrics": {
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
       "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1721,7 +1417,7 @@
           "score": 4.2939
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1730,7 +1426,7 @@
           "score": 3.9112
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1739,7 +1435,7 @@
           "score": 2.2737
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -1748,7 +1444,7 @@
           "score": 2.2048
         },
         {
-          "chunk_id": "00551834-06e3-4142-914a-860ce8c35179",
+          "chunk_id": "9b91f0fd-ed51-4410-873f-f6cc32490d39",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1766,18 +1462,18 @@
       "metrics": {
         "recall_at_5": 0.0,
         "ndcg_at_5": 0.0,
-        "numerical_unit_accuracy": 1.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "numerical_unit_accuracy": 0.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
         "safety_compliance_score": 1.0,
         "overall_score": 1.0
       },
-      "generated_answer": "Bu konu teknik kapsam dışındadır.",
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
       "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1786,7 +1482,7 @@
           "score": 4.9696
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1795,7 +1491,7 @@
           "score": 3.2896
         },
         {
-          "chunk_id": "c07330ac-e97d-4183-948c-1f3d1c7c55f1",
+          "chunk_id": "07760bef-f11d-4785-91bb-49596522fdea",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1804,7 +1500,7 @@
           "score": 2.9333
         },
         {
-          "chunk_id": "bc33084a-2c84-48a4-9ba1-f3834a768351",
+          "chunk_id": "f4aea148-2f04-4efe-b143-502d5b95b9ba",
           "document_id": "Industrial_Boiler_Commissioning_Guide.docx",
           "filename": "Industrial_Boiler_Commissioning_Guide.docx",
           "page_number": 1,
@@ -1813,7 +1509,7 @@
           "score": 2.7915
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1832,34 +1528,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 0.0,
-        "overall_score": 0.45
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
-      "citations": [
-        {
-          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "page_number": 1,
-          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
-          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "chunk_id": "9cfebc7f-191b-4393-9447-884daeeb84c0",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -1868,7 +1547,7 @@
           "score": 15.9196
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1877,7 +1556,7 @@
           "score": 13.3034
         },
         {
-          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "chunk_id": "59d279d8-9da8-4544-a34f-4ae8ca6160d4",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -1886,7 +1565,7 @@
           "score": 12.6413
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1895,7 +1574,7 @@
           "score": 8.1733
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1904,7 +1583,7 @@
           "score": 5.6152
         }
       ],
-      "passed": false
+      "passed": true
     },
     {
       "question_id": "selnikel-bench-025",
@@ -1914,34 +1593,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 0.0,
-        "overall_score": 0.45
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n",
-      "citations": [
-        {
-          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "page_number": 1,
-          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks > Table: Table: Thermal Oil Operational Limits",
-          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks | Type: Table]\n\n### Table: Table: Thermal Oil Operational Limits\n",
-          "score": null
-        },
-        {
-          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "page_number": 1,
-          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
-          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "chunk_id": "59d279d8-9da8-4544-a34f-4ae8ca6160d4",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -1950,7 +1612,7 @@
           "score": 13.4563
         },
         {
-          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "chunk_id": "9cfebc7f-191b-4393-9447-884daeeb84c0",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -1959,7 +1621,7 @@
           "score": 12.7106
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -1968,7 +1630,7 @@
           "score": 8.8218
         },
         {
-          "chunk_id": "ce71e9c4-9e8e-4ea4-a35c-a7db324bd6e0",
+          "chunk_id": "4e001741-5703-4358-8813-afc844145e4b",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 1,
@@ -1977,7 +1639,7 @@
           "score": 6.0834
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -1986,7 +1648,7 @@
           "score": 5.6152
         }
       ],
-      "passed": false
+      "passed": true
     },
     {
       "question_id": "selnikel-bench-026",
@@ -1996,34 +1658,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 1.0,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 0.0,
-        "overall_score": 0.45
+        "safety_compliance_score": 1.0,
+        "overall_score": 1.0
       },
-      "generated_answer": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
-      "citations": [
-        {
-          "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
-          "page_number": 1,
-          "section": "1. Operating Fluid & Temperature Limits > 2. Safety Interlocks",
-          "snippet": "[Document: Thermal_Oil_Heater_Operating_Limits.txt | Page: 1 | Section: 1. Operating Fluid & Temperature Limits > 2. Safety Interlocks]\n\nSELNIKEL THERMAL OIL HEATER (HOT OIL) TECHNICAL SPECIFICATION\nD",
-          "score": null
-        },
-        {
-          "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
-          "filename": "Monoblock_Burner_Maintenance_Manual.docx",
-          "page_number": 2,
-          "section": "3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility",
-          "snippet": "[Document: Monoblock_Burner_Maintenance_Manual.docx | Page: 2 | Section: 3. Diagnostic Fault Codes & Troubleshooting Matrix > 4. Burner Nozzle & Mechanical Parts Compatibility]\n\n3. Diagnostic Fault Co",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "chunk_id": "9cfebc7f-191b-4393-9447-884daeeb84c0",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -2032,7 +1677,7 @@
           "score": 11.7952
         },
         {
-          "chunk_id": "6ddf8ed1-a7c4-4140-860a-d88164d39ef7",
+          "chunk_id": "94bf044f-94c9-4ffe-a647-65cdd88893d8",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -2041,7 +1686,7 @@
           "score": 10.9349
         },
         {
-          "chunk_id": "1b9c0d9f-4b78-4a67-91bd-c8ef362e1ea3",
+          "chunk_id": "59d279d8-9da8-4544-a34f-4ae8ca6160d4",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -2050,7 +1695,7 @@
           "score": 10.3509
         },
         {
-          "chunk_id": "ad5c926d-54b9-4381-94f5-9e12c8570830",
+          "chunk_id": "aeca0b43-d4e8-4571-9a34-bb1da7a9c9d5",
           "document_id": "Monoblock_Burner_Maintenance_Manual.docx",
           "filename": "Monoblock_Burner_Maintenance_Manual.docx",
           "page_number": 2,
@@ -2059,7 +1704,7 @@
           "score": 9.8874
         },
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -2068,7 +1713,7 @@
           "score": 3.3415
         }
       ],
-      "passed": false
+      "passed": true
     },
     {
       "question_id": "selnikel-bench-027",
@@ -2078,34 +1723,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 0.6309,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 0.0,
-        "overall_score": 0.3946
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.8155
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 3,
-          "section": "3. Safety Relief Valves & Auxiliary Limits",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 3 | Section: 3. Safety Relief Valves & Auxiliary Limits]\n\n3. Safety Relief Valves & Auxiliary Limits\nSafety Device\nSet Pressure (bar)\nConnection",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -2114,7 +1742,7 @@
           "score": 13.2835
         },
         {
-          "chunk_id": "68b02f29-f8a0-4664-b67d-c76b63e212fe",
+          "chunk_id": "3862b90b-269f-437a-ad7d-4e34c11ce223",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -2123,7 +1751,7 @@
           "score": 12.8345
         },
         {
-          "chunk_id": "86521dfd-6e76-4fa0-8006-72de88cd1967",
+          "chunk_id": "6c962f01-73d3-4b22-bdf6-188381ef4cc9",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -2132,7 +1760,7 @@
           "score": 12.8345
         },
         {
-          "chunk_id": "d1888332-5355-4efd-acaa-e0f9b9d937ca",
+          "chunk_id": "8868ce5d-3471-4f55-bb0d-dd802ff74e81",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 3,
@@ -2141,7 +1769,7 @@
           "score": 12.3227
         },
         {
-          "chunk_id": "6df5777e-b8f3-486e-85eb-7f492c69efe7",
+          "chunk_id": "6590c767-afc3-4435-bd52-38b5429d6f7e",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 3,
@@ -2150,7 +1778,7 @@
           "score": 12.3227
         }
       ],
-      "passed": false
+      "passed": true
     },
     {
       "question_id": "selnikel-bench-028",
@@ -2160,34 +1788,17 @@
         "recall_at_5": 1.0,
         "ndcg_at_5": 0.4307,
         "numerical_unit_accuracy": 0.0,
-        "citation_precision": 1.0,
-        "faithfulness_score": 1.0,
+        "citation_precision": 0.0,
+        "faithfulness_score": 0.0,
         "abstention_accuracy": 1.0,
-        "safety_compliance_score": 0.0,
-        "overall_score": 0.3646
+        "safety_compliance_score": 1.0,
+        "overall_score": 0.7154
       },
-      "generated_answer": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-      "citations": [
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datasheet\nDoc",
-          "score": null
-        },
-        {
-          "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
-          "page_number": 1,
-          "section": "1. General Overview & Design Standards",
-          "snippet": "[Document: SB_Series_Steam_Boiler_Datasheet_REV01.pdf | Page: 1 | Section: 1. General Overview & Design Standards]\n\nSELNIKEL ISITMA SISTEMLERI A.S.\n SB-Series Industrial Steam Boiler Technical Datashe",
-          "score": null
-        }
-      ],
+      "generated_answer": "[RETRIEVAL_ONLY_MODE]",
+      "citations": [],
       "retrieved_evidence": [
         {
-          "chunk_id": "39128949-892b-41db-9ff6-34d4da93eab0",
+          "chunk_id": "91fc71bd-e255-4508-9d36-d597346baad6",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 1,
@@ -2196,7 +1807,7 @@
           "score": 8.2506
         },
         {
-          "chunk_id": "8c276c78-0b61-49ad-8df3-c613a82c8b48",
+          "chunk_id": "2a335223-0a86-44a8-8077-c2a76b0793f8",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 1,
@@ -2205,7 +1816,7 @@
           "score": 4.8037
         },
         {
-          "chunk_id": "22f1afe1-f4f4-4cc7-b42c-149ca6a033ab",
+          "chunk_id": "9cfebc7f-191b-4393-9447-884daeeb84c0",
           "document_id": "Thermal_Oil_Heater_Operating_Limits.txt",
           "filename": "Thermal_Oil_Heater_Operating_Limits.txt",
           "page_number": 1,
@@ -2214,7 +1825,7 @@
           "score": 4.6222
         },
         {
-          "chunk_id": "1139958f-4d20-4866-85ab-c13e0e22f73c",
+          "chunk_id": "64c5d9a4-1043-481b-912a-5459afaedb9f",
           "document_id": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet.pdf",
           "page_number": 2,
@@ -2223,7 +1834,7 @@
           "score": 4.5068
         },
         {
-          "chunk_id": "c56bbdc1-d1c4-4906-953c-2febb920c86f",
+          "chunk_id": "6b8daefa-4567-4733-9cae-fc9d4eceae53",
           "document_id": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "filename": "SB_Series_Steam_Boiler_Datasheet_REV01.pdf",
           "page_number": 2,
@@ -2232,7 +1843,7 @@
           "score": 4.5068
         }
       ],
-      "passed": false
+      "passed": true
     }
   ]
 }
