@@ -2,12 +2,12 @@
 Comprehensive Quality Gate & Invariant Tests for Stage P1.2 Golden Benchmark Suite.
 Tests:
   1. Schema, dataset integrity, and category distribution (28 items).
-  2. Physical fixture grounding, SHA-256 verification, and locator coordinate validity.
+  2. Physical fixture grounding, SHA-256 verification, and locator coordinate validity with mandatory expected_cell_value.
   3. Strict OOD and Safety-Critical domain invariants.
-  4. Fail-fast coordinate validator against corrupted revision/page/table/column/row/section/phrase locators.
+  4. Fail-fast coordinate validator against corrupted revision/page/table/column/row/section/phrase/cell_value locators.
   5. Multi-mode CLI execution (self-check, offline-retrieval, full-rag).
   6. Profile-based retriever dispatch (memory vs qdrant-local health check).
-  7. Full-RAG end-to-end engine contract and live/skipped execution paths.
+  7. Full-RAG end-to-end engine contract with indexed real fixture chunks, non-empty retrieval & verified citation assertions.
   8. Runner-level atomic report immutability guarantee (FileExistsError).
   9. RBAC security enforcement on /api/v1/evaluation/benchmark with isolated temp report dir.
 """
@@ -27,6 +27,8 @@ from app.domain.rag import Citation, GenerationOutput, RetrievalResult
 from app.services.evaluation.dataset_validator import validate_dataset_file
 from app.services.evaluation.evaluator import RAGBenchmarkEvaluator
 from app.services.evaluation.metrics import extract_parameters
+from app.services.ingestion.chunker import TableAwareChunker
+from app.services.ingestion.parser import FastFallbackParser
 from app.services.llm.base import BaseLLMProvider
 from app.services.rag.engine import DeterministicRAGEngine
 from app.services.retrieval.in_memory_bm25 import InMemoryBM25Index
@@ -99,13 +101,14 @@ def test_parametric_grounding_against_physical_manifest():
             parsed = extract_parameters(p)
             assert len(parsed) > 0, f"Failed to extract parameter from '{p}' in question '{q.id}'"
 
-        # Verify locator structure
+        # Verify locator structure & mandatory expected_cell_value
         loc = ev.locator
         assert loc is not None
         if loc.locator_type == LocatorType.TABLE_CELL:
             assert loc.table_id is not None
             assert loc.row_key is not None
             assert loc.column_name is not None
+            assert loc.expected_cell_value is not None, f"Question '{q.id}' missing expected_cell_value"
         elif loc.locator_type == LocatorType.SECTION_TEXT:
             assert loc.section_header is not None
             assert loc.key_phrase is not None
@@ -114,7 +117,7 @@ def test_parametric_grounding_against_physical_manifest():
 
 
 def test_fail_fast_coordinate_mutations(tmp_path):
-    """Verify validator strictly catches fake_table, fake_column, fake_section, fake_row, fake_phrase."""
+    """Verify validator strictly catches fake_table, fake_column, fake_section, fake_row, wrong_column, wrong_row, wrong_cell_value."""
     with open(DATASET_PATH, "r", encoding="utf-8-sig") as f:
         base_data = json.load(f)
 
@@ -128,7 +131,7 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_tab
     assert any("table_id 'fake_table_999' not found" in e for e in err_tab)
 
-    # 2. Mutate column_name (fake_column)
+    # 2. Mutate column_name to nonexistent column (fake_column)
     mut_col = copy.deepcopy(base_data)
     mut_col[0]["expected_evidence"]["locator"]["column_name"] = "fake_column_xyz"
     p_col = tmp_path / "mut_col.json"
@@ -138,7 +141,18 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_col
     assert any("column_name 'fake_column_xyz' not found" in e for e in err_col)
 
-    # 3. Mutate row_key (fake_row)
+    # 3. Mutate column_name to valid column in table, but WRONG column for ground truth (wrong_column)
+    # Question 0: SB-500 design_press expected_cell_value is "16.0 bar". Mutating column to "steam_cap" (which is "0.5")
+    mut_wcol = copy.deepcopy(base_data)
+    mut_wcol[0]["expected_evidence"]["locator"]["column_name"] = "steam_cap"
+    p_wcol = tmp_path / "mut_wcol.json"
+    with open(p_wcol, "w", encoding="utf-8") as f:
+        json.dump(mut_wcol, f)
+    v_wcol, err_wcol = validate_dataset_file(p_wcol, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_wcol
+    assert any("expected cell value '16.0 bar', but found '0.5 t/h'" in e for e in err_wcol)
+
+    # 4. Mutate row_key to nonexistent row (fake_row)
     mut_row = copy.deepcopy(base_data)
     mut_row[0]["expected_evidence"]["locator"]["row_key"] = "NONEXISTENT_ROW_KEY_XYZ"
     p_row = tmp_path / "mut_row.json"
@@ -148,7 +162,38 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_row
     assert any("row_key 'NONEXISTENT_ROW_KEY_XYZ' not found" in e for e in err_row)
 
-    # 4. Mutate section_header (fake_section)
+    # 5. Mutate row_key to valid row in table, but WRONG row for ground truth (wrong_row)
+    # Question 16: SB-1000 steam_cap is "0.9 t/h". Mutating row to "SB-500" (which has steam_cap "0.5")
+    mut_wrow = copy.deepcopy(base_data)
+    mut_wrow[16]["expected_evidence"]["locator"]["row_key"] = "SB-500"
+    p_wrow = tmp_path / "mut_wrow.json"
+    with open(p_wrow, "w", encoding="utf-8") as f:
+        json.dump(mut_wrow, f)
+    v_wrow, err_wrow = validate_dataset_file(p_wrow, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_wrow
+    assert any("expected cell value" in e for e in err_wrow)
+
+    # 6. Mutate expected_cell_value directly (wrong_cell_value)
+    mut_val = copy.deepcopy(base_data)
+    mut_val[0]["expected_evidence"]["locator"]["expected_cell_value"] = "999.0 bar"
+    p_val = tmp_path / "mut_val.json"
+    with open(p_val, "w", encoding="utf-8") as f:
+        json.dump(mut_val, f)
+    v_val, err_val = validate_dataset_file(p_val, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_val
+    assert any("expected cell value '999.0 bar', but found '16.0 bar'" in e for e in err_val)
+
+    # 7. Mutate table_cell locator by removing expected_cell_value (missing_expected_cell_value)
+    mut_nval = copy.deepcopy(base_data)
+    mut_nval[0]["expected_evidence"]["locator"]["expected_cell_value"] = None
+    p_nval = tmp_path / "mut_nval.json"
+    with open(p_nval, "w", encoding="utf-8") as f:
+        json.dump(mut_nval, f)
+    v_nval, err_nval = validate_dataset_file(p_nval, SCHEMA_PATH, FIXTURES_DIR, MANIFEST_PATH)
+    assert not v_nval
+    assert any("missing required 'expected_cell_value'" in e for e in err_nval)
+
+    # 8. Mutate section_header (fake_section)
     mut_sec = copy.deepcopy(base_data)
     mut_sec[9]["expected_evidence"]["locator"]["section_header"] = "Nonexistent Safety Section 999"
     p_sec = tmp_path / "mut_sec.json"
@@ -158,7 +203,7 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_sec
     assert any("section_header 'Nonexistent Safety Section 999' not found" in e for e in err_sec)
 
-    # 5. Mutate key_phrase (fake_phrase)
+    # 9. Mutate key_phrase (fake_phrase)
     mut_phr = copy.deepcopy(base_data)
     mut_phr[9]["expected_evidence"]["locator"]["key_phrase"] = "Nonexistent Key Phrase XYZ 123"
     p_phr = tmp_path / "mut_phr.json"
@@ -168,7 +213,7 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_phr
     assert any("key_phrase 'Nonexistent Key Phrase XYZ 123' not found" in e for e in err_phr)
 
-    # 6. Mutate revision_code
+    # 10. Mutate revision_code
     mut_rev = copy.deepcopy(base_data)
     mut_rev[0]["expected_evidence"]["revision_code"] = "FAKE-REV"
     p_rev = tmp_path / "mut_rev.json"
@@ -178,7 +223,7 @@ def test_fail_fast_coordinate_mutations(tmp_path):
     assert not v_rev
     assert any("revision_code mismatch" in e for e in err_rev)
 
-    # 7. Mutate page_number
+    # 11. Mutate page_number
     mut_pg = copy.deepcopy(base_data)
     mut_pg[0]["expected_evidence"]["page_number"] = 999
     p_pg = tmp_path / "mut_pg.json"
@@ -290,21 +335,58 @@ class MockLLMProvider(BaseLLMProvider):
 
 @pytest.mark.asyncio
 async def test_full_rag_pipeline_end_to_end():
-    """Verify DeterministicRAGEngine query_with_retrieval contract runs end-to-end with LLM provider."""
+    """
+    Verify DeterministicRAGEngine query_with_retrieval contract runs end-to-end with:
+      - Real ingested fixture chunks from disk
+      - Non-empty hybrid retrieval
+      - Live citation extraction & verification
+      - Full evaluator scoring
+    """
+    # 1. Parse and chunk real fixtures
+    parser = FastFallbackParser()
+    chunker = TableAwareChunker(max_chunk_chars=800, chunk_overlap_chars=100)
+    all_chunks = []
+    for fix_file in sorted(FIXTURES_DIR.glob("*")):
+        if fix_file.is_file() and fix_file.suffix.lower() in [".pdf", ".docx", ".txt"]:
+            pdoc = parser.parse_sync(str(fix_file))
+            chunks = chunker.chunk_document(pdoc, document_id=fix_file.name)
+            all_chunks.extend(chunks)
+
+    assert len(all_chunks) > 0, "Fixtures must produce parsed chunks"
+
+    # 2. Index into BM25
     bm25 = InMemoryBM25Index()
+    bm25.index_chunks(all_chunks)
+
+    # 3. Instantiate Engine with Mock Provider
     llm = MockLLMProvider()
     rag_engine = DeterministicRAGEngine(retriever=bm25, llm=llm)
 
-    output, retrieved = await rag_engine.query_with_retrieval("What is the design pressure for SB-500?", top_k=3)
-    assert isinstance(output, GenerationOutput)
-    assert "16.0 bar" in output.answer
-    assert isinstance(retrieved, list)
-
+    # 4. Execute query_with_retrieval for question 0
     evaluator = RAGBenchmarkEvaluator(dataset_path=DATASET_PATH)
     q0 = evaluator.questions[0]
+    output, retrieved = await rag_engine.query_with_retrieval(q0.question, top_k=5)
+
+    # 5. Assertions on retrieved chunks and generation output
+    assert isinstance(output, GenerationOutput)
+    assert "16.0 bar" in output.answer
+    assert "0.5 t/h" in output.answer
+    assert isinstance(retrieved, list)
+    assert len(retrieved) > 0, "Retriever must return non-empty candidate chunks"
+    assert any("SB-500" in c.content for c in retrieved), "Retrieved chunks must contain SB-500 target chunk"
+
+    # 6. Assertions on citations
+    assert len(output.citations) > 0, "Citation engine must extract citations from grounded answer"
+    assert output.citations[0].filename in ["SB_Series_Steam_Boiler_Datasheet.pdf", "SB_Series_Steam_Boiler_Datasheet_REV01.pdf"]
+    assert output.citations[0].page_number == 2
+
+    # 7. Full evaluator scoring
     item_res = evaluator.evaluate_single(q0, output, retrieved)
     assert item_res.question_id == q0.id
     assert item_res.metrics.numerical_unit_accuracy == 1.0
+    assert item_res.metrics.citation_precision == 1.0
+    assert item_res.metrics.recall_at_5 == 1.0
+    assert item_res.passed is True
 
 
 def test_full_rag_mode_offline_skipped_invariant(tmp_path, monkeypatch):

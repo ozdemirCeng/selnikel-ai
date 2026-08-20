@@ -244,14 +244,25 @@ def validate_dataset_file(
                                                     f"Question '{q.id}' row_key '{loc.row_key}' not found in table '{loc.table_id}' rows. Available row keys: {avail_keys}"
                                                 )
 
-                                            # 3. Validate Cell Value Non-emptiness and Ground Truth Alignment
-                                            if col_idx is not None and matched_row is not None:
+                                            # 3. Validate Mandatory Expected Cell Value & Exact Ground Truth Alignment
+                                            if not loc.expected_cell_value:
+                                                errors.append(
+                                                    f"Question '{q.id}' table_cell locator is missing required 'expected_cell_value'."
+                                                )
+                                            elif col_idx is not None and matched_row is not None:
                                                 if col_idx < len(matched_row):
                                                     cell_value = matched_row[col_idx].strip()
                                                     if not cell_value or cell_value == "-":
                                                         errors.append(
                                                             f"Question '{q.id}' coordinate ({loc.row_key}, {loc.column_name}) in table '{loc.table_id}' has empty cell value."
                                                         )
+                                                    else:
+                                                        norm_actual = re.sub(r"\s+", " ", cell_value.lower().strip()).replace("°", "").replace("", "")
+                                                        norm_expected = re.sub(r"\s+", " ", loc.expected_cell_value.lower().strip()).replace("°", "").replace("", "")
+                                                        if norm_actual != norm_expected and norm_expected not in norm_actual and norm_actual not in norm_expected:
+                                                            errors.append(
+                                                                f"Question '{q.id}' coordinate ({loc.row_key}, {loc.column_name}) expected cell value '{loc.expected_cell_value}', but found '{cell_value}' in table '{loc.table_id}'."
+                                                            )
                                                 else:
                                                     errors.append(
                                                         f"Question '{q.id}' column index {col_idx} out of range for row with {len(matched_row)} columns."

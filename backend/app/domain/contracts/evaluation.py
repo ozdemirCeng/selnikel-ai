@@ -26,6 +26,7 @@ class EvidenceLocator(BaseModel):
     table_id: Optional[str] = None
     row_key: Optional[str] = None
     column_name: Optional[str] = None
+    expected_cell_value: Optional[str] = None
     section_header: Optional[str] = None
     key_phrase: Optional[str] = None
 

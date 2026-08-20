@@ -13,7 +13,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-500",
-        "column_name": "design_press"
+        "column_name": "design_press",
+        "expected_cell_value": "16.0 bar"
       },
       "expected_numerical_parameters": [
         "0.5 t/h",
@@ -41,7 +42,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-1000",
-        "column_name": "steam_temp"
+        "column_name": "steam_temp",
+        "expected_cell_value": "204.3 °C"
       },
       "expected_numerical_parameters": [
         "204.3 °C",
@@ -69,7 +71,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-5000",
-        "column_name": "working_press"
+        "column_name": "working_press",
+        "expected_cell_value": "16.0 bar"
       },
       "expected_numerical_parameters": [
         "16.0 bar",
@@ -97,7 +100,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_01",
         "row_key": "Burner Nozzles",
-        "column_name": "interval"
+        "column_name": "interval",
+        "expected_cell_value": "500 hour"
       },
       "expected_numerical_parameters": [
         "500 hour",
@@ -125,7 +129,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_01",
         "row_key": "Nozzle Overhaul",
-        "column_name": "interval"
+        "column_name": "interval",
+        "expected_cell_value": "2000 hour"
       },
       "expected_numerical_parameters": [
         "2000 hour",
@@ -153,7 +158,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_01",
         "row_key": "Gas Valve Train",
-        "column_name": "interval"
+        "column_name": "interval",
+        "expected_cell_value": "6 month"
       },
       "expected_numerical_parameters": [
         "6 month"
@@ -180,7 +186,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_02",
         "row_key": "E01",
-        "column_name": "desc"
+        "column_name": "desc",
+        "expected_cell_value": "Flame Failure Lockout"
       },
       "expected_numerical_parameters": [],
       "ground_truth_answer": "Fault code E01 indicates Flame Failure Lockout due to ionization probe contamination or gas cutoff; clean the ionization probe and verify supply pressure."
@@ -205,7 +212,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_02",
         "row_key": "E04",
-        "column_name": "cause"
+        "column_name": "cause",
+        "expected_cell_value": "Insufficient combustion air flow or clogged fan"
       },
       "expected_numerical_parameters": [],
       "ground_truth_answer": "Fault code E04 represents an Air Pressure Switch Fault caused by insufficient combustion air flow or clogged fan; check blower differential pressure and air switch tube."
@@ -230,7 +238,8 @@
         "locator_type": "table_cell",
         "table_id": "docx_tab_02",
         "row_key": "E07",
-        "column_name": "action"
+        "column_name": "action",
+        "expected_cell_value": "Shutdown burner and perform boiler tube cleaning"
       },
       "expected_numerical_parameters": [],
       "ground_truth_answer": "Code E07 indicates High Flue Gas Temperature Trip caused by soot buildup in the heat exchanger; shutdown burner and perform boiler tube cleaning."
@@ -279,7 +288,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_02",
         "row_key": "Primary Safety Valve",
-        "column_name": "dn"
+        "column_name": "dn",
+        "expected_cell_value": "32 mm"
       },
       "expected_numerical_parameters": [
         "32 mm",
@@ -405,7 +415,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-500",
-        "column_name": "design_press"
+        "column_name": "design_press",
+        "expected_cell_value": "14.0 bar"
       },
       "expected_numerical_parameters": [
         "14.0 bar"
@@ -432,7 +443,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-1000",
-        "column_name": "steam_cap"
+        "column_name": "steam_cap",
+        "expected_cell_value": "0.9 t/h"
       },
       "expected_numerical_parameters": [
         "0.9 t/h"
@@ -459,7 +471,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_02",
         "row_key": "Primary Safety Valve",
-        "column_name": "set_pressure"
+        "column_name": "set_pressure",
+        "expected_cell_value": "14.5 bar"
       },
       "expected_numerical_parameters": [
         "14.5 bar"
@@ -551,7 +564,8 @@
         "locator_type": "table_cell",
         "table_id": "txt_tab_01",
         "row_key": "Flow Temperature",
-        "column_name": "max"
+        "column_name": "max",
+        "expected_cell_value": "320 °C"
       },
       "expected_numerical_parameters": [
         "320 °C"
@@ -578,7 +592,8 @@
         "locator_type": "table_cell",
         "table_id": "txt_tab_01",
         "row_key": "System Operating Pressure",
-        "column_name": "max"
+        "column_name": "max",
+        "expected_cell_value": "6.0 bar"
       },
       "expected_numerical_parameters": [
         "2.5 bar",
@@ -606,7 +621,8 @@
         "locator_type": "table_cell",
         "table_id": "txt_tab_01",
         "row_key": "Minimum Circulating Flow",
-        "column_name": "min"
+        "column_name": "min",
+        "expected_cell_value": "25 m³/h"
       },
       "expected_numerical_parameters": [
         "25 m³/h"
@@ -633,7 +649,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_02",
         "row_key": "Primary Safety Valve",
-        "column_name": "set_pressure"
+        "column_name": "set_pressure",
+        "expected_cell_value": "16.5 bar"
       },
       "expected_numerical_parameters": [
         "16.5 bar",
@@ -661,7 +678,8 @@
         "locator_type": "table_cell",
         "table_id": "pdf_tab_01",
         "row_key": "SB-2000",
-        "column_name": "working_press"
+        "column_name": "working_press",
+        "expected_cell_value": "16.0 bar"
       },
       "expected_numerical_parameters": [
         "16.0 bar",

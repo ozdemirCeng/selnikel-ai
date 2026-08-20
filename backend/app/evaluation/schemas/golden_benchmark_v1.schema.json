@@ -86,6 +86,7 @@
               "table_id": { "type": "string" },
               "row_key": { "type": "string" },
               "column_name": { "type": "string" },
+              "expected_cell_value": { "type": "string" },
               "section_header": { "type": "string" },
               "key_phrase": { "type": "string" }
             },
