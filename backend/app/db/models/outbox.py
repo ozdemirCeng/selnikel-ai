@@ -32,6 +32,7 @@ class OutboxEventModel(Base):
     retry_count = Column(Integer, default=0, nullable=False)
     max_retries = Column(Integer, default=5, nullable=False)
     last_error = Column(Text, nullable=True)
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True, index=True)
     locked_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)

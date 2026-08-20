@@ -34,6 +34,9 @@ class TableAwareChunker:
         document_type: str = "technical_specification",
         department: str = "engineering",
         language: str = "tr",
+        revision_id: Optional[str] = None,
+        revision_number: Optional[int] = None,
+        revision_code: Optional[str] = None,
     ) -> List[DomainChunk]:
         """Split a ParsedDocument into a list of enriched DomainChunk instances."""
         chunks: List[DomainChunk] = []
@@ -50,6 +53,9 @@ class TableAwareChunker:
                     document_type=document_type,
                     department=department,
                     language=language,
+                    revision_id=revision_id,
+                    revision_number=revision_number,
+                    revision_code=revision_code,
                     start_index=chunk_index,
                 )
                 chunks.extend(page_chunks)
@@ -61,7 +67,7 @@ class TableAwareChunker:
                 text_content=parsed_doc.full_markdown,
                 tables=parsed_doc.tables,
             )
-            chunks = self._chunk_page(
+            page_chunks = self._chunk_page(
                 page=dummy_page,
                 parsed_doc=parsed_doc,
                 document_id=document_id,
@@ -69,8 +75,12 @@ class TableAwareChunker:
                 document_type=document_type,
                 department=department,
                 language=language,
+                revision_id=revision_id,
+                revision_number=revision_number,
+                revision_code=revision_code,
                 start_index=0,
             )
+            chunks.extend(page_chunks)
 
         logger.info(
             f"Chunked document '{parsed_doc.filename}' into {len(chunks)} structure-aware chunks."
@@ -87,6 +97,9 @@ class TableAwareChunker:
         department: str,
         language: str,
         start_index: int,
+        revision_id: Optional[str] = None,
+        revision_number: Optional[int] = None,
+        revision_code: Optional[str] = None,
     ) -> List[DomainChunk]:
         chunks: List[DomainChunk] = []
         current_index = start_index
@@ -109,6 +122,9 @@ class TableAwareChunker:
                 department=department,
                 language=language,
                 start_index=current_index,
+                revision_id=revision_id,
+                revision_number=revision_number,
+                revision_code=revision_code,
             )
             chunks.extend(table_chunks)
             current_index += len(table_chunks)
@@ -138,6 +154,9 @@ class TableAwareChunker:
                             department=department,
                             language=language,
                             chunk_index=current_index,
+                            revision_id=revision_id,
+                            revision_number=revision_number,
+                            revision_code=revision_code,
                         )
                     )
                     current_index += 1
@@ -163,6 +182,9 @@ class TableAwareChunker:
                                 department=department,
                                 language=language,
                                 chunk_index=current_index,
+                                revision_id=revision_id,
+                                revision_number=revision_number,
+                                revision_code=revision_code,
                             )
                         )
                         current_index += 1
@@ -186,8 +208,12 @@ class TableAwareChunker:
                     department=department,
                     language=language,
                     chunk_index=current_index,
+                    revision_id=revision_id,
+                    revision_number=revision_number,
+                    revision_code=revision_code,
                 )
             )
+        return chunks
 
         return chunks
 
@@ -203,6 +229,9 @@ class TableAwareChunker:
         department: str,
         language: str,
         start_index: int,
+        revision_id: Optional[str] = None,
+        revision_number: Optional[int] = None,
+        revision_code: Optional[str] = None,
     ) -> List[DomainChunk]:
         """
         Chunks a Markdown table preserving header rows and never splitting mid-row.
@@ -231,6 +260,9 @@ class TableAwareChunker:
                 department=department,
                 language=language,
                 chunk_index=start_index,
+                revision_id=revision_id,
+                revision_number=revision_number,
+                revision_code=revision_code,
                 token_count=math.ceil(len(full_table_content) / 4),
             )
             return [DomainChunk(content=full_table_content, metadata=metadata)]
@@ -264,6 +296,9 @@ class TableAwareChunker:
                     department=department,
                     language=language,
                     chunk_index=idx,
+                    revision_id=revision_id,
+                    revision_number=revision_number,
+                    revision_code=revision_code,
                     token_count=math.ceil(len(slice_content) / 4),
                 )
                 chunks.append(DomainChunk(content=slice_content, metadata=metadata))
@@ -289,6 +324,9 @@ class TableAwareChunker:
                 department=department,
                 language=language,
                 chunk_index=idx,
+                revision_id=revision_id,
+                revision_number=revision_number,
+                revision_code=revision_code,
                 token_count=math.ceil(len(slice_content) / 4),
             )
             chunks.append(DomainChunk(content=slice_content, metadata=metadata))
@@ -307,6 +345,9 @@ class TableAwareChunker:
         department: str,
         language: str,
         chunk_index: int,
+        revision_id: Optional[str] = None,
+        revision_number: Optional[int] = None,
+        revision_code: Optional[str] = None,
     ) -> DomainChunk:
         """Helper to create a standard text chunk with structured contextual header."""
         header = ""
@@ -327,6 +368,9 @@ class TableAwareChunker:
             department=department,
             language=language,
             chunk_index=chunk_index,
+            revision_id=revision_id,
+            revision_number=revision_number,
+            revision_code=revision_code,
             token_count=math.ceil(len(full_content) / 4),
         )
         return DomainChunk(content=full_content, metadata=metadata)

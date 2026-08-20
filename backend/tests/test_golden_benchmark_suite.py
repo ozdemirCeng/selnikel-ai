@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
 from app.main import app
@@ -384,7 +385,14 @@ async def test_full_rag_pipeline_integration_harness():
     for fix_file in sorted(FIXTURES_DIR.glob("*")):
         if fix_file.is_file() and fix_file.suffix.lower() in [".pdf", ".docx", ".txt"]:
             pdoc = parser.parse_sync(str(fix_file))
-            chunks = chunker.chunk_document(pdoc, document_id=fix_file.name)
+            rev_id = f"rev_{fix_file.stem}"
+            chunks = chunker.chunk_document(
+                pdoc,
+                document_id=fix_file.name,
+                revision_id=rev_id,
+                revision_code="Rev. 01",
+                revision_number=1,
+            )
             all_chunks.extend(chunks)
 
     assert len(all_chunks) > 0, "Fixtures must produce parsed chunks"
@@ -397,10 +405,17 @@ async def test_full_rag_pipeline_integration_harness():
     llm = MockLLMProvider()
     rag_engine = DeterministicRAGEngine(retriever=bm25, llm=llm)
 
-    # 4. Execute query_with_retrieval for question 0
+    # 4. Execute query_with_retrieval for question 0 with verified DB snapshot session
+    mock_res = MagicMock()
+    mock_res.all.return_value = [
+        (fix_file.name, f"rev_{fix_file.stem}") for fix_file in FIXTURES_DIR.glob("*") if fix_file.is_file()
+    ]
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_res
+
     evaluator = RAGBenchmarkEvaluator(dataset_path=DATASET_PATH)
     q0 = evaluator.questions[0]
-    output, retrieved = await rag_engine.query_with_retrieval(q0.question, top_k=5)
+    output, retrieved = await rag_engine.query_with_retrieval(q0.question, top_k=5, session=mock_db)
 
     # 5. Assertions on retrieved chunks and generation output
     assert isinstance(output, GenerationOutput)

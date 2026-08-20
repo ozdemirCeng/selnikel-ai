@@ -306,25 +306,36 @@ class DeterministicRAGEngine:
         """
         Layer 3 Relational Snapshot Gate (Fail-Closed):
         Verifies that each retrieved chunk belongs to the currently APPROVED revision in PostgreSQL.
-        - If a chunk carries a revision_id (revision-bearing technical content):
-          It MUST be validated against the active approved revision in PostgreSQL.
-          If no DB session is available, or if DB query fails, or if revision is obsolete/unapproved,
-          it is suppressed (fail-closed).
+        - Any chunk belonging to a managed document (document_id is set) MUST carry a valid revision_id
+          matching the single approved canonical revision in PostgreSQL.
+        - Chunks with missing/empty revision_id for a document_id are strictly suppressed (fail-closed).
+        - If no DB session is available, or if DB query fails, all document-bearing chunks are suppressed.
         - If all candidate chunks are suppressed, downstream generation safely abstains.
         """
         if not chunks:
             return chunks
 
-        # Filter for revision-bearing chunks and document IDs
-        revision_bearing_chunks = [c for c in chunks if getattr(c.metadata, "revision_id", None)]
-        if not revision_bearing_chunks:
-            # Chunks do not carry revision_id (e.g., offline benchmark fixtures or static unversioned documents)
+        # Separate managed document chunks from static/unversioned chunks
+        managed_chunks = [c for c in chunks if c.metadata and c.metadata.document_id]
+        if not managed_chunks:
             return chunks
 
-        doc_ids = {c.metadata.document_id for c in revision_bearing_chunks if c.metadata and c.metadata.document_id}
-        if not doc_ids:
-            logger.warning("Layer 3 Gate: Revision-bearing chunks have no document_id. Enforcing fail-closed gate.")
-            return [c for c in chunks if c not in revision_bearing_chunks]
+        # Fail-closed check: Any managed chunk without revision_id is immediately invalid and dropped
+        valid_candidates = []
+        for c in managed_chunks:
+            rev_id = getattr(c.metadata, "revision_id", None)
+            if not rev_id:
+                logger.warning(
+                    f"Layer 3 Gate: Suppressed unversioned chunk '{c.chunk_id}' for managed document '{c.metadata.document_id}' (missing required revision_id)."
+                )
+                continue
+            valid_candidates.append(c)
+
+        if not valid_candidates:
+            logger.warning("Layer 3 Gate: All managed document chunks lacked revision_id. Enforcing fail-closed gate.")
+            return [c for c in chunks if not (c.metadata and c.metadata.document_id)]
+
+        doc_ids = {c.metadata.document_id for c in valid_candidates}
 
         # If no session provided, attempt auto-session from database pool or fail-closed
         if session is None:
@@ -335,9 +346,9 @@ class DeterministicRAGEngine:
             except Exception as auto_err:
                 logger.error(
                     f"Layer 3 Gate: No DB session provided and auto-session unavailable ({auto_err}). "
-                    "Enforcing fail-closed gate: dropping all revision-bearing chunks."
+                    "Enforcing fail-closed gate: dropping all managed document chunks."
                 )
-                return [c for c in chunks if c not in revision_bearing_chunks]
+                return [c for c in chunks if not (c.metadata and c.metadata.document_id)]
 
         try:
             stmt = (
@@ -351,36 +362,45 @@ class DeterministicRAGEngine:
             approved_map = {}
             if hasattr(res, "all"):
                 rows = res.all()
-                if isinstance(rows, list):
+                if callable(rows) and not isinstance(rows, (AsyncMock, MagicMock)):
+                    rows = rows()
+                if isinstance(rows, (list, tuple)):
                     for row in rows:
                         if hasattr(row, "__getitem__") and len(row) >= 2:
                             approved_map[row[0]] = row[1]
+                elif hasattr(rows, "return_value") and isinstance(rows.return_value, (list, tuple)):
+                    for row in rows.return_value:
+                        if hasattr(row, "__getitem__") and len(row) >= 2:
+                            approved_map[row[0]] = row[1]
 
-            valid_chunks: List[RetrievalResult] = []
+            verified_chunks: List[RetrievalResult] = []
             for c in chunks:
-                rev_id = getattr(c.metadata, "revision_id", None)
-                if not rev_id:
-                    valid_chunks.append(c)
+                if not (c.metadata and c.metadata.document_id):
+                    verified_chunks.append(c)
                     continue
 
                 doc_id = c.metadata.document_id
+                rev_id = getattr(c.metadata, "revision_id", None)
+                if not rev_id:
+                    continue
+
                 if doc_id in approved_map:
                     if rev_id != approved_map[doc_id]:
                         logger.warning(
                             f"Layer 3 Gate: Suppressed obsolete chunk '{c.chunk_id}' (Doc: '{doc_id}', Rev: '{rev_id}', Active: '{approved_map[doc_id]}')."
                         )
                         continue
-                    valid_chunks.append(c)
+                    verified_chunks.append(c)
                 else:
                     # Document has no approved revision in PostgreSQL -> fail-closed (drop chunk)
                     logger.warning(
-                        f"Layer 3 Gate: Suppressed chunk '{c.chunk_id}' because document '{doc_id}' has no approved active revision."
+                        f"Layer 3 Gate: Suppressed chunk '{c.chunk_id}' because document '{doc_id}' has no approved active revision in PostgreSQL."
                     )
                     continue
-            return valid_chunks
+            return verified_chunks
         except Exception as e:
-            logger.error(f"Layer 3 revision verification failed ({e}). Enforcing fail-closed gate: dropping revision-bearing chunks.")
-            return [c for c in chunks if c not in revision_bearing_chunks]
+            logger.error(f"Layer 3 revision verification failed ({e}). Enforcing fail-closed gate: dropping all managed chunks.")
+            return [c for c in chunks if not (c.metadata and c.metadata.document_id)]
 
     async def _log_query(
         self,

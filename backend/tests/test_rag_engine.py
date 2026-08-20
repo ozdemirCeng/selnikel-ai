@@ -19,6 +19,8 @@ def mock_retrieval_result():
         language="tr",
         chunk_index=0,
         token_count=25,
+        revision_id="rev_789",
+        approval_status="approved",
     )
     return RetrievalResult(
         chunk_id="chunk_123",
@@ -41,9 +43,11 @@ async def test_rag_engine_sync_query(mock_retrieval_result):
         "SB-100 model kazan saatte 1000 kg/h buhar üretir [Belge: SB_100_Datasheet.pdf, Sayfa: 3]."
     )
 
+    mock_res = MagicMock()
+    mock_res.all.return_value = [("doc_456", "rev_789")]
     mock_session = AsyncMock()
     mock_session.add = MagicMock()
-    mock_session.execute.return_value.all.return_value = []
+    mock_session.execute.return_value = mock_res
 
     engine = DeterministicRAGEngine(
         retriever=mock_retriever,
@@ -88,8 +92,14 @@ async def test_rag_engine_streaming_query(mock_retrieval_result):
         llm=mock_llm,
     )
 
+    mock_stream_res = MagicMock()
+    mock_stream_res.all.return_value = [("doc_456", "rev_789")]
+    mock_session = AsyncMock()
+    mock_session.add = MagicMock()
+    mock_session.execute.return_value = mock_stream_res
+
     events = []
-    async for event in engine.query_stream("SB-100 kapasitesi"):
+    async for event in engine.query_stream("SB-100 kapasitesi", session=mock_session):
         events.append(event)
 
     assert len(events) >= 4  # status + 3 tokens + citations + done

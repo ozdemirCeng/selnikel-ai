@@ -5,13 +5,17 @@ Validates:
 2. Database-level partial unique index (at most 1 approved revision per document_id)
 3. Transactional Outbox dual-write atomicity
 4. Outbox worker SKIP LOCKED processing & idempotency
-5. Qdrant failure isolation & non-rollback retry mechanism
+5. Qdrant failure isolation, exponential backoff, and next_attempt_at scheduling
 6. Qdrant search payload hydration (revision_id, approval_status, etc.)
-7. Layer 3 Relational Snapshot Gate Fail-Closed safety (suppressing stale/obsolete chunks, DB error safety, unapproved document safety)
+7. Layer 3 Relational Snapshot Gate Fail-Closed safety:
+   - Suppressing stale/obsolete chunks
+   - Suppressing document chunks lacking required revision_id (missing hydration / legacy bypass defense)
+   - DB connection error safety
+   - Unapproved document safety
 8. Concurrent approval race serialization via FOR UPDATE locking and partial unique index
 """
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 import uuid
 from typing import Optional
@@ -312,6 +316,7 @@ async def test_outbox_worker_process_batch_and_idempotency():
         await session.refresh(event)
         assert event.status == "completed"
         assert event.last_error is None
+        assert event.next_attempt_at is None
 
         # Re-running batch should process 0 events (idempotent no-op)
         processed_again = await worker.process_batch(session=session, batch_size=10)
@@ -319,8 +324,8 @@ async def test_outbox_worker_process_batch_and_idempotency():
 
 
 @pytest.mark.asyncio
-async def test_outbox_worker_qdrant_failure_isolation_and_retry():
-    """Verify that when Qdrant is unreachable, outbox worker records retry without rolling back Postgres."""
+async def test_outbox_worker_exponential_backoff_and_next_attempt_at():
+    """Verify that failed outbox events calculate exponential backoff next_attempt_at and are skipped until due."""
     async with get_test_session() as session:
         doc_id = str(uuid.uuid4())
         rev_id = str(uuid.uuid4())
@@ -330,7 +335,7 @@ async def test_outbox_worker_qdrant_failure_isolation_and_retry():
             aggregate_type="document_revision",
             aggregate_id=rev_id,
             event_type="document_revision.approved",
-            idempotency_key=f"test_qdrant_fail_{rev_id}",
+            idempotency_key=f"test_backoff_{rev_id}",
             payload={"document_id": doc_id, "approved_revision_id": rev_id},
             status="pending",
             retry_count=0,
@@ -339,18 +344,50 @@ async def test_outbox_worker_qdrant_failure_isolation_and_retry():
         session.add(event)
         await session.commit()
 
-        # Mock Qdrant connection failure
+        # 1. Mock Qdrant connection failure
         mock_vector_repo = AsyncMock()
         mock_vector_repo.update_revision_payload_status.side_effect = ConnectionError("Qdrant host offline on port 6333")
 
-        worker = RevisionOutboxWorker(vector_repo=mock_vector_repo)
-        processed = await worker.process_batch(session=session, batch_size=10)
+        worker = RevisionOutboxWorker(
+            vector_repo=mock_vector_repo,
+            base_backoff_seconds=2.0,
+            max_backoff_seconds=30.0,
+        )
 
+        # Process batch: event should fail and schedule backoff
+        now_before = datetime.now(timezone.utc)
+        processed = await worker.process_batch(session=session, batch_size=10)
         assert processed == 0
+
         await session.refresh(event)
         assert event.retry_count == 1
-        assert event.status == "pending"  # Eligible for backoff retry
-        assert "Qdrant host offline" in str(event.last_error)
+        assert event.status == "pending"
+        assert event.next_attempt_at is not None
+        next_attempt = event.next_attempt_at
+        if next_attempt.tzinfo is None:
+            next_attempt = next_attempt.replace(tzinfo=timezone.utc)
+        # Backoff: 2.0 * (2^0) = 2.0s
+        assert next_attempt >= now_before + timedelta(seconds=1.5)
+
+        # 2. Immediately re-running batch must skip this event because next_attempt_at > now
+        processed_immediate = await worker.process_batch(session=session, batch_size=10)
+        assert processed_immediate == 0
+        assert mock_vector_repo.update_revision_payload_status.call_count == 1  # Not called again
+
+        # 3. Simulate passage of time: set next_attempt_at to past
+        event.next_attempt_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        await session.commit()
+
+        # Fix Qdrant repo to succeed
+        mock_vector_repo.update_revision_payload_status.side_effect = None
+        mock_vector_repo.update_revision_payload_status.return_value = True
+
+        processed_due = await worker.process_batch(session=session, batch_size=10)
+        assert processed_due == 1
+
+        await session.refresh(event)
+        assert event.status == "completed"
+        assert event.next_attempt_at is None
 
 
 @pytest.mark.asyncio
@@ -465,6 +502,75 @@ async def test_qdrant_search_hydration_and_e2e_stale_suppression():
 
 
 @pytest.mark.asyncio
+async def test_layer_3_suppresses_document_chunk_missing_revision_id():
+    """Verify Layer 3 Gate enforces fail-closed suppression when a chunk has document_id but missing revision_id."""
+    async with get_test_session() as session:
+        doc_id = str(uuid.uuid4())
+        doc = DocumentModel(
+            id=doc_id,
+            filename="SB_Series_Boiler_Datasheet.pdf",
+            file_hash="hash_missing_rev_test",
+            file_size_bytes=102400,
+            content_type="application/pdf",
+            document_type="datasheet",
+            department="engineering",
+            language="tr",
+            version=1,
+            status="ready",
+        )
+        session.add(doc)
+
+        rev_id = str(uuid.uuid4())
+        rev = DocumentRevisionModel(
+            id=rev_id,
+            document_id=doc_id,
+            revision_code="Rev. 01",
+            revision_number=1,
+            approval_status="approved",
+            approved_at=datetime.now(timezone.utc),
+            source_sha256="sha256_approved_01",
+        )
+        session.add(rev)
+        await session.commit()
+
+        # Construct a candidate chunk that carries document_id but has NO revision_id (legacy/stale bypass attempt)
+        stale_bypass_chunk = RetrievalResult(
+            chunk_id="chunk_stale_bypass",
+            content="SB-500 Çalışma Sıcaklığı: 180 C (Eski payload)",
+            metadata=ChunkMetadata(
+                chunk_id="chunk_stale_bypass",
+                document_id=doc_id,
+                revision_id=None,  # Missing revision_id!
+                filename="SB_Series_Boiler_Datasheet.pdf",
+                page_number=1,
+                department="engineering",
+            ),
+            score=0.92,
+        )
+
+        mock_retriever = AsyncMock()
+        mock_retriever.retrieve.return_value = [stale_bypass_chunk]
+
+        mock_reranker = AsyncMock()
+        mock_reranker.rerank.return_value = [stale_bypass_chunk]
+
+        engine = DeterministicRAGEngine(
+            retriever=mock_retriever,
+            reranker=mock_reranker,
+            llm=MockLLM(),
+        )
+
+        out = await engine.query(
+            query_text="SB-500 çalışma sıcaklığı nedir?",
+            session=session,
+        )
+
+        # Must fail-closed: return safe abstention because unversioned managed chunk was dropped
+        assert "Belge revizyon doğrulaması sağlanamadığı" in out.answer
+        assert len(out.citations) == 0
+
+
+@pytest.mark.asyncio
 async def test_layer_3_fail_closed_on_db_error_and_unapproved_doc():
     """Verify Layer 3 Gate enforces fail-closed abstention when DB errors or unapproved docs occur."""
     doc_id = str(uuid.uuid4())
@@ -519,13 +625,22 @@ async def test_layer_3_fail_closed_on_db_error_and_unapproved_doc():
 @pytest.mark.asyncio
 async def test_concurrent_approval_race_condition(tmp_path):
     """Verify that concurrent approval attempts for the same document serialize and enforce exactly 1 active approved revision."""
-    db_file = tmp_path / f"test_concurrent_{uuid.uuid4().hex[:8]}.db"
-    db_url = f"sqlite+aiosqlite:///{db_file.as_posix()}"
-    engine = create_async_engine(
-        db_url,
-        echo=False,
-        poolclass=NullPool,
-    )
+    pg_url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL")
+    if pg_url:
+        if pg_url.startswith("postgres://"):
+            pg_url = pg_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif pg_url.startswith("postgresql://") and "+asyncpg" not in pg_url:
+            pg_url = pg_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        engine = create_async_engine(pg_url, echo=False)
+    else:
+        db_file = tmp_path / f"test_concurrent_{uuid.uuid4().hex[:8]}.db"
+        db_url = f"sqlite+aiosqlite:///{db_file.as_posix()}"
+        engine = create_async_engine(
+            db_url,
+            echo=False,
+            poolclass=NullPool,
+        )
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

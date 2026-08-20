@@ -4,9 +4,9 @@ Consumes outbox events using SELECT FOR UPDATE SKIP LOCKED and synchronizes vect
 Guarantees at-least-once delivery, non-rollback transactional isolation, and exponential backoff retry.
 """
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
@@ -15,10 +15,17 @@ from app.infrastructure.qdrant import QdrantVectorRepository, qdrant_repo
 
 
 class RevisionOutboxWorker:
-    """Processes document revision outbox events and synchronizes vector payload states."""
+    """Processes document revision outbox events and synchronizes vector payload states with exponential backoff."""
 
-    def __init__(self, vector_repo: Optional[QdrantVectorRepository] = None):
+    def __init__(
+        self,
+        vector_repo: Optional[QdrantVectorRepository] = None,
+        base_backoff_seconds: float = 2.0,
+        max_backoff_seconds: float = 60.0,
+    ):
         self.vector_repo = vector_repo or qdrant_repo
+        self.base_backoff_seconds = base_backoff_seconds
+        self.max_backoff_seconds = max_backoff_seconds
         self._running = False
         self._task: Optional[asyncio.Task] = None
 
@@ -29,12 +36,19 @@ class RevisionOutboxWorker:
     ) -> int:
         """
         Poll and process a batch of pending outbox events using SELECT FOR UPDATE SKIP LOCKED.
+        Filters by (next_attempt_at IS NULL OR next_attempt_at <= now).
         Returns the number of processed events.
         """
         now = datetime.now(timezone.utc)
         stmt = (
             select(OutboxEventModel)
-            .where(OutboxEventModel.status.in_(["pending"]))
+            .where(
+                OutboxEventModel.status == "pending",
+                or_(
+                    OutboxEventModel.next_attempt_at.is_(None),
+                    OutboxEventModel.next_attempt_at <= now,
+                ),
+            )
             .order_by(OutboxEventModel.created_at.asc())
             .limit(batch_size)
             .with_for_update(skip_locked=True)
@@ -64,6 +78,7 @@ class RevisionOutboxWorker:
                 event.locked_at = None
                 event.updated_at = now
                 event.last_error = None
+                event.next_attempt_at = None
                 processed_count += 1
                 logger.info(f"Outbox event '{event.event_id}' ({event.event_type}) completed successfully.")
             except Exception as e:
@@ -73,10 +88,19 @@ class RevisionOutboxWorker:
                 event.updated_at = now
                 if event.retry_count >= event.max_retries:
                     event.status = "failed"
+                    event.next_attempt_at = None
                     logger.error(f"Outbox event '{event.event_id}' failed permanently after {event.retry_count} retries: {e}")
                 else:
                     event.status = "pending"
-                    logger.warning(f"Outbox event '{event.event_id}' failed (attempt {event.retry_count}/{event.max_retries}): {e}. Will retry.")
+                    backoff_delay = min(
+                        self.max_backoff_seconds,
+                        self.base_backoff_seconds * (2 ** (event.retry_count - 1)),
+                    )
+                    event.next_attempt_at = now + timedelta(seconds=backoff_delay)
+                    logger.warning(
+                        f"Outbox event '{event.event_id}' failed (attempt {event.retry_count}/{event.max_retries}): {e}. "
+                        f"Retry scheduled at {event.next_attempt_at} (delay: {backoff_delay:.1f}s)."
+                    )
 
         await session.commit()
         return processed_count

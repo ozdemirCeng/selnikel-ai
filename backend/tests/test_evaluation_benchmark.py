@@ -4,7 +4,7 @@ Validates mathematical metrics: Recall@5, nDCG@5, Parameter Accuracy, Faithfulne
 against the production RAGBenchmarkEvaluator service.
 """
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 import pytest
 from app.domain.contracts.evaluation import BenchmarkQuestion, ExpectedEvidence
 from app.domain.document import ChunkMetadata
@@ -98,6 +98,8 @@ async def test_rag_pipeline_benchmark_evaluation(eval_dataset_path):
             language="tr",
             chunk_index=0,
             token_count=30,
+            revision_id=f"rev_{item.id}",
+            approval_status="approved",
         )
         chunk = RetrievalResult(
             chunk_id=f"chunk_{item.id}",
@@ -112,7 +114,12 @@ async def test_rag_pipeline_benchmark_evaluation(eval_dataset_path):
             f"{item.expected_evidence.ground_truth_answer} [Doc: {item.expected_evidence.document_name}, P. {item.expected_evidence.page_number}]"
         )
 
-        output = await engine.query(item.question)
+        mock_res = MagicMock()
+        mock_res.all.return_value = [(f"doc_{item.id}", f"rev_{item.id}")]
+        mock_db = AsyncMock()
+        mock_db.execute.return_value = mock_res
+
+        output = await engine.query(item.question, session=mock_db)
         eval_res = evaluator.evaluate_single(item, output, retrieved_chunks=[chunk])
         results.append(eval_res)
 
