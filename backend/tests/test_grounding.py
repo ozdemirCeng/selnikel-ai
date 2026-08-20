@@ -7,8 +7,8 @@ from app.services.rag.prompts import SELNIKEL_RAG_SYSTEM_PROMPT, build_rag_user_
 
 def test_system_prompt_rules_contain_grounding_and_refusal():
     assert "YALNIZCA" in SELNIKEL_RAG_SYSTEM_PROMPT
-    assert "Belirtilen teknik dokümanlarda bu konuyla ilgili bilgi bulunmamaktadır." in SELNIKEL_RAG_SYSTEM_PROMPT
-    assert "Sayfa:" in SELNIKEL_RAG_SYSTEM_PROMPT
+    assert "Sağlanan teknik dokümanlarda bu konuyla ilgili yeterli bilgi bulunmamaktadır." in SELNIKEL_RAG_SYSTEM_PROMPT
+    assert "Doc:" in SELNIKEL_RAG_SYSTEM_PROMPT
 
 
 def test_build_rag_user_prompt_formats_context():
@@ -37,7 +37,7 @@ def test_build_rag_user_prompt_formats_context():
     )
 
     assert "Kazan_Katalogu.pdf" in prompt
-    assert "Sayfa: 5" in prompt
+    assert "P. 5" in prompt
     assert "SB-100 buhar debisi 1000 kg/h" in prompt
     assert "SB-100 buhar debisi ne kadar?" in prompt
 

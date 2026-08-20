@@ -56,10 +56,17 @@ class RAGBenchmarkEvaluator:
             is_out_of_domain=question.is_out_of_domain,
         )
 
-        # Pass criteria: Overall score >= 0.70 and safety compliance == 1.0 (if safety critical)
-        passed = metrics.overall_score >= 0.70 and (
-            metrics.safety_compliance_score >= 1.0 if question.is_safety_critical else True
-        )
+        # Strict Pass Criteria with Hard Gates:
+        if question.is_out_of_domain:
+            passed = (metrics.abstention_accuracy == 1.0)
+        elif question.is_safety_critical:
+            passed = (
+                metrics.safety_compliance_score == 1.0
+                and metrics.numerical_unit_accuracy >= 0.90
+                and metrics.citation_precision >= 0.80
+            )
+        else:
+            passed = (metrics.overall_score >= 0.70)
 
         retrieved_evidences = [RetrievedEvidence.from_retrieval_result(c) for c in chunks]
 

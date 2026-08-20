@@ -16,7 +16,9 @@
     "is_out_of_domain": false,
     "expert_reviewer": "Lead Boiler Engineer (Mechanical)",
     "dataset_version": "1.0.0",
-    "anonymized": true
+    "anonymized": true,
+    "synthetic": true,
+    "review_status": "unverified_draft"
   },
   {
     "id": "selnikel-bench-002",
@@ -28,14 +30,16 @@
       "revision_code": "REV-01",
       "page_number": 12,
       "section": "Periodic Maintenance Procedures",
-      "expected_numerical_parameters": ["500 hours"],
+      "expected_numerical_parameters": ["500 hour", "6 month"],
       "ground_truth_answer": "Burner nozzles must be inspected and cleaned every 500 operating hours or at least every 6 months."
     },
     "is_safety_critical": false,
     "is_out_of_domain": false,
     "expert_reviewer": "Combustion Service Supervisor",
     "dataset_version": "1.0.0",
-    "anonymized": true
+    "anonymized": true,
+    "synthetic": true,
+    "review_status": "unverified_draft"
   },
   {
     "id": "selnikel-bench-003",
@@ -54,6 +58,8 @@
     "is_out_of_domain": false,
     "expert_reviewer": "Compliance & Certification Specialist",
     "dataset_version": "1.0.0",
-    "anonymized": true
+    "anonymized": true,
+    "synthetic": true,
+    "review_status": "unverified_draft"
   }
 ]

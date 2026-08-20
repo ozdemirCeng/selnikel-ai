@@ -29,7 +29,7 @@ def main():
     else:
         reports_dir = backend_dir / "evaluation" / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)
-        output_path = reports_dir / "baseline_report_v1.json"
+        output_path = reports_dir / "baseline_selfcheck_v1.json"
 
     print(f"[*] Loading benchmark questions from: {dataset_path}")
     evaluator = RAGBenchmarkEvaluator(dataset_path=dataset_path)
@@ -38,7 +38,7 @@ def main():
     results = []
     for q in evaluator.questions:
         print(f"    -> Evaluating question [{q.id}]: {q.question[:60]}...")
-        # Simulate baseline generation using expected ground truth (baseline self-check)
+        # Evaluator self-check mode: simulates exact grounded answer with valid citation
         simulated_output = GenerationOutput(
             answer=f"{q.expected_evidence.ground_truth_answer} [Doc: {q.expected_evidence.document_name}, P. {q.expected_evidence.page_number}]",
             citations=[
@@ -70,12 +70,21 @@ def main():
         item_result = evaluator.evaluate_single(q, simulated_output, [simulated_chunk])
         results.append(item_result)
 
-    report = evaluator.generate_run_report(results, dataset_version="1.0.0", model_name="baseline-reference-v1")
+    report = evaluator.generate_run_report(
+        results,
+        dataset_version="1.0.0",
+        model_name="evaluator-selfcheck-reference-v1",
+    )
+
+    report_dict = report.model_dump()
+    report_dict["execution_mode"] = "evaluator_self_check"
+    report_dict["evaluation_note"] = "Self-check verification of mathematical evaluator formulas using ground-truth pairs (not live retrieval benchmark)."
 
     with open(output_path, "w", encoding="utf-8") as rf:
-        json.dump(report.model_dump(), rf, indent=2, ensure_ascii=False)
+        json.dump(report_dict, rf, indent=2, ensure_ascii=False)
 
-    print(f"[+] Evaluation completed successfully.")
+    print(f"[+] Evaluator self-check run completed successfully.")
+    print(f"[+] Mode: {report_dict['execution_mode']}")
     print(f"[+] Total Questions: {report.total_questions} | Passed: {report.passed_questions}")
     print(f"[+] Mean Recall@5: {report.mean_recall_at_5:.4f}")
     print(f"[+] Mean nDCG@5: {report.mean_ndcg_at_5:.4f}")

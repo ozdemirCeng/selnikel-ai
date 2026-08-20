@@ -36,6 +36,8 @@ class BenchmarkQuestion(BaseModel):
     expert_reviewer: Optional[str] = None
     dataset_version: str = "1.0.0"
     anonymized: bool = True
+    synthetic: bool = True
+    review_status: str = "unverified_draft"
 
 
 class RetrievedEvidence(BaseModel):

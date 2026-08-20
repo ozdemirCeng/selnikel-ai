@@ -11,7 +11,9 @@
       "expected_evidence",
       "is_safety_critical",
       "is_out_of_domain",
-      "dataset_version"
+      "dataset_version",
+      "synthetic",
+      "review_status"
     ],
     "properties": {
       "id": {
@@ -40,7 +42,8 @@
         "required": [
           "document_name",
           "page_number",
-          "ground_truth_answer"
+          "ground_truth_answer",
+          "expected_numerical_parameters"
         ],
         "properties": {
           "document_name": {
@@ -87,6 +90,18 @@
       "anonymized": {
         "type": "boolean",
         "default": true
+      },
+      "synthetic": {
+        "type": "boolean",
+        "default": true
+      },
+      "review_status": {
+        "type": "string",
+        "enum": [
+          "unverified_draft",
+          "verified_expert_reviewed",
+          "deprecated"
+        ]
       }
     },
     "additionalProperties": false
