@@ -181,3 +181,26 @@
   2. Any changes spawn a new `DocumentRevision` with `supersedes_revision_id` pointing to the prior revision.
   3. Queries default to `revision_policy: approved_latest`.
 - **Consequences**: Guaranteed historical accuracy and instant visual diff generation between revisions.
+
+---
+
+## ADR-020: Spatial FastFallbackParser, Dynamic Table Grid Clustered Boundaries, and Optional AI Document Converters
+
+- **Date**: 2026-08-20
+- **Status**: PROPOSED (SUBMITTED FOR MANAGER REVIEW)
+- **Context**: Document ingestion in Selnikel AI requires both high fidelity across complex layouts (multi-column PDF tables, multi-page DOCX documents) and guaranteed determinism in lightweight CI, testing, and offline environments where heavy OCR (Tesseract), Poppler rendering binaries, or Docling dependencies are unavailable or cost-prohibitive.
+- **Decision**:
+  1. Implement a spatial, coordinate-based fallback parser (`FastFallbackParser`) using `pypdf` spatial visitor geometry (`visitor_text`) and `python-docx` element-order traversal as the baseline deterministic parser.
+  2. Implement strict table-grid detection with spatial clustering:
+     - Group text elements by Y-coordinate ($\pm 3.0\text{ pt}$) into candidate lines.
+     - Isolate section headers from tabular data blocks using full-line equality (never substring containment that drops valid short cells like `"A"`, `"B"`, `"C"`).
+     - Cluster multi-column lines using vertical proximity ($\Delta y \le 35.0\text{ pt}$) to properly separate distinct tables on the same page.
+     - Require identical column counts ($K = \text{len(hdr)}$) across all data rows in a table block.
+     - Disallow model codes (`SB-5000`) or plain text from acting as table captions or section headings.
+  3. Traverse DOCX elements in native XML body sequence (`w:p`, `w:tbl`) with explicit page-break detection (`w:br[w:type="page"]`) and pipe character escaping (`\|`).
+  4. Decouple IBM Docling and Tesseract OCR into optional runtime converter plugins. When external binaries or packages are absent, `DocumentParserFactory` transparently routes documents to `FastFallbackParser` and explicitly records `ocr_applied: false` in document metadata.
+- **Alternatives Considered**:
+  - Hard requirement on Docling/Tesseract binaries in all environments (Rejected: Fails in standard Python lightweight CI and offline developer workstations).
+  - Simple flat-text PDF extraction without spatial coordinates (Rejected: Loses all multi-column table layout fidelity).
+- **Reason**: Guarantees zero-dependency reproducible baseline execution while maintaining structural table fidelity and clear operational telemetry.
+- **Consequences**: Fast fallback parsing runs identically across Windows, Linux, and macOS without external OS packages. OCR state is explicitly declared in all ingestion payloads.

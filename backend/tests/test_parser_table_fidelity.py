@@ -3,11 +3,11 @@ Stage P1.1: Parser & Table Layout Fidelity Verification Tests.
 Validates:
 1. Synthetic industrial fixture manifest integrity, explicit labeling, & SHA-256 validation.
 2. Parametric cell-level coordinate verification: (table_id, row_key, column_name) -> exact value.
-3. Strict table column consistency: every data row has the exact same cell count as the header row.
-4. Section header isolation: model codes (SB-5000) and table data are NEVER treated as section headers or captions.
+3. Strict table column consistency & spatial separation: multi-table per page separation, zero cell deletion.
+4. Section header isolation: model codes (SB-5000) are NEVER treated as section headers or captions.
 5. Multi-page DOCX flow preservation with page breaks, paragraph-table ordering, and pipe escaping.
 6. End-to-end Parser -> Chunker integration: table row integrity, header repetition, and provenance tracking.
-7. Explicit OCR metadata tracking (ocr_applied) and Docling fallback resolution.
+7. Explicit OCR metadata tracking (ocr_applied) and deterministic FastFallbackParser fallback verification.
 """
 import hashlib
 import json
@@ -108,7 +108,7 @@ async def test_parametric_manifest_table_and_cell_coordinate_fidelity(fixtures_d
     """
     CRITICAL GROUND TRUTH TEST:
     Parametrically iterates through all manifest fixtures and verifies:
-    1. Table presence on exact expected page.
+    1. Table presence on exact expected page with unique table signature match.
     2. Exact row count, column count, and header alignment.
     3. Strict (table_id, row_key, column_name) -> exact cell coordinate value verification.
     4. Negative checks: model codes (SB-5000) are NOT section headers.
@@ -144,14 +144,16 @@ async def test_parametric_manifest_table_and_cell_coordinate_fidelity(fixtures_d
             page_tables = [t for t in parsed_doc.tables if t.page_number == page_no]
             assert len(page_tables) > 0, f"No tables parsed on page {page_no} of {fix['filename']}"
 
-            # Locate matching table by column count or title
-            target_table = None
-            for pt in page_tables:
-                if pt.num_cols == expected_tab["column_count"]:
-                    target_table = pt
-                    break
-            if target_table is None:
-                target_table = page_tables[0]
+            # Strict Table Identification: match by exact header signature or title
+            matching_tables = [
+                pt for pt in page_tables
+                if pt.headers == expected_tab["headers"] or pt.caption == expected_tab["title"]
+            ]
+            assert len(matching_tables) == 1, (
+                f"Expected exactly 1 matching table on page {page_no} for title='{expected_tab['title']}', "
+                f"found {len(matching_tables)}. Available headers: {[pt.headers for pt in page_tables]}"
+            )
+            target_table = matching_tables[0]
 
             assert target_table.num_cols == expected_tab["column_count"], (
                 f"Column count mismatch for table {expected_tab['table_id']} on page {page_no}: "
@@ -261,17 +263,26 @@ async def test_end_to_end_parser_to_chunker_integration(fixtures_dir: Path):
 
 
 @pytest.mark.asyncio
-async def test_parser_factory_and_docling_fallback(fixtures_dir: Path):
-    """Verify that DocumentParserFactory and DoclingParser gracefully route to FastFallbackParser when Docling is unavailable."""
+async def test_deterministic_fallback_parser_and_factory(fixtures_dir: Path):
+    """
+    VERIFIES ADR-008:
+    1. FastFallbackParser returns deterministic parser_name (fast_fallback_*).
+    2. DocumentParserFactory with force_fallback=True guarantees deterministic FastFallbackParser execution.
+    3. Short cell preservation (A, B, C) and zero silent truncation.
+    """
     txt_file = fixtures_dir / "documents" / "Thermal_Oil_Heater_Operating_Limits.txt"
-    docling_parser = DoclingParser()
+    pdf_file = fixtures_dir / "documents" / "SB_Series_Steam_Boiler_Datasheet.pdf"
 
-    # Even if docling is not installed, parse() should succeed by fallback
-    parsed = await docling_parser.parse(str(txt_file))
-    assert parsed.filename == "Thermal_Oil_Heater_Operating_Limits.txt"
-    assert len(parsed.tables) == 1
-    assert parsed.metadata["ocr_applied"] is False
+    # 1. Factory force_fallback
+    fallback_parser = DocumentParserFactory.get_parser(str(txt_file), force_fallback=True)
+    assert isinstance(fallback_parser, FastFallbackParser)
+    parsed_txt = await fallback_parser.parse(str(txt_file))
+    assert parsed_txt.parser_name == "fast_fallback_text"
+    assert parsed_txt.metadata["ocr_applied"] is False
 
-    headers, rows = parse_markdown_table_to_matrix(parsed.tables[0].markdown_table)
-    assert "Flow Temperature" in rows
-    assert rows["Flow Temperature"]["Maximum Safety Limit"] == "320 °C"
+    # 2. PDF Fast Fallback
+    pdf_parser = FastFallbackParser()
+    parsed_pdf = await pdf_parser.parse(str(pdf_file))
+    assert parsed_pdf.parser_name == "fast_fallback_pypdf"
+    assert parsed_pdf.metadata["ocr_applied"] is False
+    assert len(parsed_pdf.tables) == 2

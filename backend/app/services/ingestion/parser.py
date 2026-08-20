@@ -171,29 +171,50 @@ class FastFallbackParser(BaseDocumentParser):
             lines_dict[matched_y].append((x, text))
 
         sorted_y = sorted(lines_dict.keys(), reverse=True)
-        raw_table_rows = []
+        multi_col_rows = []
 
         for y in sorted_y:
             line_elems = sorted(lines_dict[y], key=lambda item: item[0])
             line_texts = [t for _, t in line_elems]
-            # Exclude section headers from table row candidates
-            line_texts_filtered = [
-                t for t in line_texts
-                if not any(t == sh or t in sh for sh in section_headers)
-                and not t.startswith("Section ")
-            ]
-            if len(line_texts_filtered) >= 3:
-                raw_table_rows.append(line_texts_filtered)
+            full_line = " ".join(line_texts).strip()
 
-        # Detect tabular blocks with strict column count consistency
+            # Skip full-line section headers or title banners from table candidates
+            is_section_line = any(full_line == sh.strip() for sh in section_headers) or re.match(
+                r"^\d+(\.\d+)*\.?\s+[A-Z]", full_line
+            )
+            if not is_section_line and len(line_texts) >= 3:
+                multi_col_rows.append((y, line_texts))
+
+        # Spatial table clustering: group multi-column rows by vertical proximity (dy <= 35 pt)
+        table_clusters: List[List[Tuple[float, List[str]]]] = []
+        curr_cluster: List[Tuple[float, List[str]]] = []
+
+        for y, row in multi_col_rows:
+            if not curr_cluster:
+                curr_cluster.append((y, row))
+            else:
+                hdr_col_count = len(curr_cluster[0][1])
+                last_y = curr_cluster[-1][0]
+                dy = abs(last_y - y)
+
+                # Row belongs to current cluster if column count matches and vertical gap is within table pitch
+                if len(row) == hdr_col_count and dy <= 35.0:
+                    curr_cluster.append((y, row))
+                else:
+                    if len(curr_cluster) >= 2:
+                        table_clusters.append(curr_cluster)
+                    curr_cluster = [(y, row)]
+
+        if len(curr_cluster) >= 2:
+            table_clusters.append(curr_cluster)
+
+        # Reconstruct clean GFM tables from clusters
         tables: List[ParsedTable] = []
-        if len(raw_table_rows) >= 2:
-            hdr = raw_table_rows[0]
+        for cluster_idx, cluster in enumerate(table_clusters, start=1):
+            table_rows = [r for _, r in cluster]
+            hdr = table_rows[0]
             col_count = len(hdr)
-            valid_body_rows = []
-            for r in raw_table_rows[1:]:
-                if len(r) == col_count:
-                    valid_body_rows.append(r)
+            valid_body_rows = table_rows[1:]
 
             if valid_body_rows and col_count >= 2:
                 sep = ["---"] * col_count
@@ -204,7 +225,7 @@ class FastFallbackParser(BaseDocumentParser):
                 table_md = "\n".join([header_line, sep_line] + body_lines)
                 tables.append(
                     ParsedTable(
-                        table_id=f"pdf_tab_{page_number}_{str(uuid.uuid4())[:8]}",
+                        table_id=f"pdf_tab_{page_number}_{cluster_idx}",
                         page_number=page_number,
                         markdown_table=table_md,
                         num_rows=len(valid_body_rows),
