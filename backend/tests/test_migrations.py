@@ -25,6 +25,7 @@ EXPECTED_TABLES = [
     "document_elements",
     "ingestion_jobs",
     "user_external_identities",
+    "outbox_events",
 ]
 
 def test_alembic_configuration_and_revisions():
@@ -39,7 +40,7 @@ def test_alembic_configuration_and_revisions():
     script_dir = ScriptDirectory.from_config(config)
     revisions = list(script_dir.walk_revisions())
     
-    assert len(revisions) >= 6, f"Expected 6 revisions, found {len(revisions)}."
+    assert len(revisions) >= 8, f"Expected at least 8 revisions, found {len(revisions)}."
     
     rev_ids = [r.revision for r in revisions]
     assert "001_baseline" in rev_ids
@@ -48,6 +49,8 @@ def test_alembic_configuration_and_revisions():
     assert "004_doc_elements" in rev_ids
     assert "005_ingestion_jobs" in rev_ids
     assert "006_ext_id_queue_hardening" in rev_ids
+    assert "007_revision_fsm_and_outbox" in rev_ids
+    assert "008_add_outbox_next_attempt_at" in rev_ids
 
 
 def test_sqlite_upgrade_downgrade_cycle(tmp_path):
@@ -71,6 +74,10 @@ def test_sqlite_upgrade_downgrade_cycle(tmp_path):
     for table in EXPECTED_TABLES:
         assert table in tables, f"Table '{table}' not created by upgrade head."
 
+    # Verify next_attempt_at column added by migration 008
+    outbox_cols = [c["name"] for c in inspector.get_columns("outbox_events")]
+    assert "next_attempt_at" in outbox_cols, "Column 'next_attempt_at' missing from outbox_events table."
+
     # 2. Downgrade to base (clean rollback)
     command.downgrade(config, "base")
     inspector = inspect(engine)
@@ -84,6 +91,8 @@ def test_sqlite_upgrade_downgrade_cycle(tmp_path):
     tables_reupgrade = inspector.get_table_names()
     for table in EXPECTED_TABLES:
         assert table in tables_reupgrade, f"Table '{table}' missing after re-upgrade."
+    reupgrade_outbox_cols = [c["name"] for c in inspector.get_columns("outbox_events")]
+    assert "next_attempt_at" in reupgrade_outbox_cols
 
 
 def test_postgresql_upgrade_downgrade_cycle():

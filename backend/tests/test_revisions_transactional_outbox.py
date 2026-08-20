@@ -707,3 +707,138 @@ async def test_concurrent_approval_race_condition(tmp_path):
         assert len(approved_revs) == 1
 
     await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_postgres_concurrency_row_lock_and_skip_locked_serialization():
+    """
+    Mandatory PostgreSQL Integration Test Gate:
+    Proves real PostgreSQL row-level locking (SELECT ... FOR UPDATE) and worker SKIP LOCKED serialization.
+    When REQUIRE_POSTGRES_CONCURRENCY=true or REQUIRE_POSTGRES_QUEUE=true or CI=true:
+    Any missing PostgreSQL DATABASE_URL strictly FAILS the test build.
+    """
+    require_postgres = (
+        os.getenv("REQUIRE_POSTGRES_CONCURRENCY") == "true"
+        or os.getenv("REQUIRE_POSTGRES_QUEUE") == "true"
+        or os.getenv("CI") == "true"
+    )
+    pg_url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or os.getenv("TEST_POSTGRES_URL")
+
+    if not pg_url or not ("postgresql" in pg_url or "postgres" in pg_url):
+        if require_postgres:
+            pytest.fail(
+                "CI Gate Failure: PostgreSQL is strictly mandatory for FOR UPDATE / SKIP LOCKED concurrency proof, "
+                "but no valid PostgreSQL URL was provided."
+            )
+        else:
+            pytest.skip(
+                "PostgreSQL connection not configured. Set TEST_DATABASE_URL or REQUIRE_POSTGRES_CONCURRENCY=true."
+            )
+
+    if pg_url.startswith("postgres://"):
+        pg_url = pg_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif pg_url.startswith("postgresql://") and "+asyncpg" not in pg_url:
+        pg_url = pg_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    engine = create_async_engine(pg_url, echo=False, poolclass=NullPool)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+    doc_id = str(uuid.uuid4())
+    rev_a_id = str(uuid.uuid4())
+    rev_b_id = str(uuid.uuid4())
+
+    # 1. Setup Document with 2 draft revisions on PostgreSQL
+    async with session_maker() as init_session:
+        doc = DocumentModel(
+            id=doc_id,
+            filename="Postgres_Lock_Test_Doc.pdf",
+            file_hash="hash_pg_lock_001",
+            file_size_bytes=48000,
+            content_type="application/pdf",
+            document_type="datasheet",
+            department="engineering",
+            language="tr",
+            version=1,
+            status="ready",
+        )
+        init_session.add(doc)
+
+        rev_a = DocumentRevisionModel(
+            id=rev_a_id,
+            document_id=doc_id,
+            revision_code="Rev. PG-A",
+            revision_number=1,
+            approval_status="draft",
+            source_sha256="sha_pg_a",
+        )
+        rev_b = DocumentRevisionModel(
+            id=rev_b_id,
+            document_id=doc_id,
+            revision_code="Rev. PG-B",
+            revision_number=2,
+            approval_status="draft",
+            source_sha256="sha_pg_b",
+        )
+        init_session.add_all([rev_a, rev_b])
+        await init_session.commit()
+
+    # 2. Execute simultaneous approval race under genuine PostgreSQL FOR UPDATE row lock
+    async def approve_on_postgres(r_id: str, approver: str):
+        async with session_maker() as sess:
+            return await revision_service.approve_revision(sess, revision_id=r_id, approver_id=approver)
+
+    results = await asyncio.gather(
+        approve_on_postgres(rev_a_id, "pg_engineer_a"),
+        approve_on_postgres(rev_b_id, "pg_engineer_b"),
+        return_exceptions=True,
+    )
+
+    successes = [r for r in results if not isinstance(r, Exception)]
+    assert len(successes) >= 1, "At least one PostgreSQL approval transaction must succeed"
+
+    # Verify exactly 1 approved revision on PostgreSQL
+    async with session_maker() as check_session:
+        all_stmt = select(DocumentRevisionModel).where(DocumentRevisionModel.document_id == doc_id)
+        all_revs = (await check_session.execute(all_stmt)).scalars().all()
+        approved_revs = [r for r in all_revs if r.approval_status == "approved"]
+        assert len(approved_revs) == 1, "PostgreSQL partial unique index must enforce strictly 1 approved revision"
+
+    # 3. Test PostgreSQL SKIP LOCKED concurrent worker claiming
+    async with session_maker() as outbox_init_session:
+        ev1 = OutboxEventModel(
+            event_id=str(uuid.uuid4()),
+            aggregate_type="document_revision",
+            aggregate_id=rev_a_id,
+            event_type="document_revision.approved",
+            idempotency_key=f"pg_outbox_skip_1_{rev_a_id}",
+            payload={"document_id": doc_id, "approved_revision_id": rev_a_id},
+            status="pending",
+        )
+        ev2 = OutboxEventModel(
+            event_id=str(uuid.uuid4()),
+            aggregate_type="document_revision",
+            aggregate_id=rev_b_id,
+            event_type="document_revision.approved",
+            idempotency_key=f"pg_outbox_skip_2_{rev_b_id}",
+            payload={"document_id": doc_id, "approved_revision_id": rev_b_id},
+            status="pending",
+        )
+        outbox_init_session.add_all([ev1, ev2])
+        await outbox_init_session.commit()
+
+    mock_repo = AsyncMock()
+    mock_repo.update_revision_payload_status.return_value = True
+    worker = RevisionOutboxWorker(vector_repo=mock_repo)
+
+    async def worker_poll():
+        async with session_maker() as sess:
+            return await worker.process_batch(sess, batch_size=1)
+
+    worker_res = await asyncio.gather(worker_poll(), worker_poll())
+    assert sum(worker_res) == 2, "Concurrent PostgreSQL SKIP LOCKED workers must claim and process distinct events"
+
+    await engine.dispose()

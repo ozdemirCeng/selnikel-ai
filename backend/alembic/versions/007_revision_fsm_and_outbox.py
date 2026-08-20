@@ -29,7 +29,6 @@ def upgrade() -> None:
         sa.Column('retry_count', sa.Integer(), server_default='0', nullable=False),
         sa.Column('max_retries', sa.Integer(), server_default='5', nullable=False),
         sa.Column('last_error', sa.Text(), nullable=True),
-        sa.Column('next_attempt_at', sa.DateTime(timezone=True), nullable=True, index=True),
         sa.Column('locked_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
