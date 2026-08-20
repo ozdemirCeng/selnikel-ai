@@ -163,19 +163,37 @@ def test_citation_snippet_adversarial_rejection():
     ]
     assert compute_citation_precision(fake_snippet_citation, retrieved) == 0.0
 
-    # 2. Exact substring snippet -> MUST PASS (1.0)
+    # 2. Empty snippet -> MUST FAIL (0.0)
+    empty_snippet_citation = [
+        Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="")
+    ]
+    assert compute_citation_precision(empty_snippet_citation, retrieved) == 0.0
+
+    # 3. Repeated single token -> MUST FAIL (0.0)
+    repeated_token_citation = [
+        Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="pressure pressure pressure")
+    ]
+    assert compute_citation_precision(repeated_token_citation, retrieved) == 0.0
+
+    # 4. Unknown or magic document ID mismatch -> MUST FAIL (0.0)
+    unknown_id_citation = [
+        Citation(document_id="unknown", filename="boiler.pdf", page_number=4, snippet="working steam pressure")
+    ]
+    assert compute_citation_precision(unknown_id_citation, retrieved) == 0.0
+
+    # 5. Exact substring snippet with matching doc_id -> MUST PASS (1.0)
     valid_exact_citation = [
         Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="working steam pressure")
     ]
     assert compute_citation_precision(valid_exact_citation, retrieved) == 1.0
 
-    # 3. High token-precision snippet (80%+ overlap) -> MUST PASS (1.0)
+    # 6. High token-precision snippet (80%+ overlap) -> MUST PASS (1.0)
     valid_token_citation = [
         Citation(document_id="doc-1", filename="boiler.pdf", page_number=4, snippet="standard working steam pressure 16 bar")
     ]
     assert compute_citation_precision(valid_token_citation, retrieved) == 1.0
 
-    # 4. Wrong document ID -> MUST FAIL (0.0)
+    # 7. Wrong document ID -> MUST FAIL (0.0)
     wrong_id_citation = [
         Citation(document_id="doc-WRONG", filename="boiler.pdf", page_number=4, snippet="working steam pressure")
     ]

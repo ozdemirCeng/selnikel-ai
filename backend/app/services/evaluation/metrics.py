@@ -199,15 +199,14 @@ def compute_citation_precision(
 ) -> float:
     """
     Citation Precision with Strict Provenance & Snippet Verification:
-    - Provenance match: filename + page_number (and document_id if specified).
-    - Snippet match:
-      1. Exact normalized substring in chunk content, OR
-      2. Token precision >= 0.80 (at least 80% of citation words exist in chunk content)
-         with minimum 3 tokens. Single or low token overlap fails strictly.
+    - Zero bypass on document_id: exact match required (cit.document_id == chunk.metadata.document_id).
+    - Non-empty snippet required: empty or whitespace-only snippet strictly fails (0.0).
+    - Snippet matching:
+      1. Exact normalized substring in chunk content (with >= 10 chars and >= 2 unique tokens), OR
+      2. Unique token precision >= 0.80 over at least 3 distinct meaningful tokens (>2 chars).
+      Repeated single tokens (e.g. 'pressure pressure pressure') strictly fail.
     """
-    if not citations:
-        return 0.0
-    if not retrieved_chunks:
+    if not citations or not retrieved_chunks:
         return 0.0
 
     valid_count = 0
@@ -217,47 +216,45 @@ def compute_citation_precision(
         cit_id = (cit.document_id or "").strip()
         cit_snippet = (cit.snippet or "").strip()
 
+        # Rule 1: Non-empty snippet is strictly required
+        if not cit_snippet or len(cit_snippet) < 5:
+            continue
+
+        norm_snip = _normalize_text_for_matching(cit_snippet)
+        unique_snip_tokens = set(t for t in norm_snip.split() if len(t) > 2)
+
+        # Rule 2: Minimum token uniqueness (reject repeated single words)
+        if len(unique_snip_tokens) < 2:
+            continue
+
         matched = False
         for c in retrieved_chunks:
             chk_doc = getattr(c.metadata, "filename", "").lower().strip()
             chk_page = getattr(c.metadata, "page_number", -1)
-            chk_id = getattr(c.metadata, "document_id", "")
+            chk_id = getattr(c.metadata, "document_id", "").strip()
             chk_content = c.content
 
-            # Provenance match
+            # Strict Provenance match: filename, page, and exact document_id match
             doc_matches = (chk_doc == cit_doc)
             page_matches = (chk_page == cit_page)
-            id_matches = True
-            if cit_id and chk_id and cit_id not in ("doc-base", "unknown"):
-                id_matches = (cit_id == chk_id)
+            id_matches = (chk_id == cit_id)
 
             if doc_matches and page_matches and id_matches:
-                if not cit_snippet:
-                    matched = True
-                    break
-
-                # Snippet verification
-                norm_snip = _normalize_text_for_matching(cit_snippet)
                 norm_chunk = _normalize_text_for_matching(chk_content)
-
-                if norm_snip in norm_chunk:
-                    matched = True
-                    break
-
-                # Token precision check
-                snip_tokens = norm_snip.split()
-                if not snip_tokens:
-                    matched = True
-                    break
-
                 chunk_token_set = set(norm_chunk.split())
-                overlap_count = sum(1 for t in snip_tokens if t in chunk_token_set)
-                token_precision = overlap_count / len(snip_tokens)
 
-                # Require high token precision (>= 0.80) to prevent single-word coincidences
-                if token_precision >= 0.80:
+                # Exact normalized substring match
+                if norm_snip in norm_chunk and len(norm_snip) >= 10:
                     matched = True
                     break
+
+                # Distinct token-level precision >= 0.80 with at least 3 distinct tokens
+                if len(unique_snip_tokens) >= 3:
+                    overlap_count = len(unique_snip_tokens & chunk_token_set)
+                    token_precision = overlap_count / len(unique_snip_tokens)
+                    if token_precision >= 0.80:
+                        matched = True
+                        break
 
         if matched:
             valid_count += 1
