@@ -588,7 +588,56 @@ export default function DocumentComparisonWorkspace({
             </div>
 
             <div className="prose prose-invert prose-xs max-w-none text-[#e3e3e3] leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiAnswer}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ node, ...props }) => (
+                    <div className="overflow-x-auto my-3 rounded-xl border border-[#3d4043] shadow-md bg-[#181a1b]">
+                      <table className="w-full border-collapse text-xs" {...props} />
+                    </div>
+                  ),
+                  thead: ({ node, ...props }) => (
+                    <thead className="bg-[#1e2227] border-b border-[#3d4043]" {...props} />
+                  ),
+                  th: ({ node, ...props }) => (
+                    <th className="border-r border-[#3d4043] last:border-r-0 px-3.5 py-2.5 text-left font-bold text-[#a8c7fa] text-[11px] uppercase tracking-wider" {...props} />
+                  ),
+                  td: ({ node, ...props }) => {
+                    const cellStr = String(props.children);
+                    const isError = cellStr.includes('❌') || cellStr.includes('UYGUNSUZ') || cellStr.includes('LİMİT AŞIMI') || cellStr.includes('134.0') || cellStr.includes('Süreksizlik');
+                    const isWarning = cellStr.includes('⚠️') || cellStr.includes('TOLERANS');
+                    const isSuccess = cellStr.includes('✅') || cellStr.includes('UYGUN');
+                    return (
+                      <td
+                        className={`border-t border-r border-[#2d2f31] last:border-r-0 px-3.5 py-2 text-xs ${
+                          isError
+                            ? 'bg-rose-950/40 text-rose-200 font-bold'
+                            : isWarning
+                            ? 'bg-amber-950/30 text-amber-200 font-medium'
+                            : isSuccess
+                            ? 'text-emerald-300 font-medium'
+                            : 'text-[#e3e3e3]'
+                        }`}
+                        {...props}
+                      />
+                    );
+                  },
+                  h1: ({ node, ...props }) => (
+                    <h1 className="text-base font-bold text-white mt-4 mb-2 pb-1.5 border-b border-[#2d2f31] flex items-center gap-2" {...props} />
+                  ),
+                  h2: ({ node, ...props }) => (
+                    <h2 className="text-sm font-bold text-[#a8c7fa] mt-3.5 mb-1.5 flex items-center gap-1.5" {...props} />
+                  ),
+                  h3: ({ node, ...props }) => (
+                    <h3 className="text-xs font-bold text-emerald-400 mt-2.5 mb-1 flex items-center gap-1.5" {...props} />
+                  ),
+                  blockquote: ({ node, ...props }) => (
+                    <blockquote className="border-l-4 border-blue-400 bg-[#1e2227]/70 pl-3.5 py-2 my-2 text-[#c4c7c5] rounded-r-xl" {...props} />
+                  ),
+                }}
+              >
+                {aiAnswer}
+              </ReactMarkdown>
             </div>
 
             {/* Citations Footer */}

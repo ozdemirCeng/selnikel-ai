@@ -47,6 +47,9 @@ class OllamaProvider(BaseLLMProvider):
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
+                "repeat_penalty": 1.25,
+                "repeat_last_n": 128,
+                "top_p": 0.9,
             },
         }
 
@@ -60,7 +63,7 @@ class OllamaProvider(BaseLLMProvider):
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        temperature: float = 0.2,
+        temperature: float = 0.1,
         max_tokens: int = 1500,
         **kwargs,
     ) -> AsyncGenerator[str, None]:
@@ -76,6 +79,9 @@ class OllamaProvider(BaseLLMProvider):
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
+                "repeat_penalty": 1.25,
+                "repeat_last_n": 128,
+                "top_p": 0.9,
             },
         }
 
