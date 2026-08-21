@@ -48,20 +48,22 @@ export default function DocumentComparisonWorkspace({
   initialDocBId,
   onClose,
 }: DocumentComparisonWorkspaceProps) {
+  // Find distinct default documents
+  const standardDoc = documents.find((d) => d.filename.toLowerCase().includes('standart')) || documents[0];
+  const testDoc =
+    documents.find(
+      (d) =>
+        d.id !== standardDoc?.id &&
+        (d.filename.toLowerCase().includes('numune') ||
+          d.filename.toLowerCase().includes('test') ||
+          d.filename.toLowerCase().includes('rapor'))
+    ) ||
+    documents.find((d) => d.id !== standardDoc?.id) ||
+    documents[0];
+
   // Document Selection
-  const [docAId, setDocAId] = useState<string>(
-    initialDocAId ||
-      documents.find((d) => d.filename.toLowerCase().includes('standart'))?.id ||
-      documents[0]?.id ||
-      ''
-  );
-  const [docBId, setDocBId] = useState<string>(
-    initialDocBId ||
-      documents.find((d) => d.filename.toLowerCase().includes('numune') || d.filename.toLowerCase().includes('test'))?.id ||
-      documents[1]?.id ||
-      documents[0]?.id ||
-      ''
-  );
+  const [docAId, setDocAId] = useState<string>(initialDocAId || standardDoc?.id || '');
+  const [docBId, setDocBId] = useState<string>(initialDocBId || testDoc?.id || '');
 
   // Document Chunks & Content
   const [chunksA, setChunksA] = useState<DocumentChunkItem[]>([]);
@@ -171,12 +173,32 @@ export default function DocumentComparisonWorkspace({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Helper to clean table content from header artifacts like "SÜTUN 2 | SÜTUN 3"
-  const sanitizeMarkdownContent = (rawContent: string) => {
-    return rawContent
-      .replace(/\|?\s*SÜTUN\s*\d+\s*\|?/gi, '')
-      .replace(/\|\s*SELNİKEL[^\n]*\|/gi, '')
-      .trim();
+  // Proper Markdown table cleaner that preserves standard GFM syntax
+  const cleanChunkMarkdown = (rawContent: string): string => {
+    const lines = rawContent
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !l.startsWith('[Document:') && !l.startsWith('### Table:') && !l.startsWith('Table: Tablo:'));
+
+    const tableLines = lines.filter((l) => l.startsWith('|') && l.endsWith('|'));
+    const nonTableLines = lines.filter((l) => !(l.startsWith('|') && l.endsWith('|')));
+
+    if (tableLines.length >= 3) {
+      const firstRow = tableLines[0];
+      const secondRow = tableLines[1];
+      const thirdRow = tableLines[2];
+
+      if (firstRow.toLowerCase().includes('sütun 2') && secondRow.startsWith('| ---')) {
+        const actualHeader = thirdRow;
+        const colCount = actualHeader.split('|').filter((c) => c.trim().length > 0).length;
+        const separator = '| ' + Array(colCount).fill('---').join(' | ') + ' |';
+        const dataRows = tableLines.slice(3);
+        const reconstructedTable = [actualHeader, separator, ...dataRows].join('\n');
+        return [...nonTableLines, reconstructedTable].join('\n\n');
+      }
+    }
+
+    return lines.join('\n\n');
   };
 
   // Render Table / Chunk Content
@@ -193,7 +215,7 @@ export default function DocumentComparisonWorkspace({
     if (activeFilter === 'compliant' && isError) return null;
     if (searchFilter && !content.toLowerCase().includes(searchFilter.toLowerCase())) return null;
 
-    const cleanedContent = sanitizeMarkdownContent(content);
+    const cleanedContent = cleanChunkMarkdown(content);
 
     return (
       <div
