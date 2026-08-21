@@ -10,6 +10,9 @@ from app.domain.agent import (
     ToolDefinition,
 )
 from app.services.agent.tools.boiler_calc import BoilerEfficiencyTool
+from app.services.agent.tools.burner_calc import BurnerCombustionTool
+from app.services.agent.tools.economizer_calc import EconomizerHeatRecoveryTool
+from app.services.agent.tools.safety_valve_calc import SafetyValveSizingTool
 from app.services.agent.tools.fan_calc import FanAirflowTool
 from app.services.agent.tools.report_gen import ReportGeneratorTool
 from app.services.agent.tools.search_docs import SearchDocumentsTool
@@ -27,6 +30,9 @@ class EngineeringAgentOrchestrator:
         self.tools: Dict[str, Any] = {
             "search_engineering_documents": SearchDocumentsTool,
             "calculate_boiler_efficiency": BoilerEfficiencyTool,
+            "calculate_burner_combustion": BurnerCombustionTool,
+            "calculate_economizer_recovery": EconomizerHeatRecoveryTool,
+            "calculate_safety_valve_sizing": SafetyValveSizingTool,
             "calculate_fan_airflow": FanAirflowTool,
             "generate_engineering_report": ReportGeneratorTool,
         }
