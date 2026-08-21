@@ -367,36 +367,24 @@ export default function NotebookLMWorkspace({
   }
 
   // Dynamic Responsive Column Calculations
-  let leftColClass = isLeftCollapsed ? 'w-14 shrink-0' : 'lg:col-span-3 xl:col-span-2';
-  let centerColClass = 'lg:col-span-6 xl:col-span-7';
-  let rightColClass = isRightCollapsed ? 'w-14 shrink-0' : 'lg:col-span-3 xl:col-span-3';
+  let leftColClass = isLeftCollapsed ? 'w-14 shrink-0' : 'w-72 xl:w-80 shrink-0';
+  let centerColClass = 'flex-1 min-w-0';
+  let rightColClass = isRightCollapsed ? 'w-14 shrink-0' : 'w-72 xl:w-80 shrink-0';
 
   if (activeReaderDoc) {
     // When reading a document, expand document view and chat half-and-half!
-    leftColClass = 'lg:col-span-6 xl:col-span-6';
-    centerColClass = 'lg:col-span-6 xl:col-span-6';
+    leftColClass = 'w-1/2 shrink-0';
+    centerColClass = 'w-1/2 shrink-0';
     rightColClass = 'hidden';
   } else if (studioView === 'artifact') {
     // When editing artifact report, expand artifact view!
-    leftColClass = 'hidden xl:block xl:col-span-2';
-    centerColClass = 'lg:col-span-5 xl:col-span-4';
-    rightColClass = 'lg:col-span-7 xl:col-span-6';
-  } else if (isLeftCollapsed && isRightCollapsed) {
-    leftColClass = 'w-14 shrink-0';
-    centerColClass = 'flex-1';
-    rightColClass = 'w-14 shrink-0';
-  } else if (isLeftCollapsed) {
-    leftColClass = 'w-14 shrink-0';
-    centerColClass = 'lg:col-span-9 xl:col-span-9';
-    rightColClass = 'lg:col-span-3 xl:col-span-3';
-  } else if (isRightCollapsed) {
-    leftColClass = 'lg:col-span-3 xl:col-span-2';
-    centerColClass = 'lg:col-span-9 xl:col-span-10';
-    rightColClass = 'w-14 shrink-0';
+    leftColClass = 'hidden xl:block xl:w-60 xl:shrink-0';
+    centerColClass = 'w-[40%] shrink-0';
+    rightColClass = 'flex-1 min-w-0';
   }
 
   return (
-    <div className="h-[calc(100vh-5.5rem)] flex lg:grid lg:grid-cols-12 gap-3 pb-3">
+    <div className="h-[calc(100vh-4.5rem)] flex flex-row gap-3 px-3 pb-3 overflow-hidden">
       {/* 1. LEFT COLUMN: Kaynaklar OR Kaynak Okuyucu */}
       <div className={`${leftColClass} h-full overflow-hidden transition-all duration-200`}>
         {activeReaderDoc ? (
