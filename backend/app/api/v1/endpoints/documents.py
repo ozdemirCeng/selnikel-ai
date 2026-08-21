@@ -104,13 +104,18 @@ async def list_documents(
     query = select(DocumentModel)
 
     # Enforce departmental ACL
-    if "admin" not in user.role_codes:
-        query = query.where(DocumentModel.department.in_(user.department_ids))
+    is_admin = "admin" in user.role_codes or "super_admin" in user.role_codes or "*" in user.permissions
+    if not is_admin:
+        allowed_depts = list(set(user.department_ids + [d.replace("dept-", "") for d in user.department_ids]))
+        query = query.where(DocumentModel.department.in_(allowed_depts))
 
     if department:
         if not user.can_access_department(department):
             return DocumentListResponse(items=[], total=0)
-        query = query.where(DocumentModel.department == department)
+        query = query.where(
+            (DocumentModel.department == department) | 
+            (DocumentModel.department == department.replace("dept-", ""))
+        )
     if document_type:
         query = query.where(DocumentModel.document_type == document_type)
     if status_filter:
