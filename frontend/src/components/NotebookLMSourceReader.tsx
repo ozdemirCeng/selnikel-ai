@@ -180,9 +180,9 @@ export default function NotebookLMSourceReader({
             >
               Tümü
             </button>
-            {pages.map((p) => (
+            {pages.map((p, pIdx) => (
               <button
-                key={p}
+                key={`page-${p}-${pIdx}`}
                 onClick={() => setActivePage(p)}
                 className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition ${
                   activePage === p
@@ -248,7 +248,7 @@ export default function NotebookLMSourceReader({
 
             return (
               <div
-                key={chunk.id}
+                key={chunk.id || `chunk-${chunk.chunk_index}-${idx}`}
                 className={`p-4 rounded-2xl border transition ${
                   isHighlighted
                     ? 'bg-[#282a2c] border-[#a8c7fa] ring-1 ring-[#a8c7fa]'

@@ -264,7 +264,10 @@ class DeterministicRAGEngine:
         # 3. Stream LLM Tokens
         accumulated_text = ""
         try:
-            async for token in self.llm.generate_stream(
+            stream_gen = getattr(self.llm, "stream", None) or getattr(self.llm, "generate_stream", None)
+            if stream_gen is None:
+                raise AttributeError(f"LLM provider {type(self.llm)} does not implement stream or generate_stream.")
+            async for token in stream_gen(
                 prompt=user_prompt,
                 system_prompt=SELNIKEL_RAG_SYSTEM_PROMPT,
             ):

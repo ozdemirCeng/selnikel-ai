@@ -92,3 +92,5 @@ class OllamaProvider(BaseLLMProvider):
                             yield content
                     except json.JSONDecodeError:
                         continue
+
+    generate_stream = stream

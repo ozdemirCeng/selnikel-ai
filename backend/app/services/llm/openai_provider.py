@@ -124,3 +124,5 @@ class OpenAIProvider(BaseLLMProvider):
             else:
                 raise
 
+    generate_stream = stream
+
