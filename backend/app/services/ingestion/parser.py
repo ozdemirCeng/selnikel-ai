@@ -579,6 +579,17 @@ class DoclingParser(BaseDocumentParser):
         ext = Path(file_path).suffix.lower()
         return ext in self.SUPPORTED_EXTENSIONS
 
+    @staticmethod
+    def _sanitize_markdown(text: str) -> str:
+        """Strip Docling rich cell annotations and empty comment placeholders."""
+        if not text:
+            return ""
+        # Remove rich cell comments
+        cleaned = re.sub(r"<!--\s*rich\s*cell\s*-->", "", text, flags=re.IGNORECASE)
+        # Remove duplicate pipes or messy spacing caused by comment removal
+        cleaned = re.sub(r"<!--.*?-->", "", cleaned)
+        return cleaned
+
     async def parse(self, file_path: str, content_type: Optional[str] = None) -> ParsedDocument:
         path = Path(file_path)
         if not path.exists():
@@ -594,7 +605,8 @@ class DoclingParser(BaseDocumentParser):
             conv_result = self._converter.convert(str(path))
             doc = conv_result.document
 
-            full_markdown = doc.export_to_markdown()
+            raw_markdown = doc.export_to_markdown()
+            full_markdown = self._sanitize_markdown(raw_markdown)
             tables: List[ParsedTable] = []
             blocks: List[ParsedBlock] = []
 
@@ -605,7 +617,8 @@ class DoclingParser(BaseDocumentParser):
                     if hasattr(table_item, "prov") and table_item.prov:
                         page_no = getattr(table_item.prov[0], "page_no", 1)
 
-                    table_md = table_item.export_to_markdown() if hasattr(table_item, "export_to_markdown") else str(table_item)
+                    raw_table_md = table_item.export_to_markdown() if hasattr(table_item, "export_to_markdown") else str(table_item)
+                    table_md = self._sanitize_markdown(raw_table_md)
                     tables.append(
                         ParsedTable(
                             table_id=str(uuid.uuid4()),

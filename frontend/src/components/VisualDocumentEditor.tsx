@@ -271,7 +271,8 @@ export default function VisualDocumentEditor({
 
 // Lightweight parser: Markdown -> Visual HTML
 function markdownToHtml(md: string): string {
-  let html = md
+  let cleanMd = (md || '').replace(/<!--[\s\S]*?-->/g, '');
+  let html = cleanMd
     // Headers
     .replace(/^# (.*$)/gim, '<h1 class="text-lg font-bold text-white my-2.5">$1</h1>')
     .replace(/^## (.*$)/gim, '<h2 class="text-sm font-semibold text-white my-2">$1</h2>')
@@ -287,9 +288,9 @@ function markdownToHtml(md: string): string {
   // Format Markdown Tables to HTML Tables
   const tableRegex = /\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g;
   html = html.replace(tableRegex, (match, headerLine, bodyLines) => {
-    const headers = headerLine.split('|').filter(Boolean).map((h: string) => h.trim());
+    const headers = headerLine.split('|').filter(Boolean).map((h: string) => h.replace(/<!--[\s\S]*?-->/g, '').trim());
     const rows = bodyLines.trim().split('\n').map((row: string) =>
-      row.split('|').filter(Boolean).map((cell: string) => cell.trim())
+      row.split('|').filter(Boolean).map((cell: string) => cell.replace(/<!--[\s\S]*?-->/g, '').trim())
     );
 
     let tHtml = `
