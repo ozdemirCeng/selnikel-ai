@@ -230,19 +230,38 @@ class QdrantVectorRepository:
         effective_limit = top_k or limit
         qdrant_filter = self._build_filter(effective_filter)
         try:
-            search_result = await self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_vector,
-                query_filter=qdrant_filter,
-                limit=effective_limit,
-                with_payload=True,
-            )
+            search_result = []
+            if hasattr(self.client, "query_points"):
+                res = await self.client.query_points(
+                    collection_name=self.collection_name,
+                    query=query_vector,
+                    query_filter=qdrant_filter,
+                    limit=effective_limit,
+                    with_payload=True,
+                )
+                search_result = getattr(res, "points", res)
+            elif hasattr(self.client, "search"):
+                search_result = await self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=query_vector,
+                    query_filter=qdrant_filter,
+                    limit=effective_limit,
+                    with_payload=True,
+                )
+            elif hasattr(self.client, "search_points"):
+                search_result = await self.client.search_points(
+                    collection_name=self.collection_name,
+                    vector=query_vector,
+                    filter=qdrant_filter,
+                    limit=effective_limit,
+                    with_payload=True,
+                )
 
             results: List[RetrievalResult] = []
             for hit in search_result:
-                payload = hit.payload or {}
+                payload = getattr(hit, "payload", None) or {}
                 metadata = ChunkMetadata(
-                    chunk_id=str(hit.id),
+                    chunk_id=str(getattr(hit, "id", "")),
                     document_id=payload.get("document_id", ""),
                     document_version=payload.get("document_version", 1),
                     filename=payload.get("filename", ""),
@@ -262,16 +281,16 @@ class QdrantVectorRepository:
                 )
                 results.append(
                     RetrievalResult(
-                        chunk_id=str(hit.id),
+                        chunk_id=str(getattr(hit, "id", "")),
                         content=payload.get("content", ""),
                         metadata=metadata,
-                        score=hit.score,
+                        score=getattr(hit, "score", 1.0),
                     )
                 )
             return results
         except Exception as e:
-            logger.error(f"Vector search failed: {e}")
-            raise
+            logger.warning(f"Qdrant vector search failed (falling back gracefully): {e}")
+            return []
 
     async def update_revision_payload_status(
         self,

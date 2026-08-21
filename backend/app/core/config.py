@@ -42,14 +42,14 @@ class Settings(BaseSettings):
     QDRANT_PREFER_GRPC: bool = False
 
     # LLM Settings
-    LLM_PROVIDER: Literal["openai", "ollama"] = "openai"
+    LLM_PROVIDER: Literal["openai", "ollama"] = "ollama"
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_API_KEY: Optional[str] = None
 
     # Ollama Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_MODEL: str = "qwen2.5-coder:14b"
 
     # Embedding Settings
     EMBEDDING_PROVIDER: str = "bge-m3"
