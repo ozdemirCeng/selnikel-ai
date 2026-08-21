@@ -29,6 +29,21 @@ class RevisionOutboxWorker:
         self._running = False
         self._task: Optional[asyncio.Task] = None
 
+    async def start(self, session_maker, poll_interval_seconds: float = 2.0, batch_size: int = 10) -> None:
+        """Start background polling loop."""
+        self._running = True
+        while self._running:
+            try:
+                async with session_maker() as session:
+                    await self.process_batch(session=session, batch_size=batch_size)
+            except Exception as e:
+                logger.error(f"Error in RevisionOutboxWorker loop: {e}")
+            await asyncio.sleep(poll_interval_seconds)
+
+    def stop(self) -> None:
+        """Signal background worker to stop."""
+        self._running = False
+
     async def process_batch(
         self,
         session: AsyncSession,

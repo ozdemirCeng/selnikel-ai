@@ -43,7 +43,8 @@ async def test_frontend_live_asset_serving_over_http():
     and validates that every single static chunk returns HTTP 200.
     """
     require_live = os.environ.get("REQUIRE_LIVE_FRONTEND") == "true"
-    urls_to_try = ["http://localhost:3005", "http://localhost:3000"]
+    frontend_target = os.environ.get("FRONTEND_URL") or "http://localhost:3005"
+    urls_to_try = [frontend_target] if os.environ.get("FRONTEND_URL") else ["http://localhost:3005"]
     live_url = None
     
     async with httpx.AsyncClient(timeout=3.0) as client:

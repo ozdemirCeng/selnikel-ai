@@ -1,4 +1,5 @@
 import io
+import os
 import re
 from datetime import datetime, timezone
 from typing import List, Tuple
@@ -6,6 +7,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     HRFlowable,
     Paragraph,
@@ -15,12 +18,45 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+_FONTS_INITIALIZED = False
+_DEFAULT_FONT = "Helvetica"
+_DEFAULT_BOLD_FONT = "Helvetica-Bold"
+
+
+def _ensure_unicode_fonts() -> Tuple[str, str]:
+    global _FONTS_INITIALIZED, _DEFAULT_FONT, _DEFAULT_BOLD_FONT
+    if _FONTS_INITIALIZED:
+        return _DEFAULT_FONT, _DEFAULT_BOLD_FONT
+
+    font_candidates = [
+        ("C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/arialbd.ttf", "Arial", "Arial-Bold"),
+        ("C:/Windows/Fonts/calibri.ttf", "C:/Windows/Fonts/calibrib.ttf", "Calibri", "Calibri-Bold"),
+        ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf", "SegoeUI", "SegoeUI-Bold"),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans", "DejaVuSans-Bold"),
+    ]
+
+    for reg_path, bold_path, reg_name, bold_name in font_candidates:
+        if os.path.exists(reg_path) and os.path.exists(bold_path):
+            try:
+                pdfmetrics.registerFont(TTFont(reg_name, reg_path))
+                pdfmetrics.registerFont(TTFont(bold_name, bold_path))
+                _DEFAULT_FONT = reg_name
+                _DEFAULT_BOLD_FONT = bold_name
+                _FONTS_INITIALIZED = True
+                return _DEFAULT_FONT, _DEFAULT_BOLD_FONT
+            except Exception:
+                continue
+
+    _FONTS_INITIALIZED = True
+    return _DEFAULT_FONT, _DEFAULT_BOLD_FONT
+
 
 class EngineeringPDFExporter:
     """Exports structured markdown engineering reports to high-fidelity PDF documents."""
 
     @classmethod
     def generate_pdf(cls, markdown_text: str, title: str = "Selnikel Teknik Raporu") -> bytes:
+        font_name, bold_font_name = _ensure_unicode_fonts()
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
             buffer,
@@ -40,7 +76,7 @@ class EngineeringPDFExporter:
             fontSize=16,
             leading=20,
             textColor=colors.HexColor("#0f172a"),
-            fontName="Helvetica-Bold",
+            fontName=bold_font_name,
         )
         section_heading_style = ParagraphStyle(
             name="SectionHeading",
@@ -48,7 +84,7 @@ class EngineeringPDFExporter:
             fontSize=12,
             leading=16,
             textColor=colors.HexColor("#0369a1"),
-            fontName="Helvetica-Bold",
+            fontName=bold_font_name,
             spaceBefore=10,
             spaceAfter=6,
         )
@@ -58,12 +94,12 @@ class EngineeringPDFExporter:
             fontSize=9.5,
             leading=14,
             textColor=colors.HexColor("#334155"),
-            fontName="Helvetica",
+            fontName=font_name,
         )
         bold_body_style = ParagraphStyle(
             name="BoldBody",
             parent=body_style,
-            fontName="Helvetica-Bold",
+            fontName=bold_font_name,
         )
         footer_note_style = ParagraphStyle(
             name="FooterNote",
@@ -71,6 +107,7 @@ class EngineeringPDFExporter:
             fontSize=8,
             leading=11,
             textColor=colors.HexColor("#64748b"),
+            fontName=font_name,
         )
 
         elements = []

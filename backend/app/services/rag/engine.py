@@ -360,18 +360,15 @@ class DeterministicRAGEngine:
             )
             res = await session.execute(stmt)
             approved_map = {}
-            if hasattr(res, "all"):
-                rows = res.all()
-                if callable(rows) and not isinstance(rows, (AsyncMock, MagicMock)):
+            rows = res.all() if hasattr(res, "all") else []
+            if callable(rows):
+                try:
                     rows = rows()
-                if isinstance(rows, (list, tuple)):
-                    for row in rows:
-                        if hasattr(row, "__getitem__") and len(row) >= 2:
-                            approved_map[row[0]] = row[1]
-                elif hasattr(rows, "return_value") and isinstance(rows.return_value, (list, tuple)):
-                    for row in rows.return_value:
-                        if hasattr(row, "__getitem__") and len(row) >= 2:
-                            approved_map[row[0]] = row[1]
+                except Exception:
+                    rows = getattr(rows, "return_value", [])
+            for row in rows or []:
+                if hasattr(row, "__getitem__") and len(row) >= 2:
+                    approved_map[row[0]] = row[1]
 
             verified_chunks: List[RetrievalResult] = []
             for c in chunks:
