@@ -39,6 +39,7 @@ import {
   Bold,
   ArrowLeft,
   ChevronRight,
+  Columns2,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -55,6 +56,7 @@ import NotebookLMAddSourceModal from './NotebookLMAddSourceModal';
 import NotebookLMSourceReader from './NotebookLMSourceReader';
 import ChunkInspectorModal from './ChunkInspectorModal';
 import VisualDocumentEditor from './VisualDocumentEditor';
+import DocumentComparisonWorkspace from './DocumentComparisonWorkspace';
 
 interface WorkspaceMessage {
   id: string;
@@ -86,6 +88,9 @@ export default function NotebookLMWorkspace({
     totalPages?: number;
     highlightSnippet?: string;
   } | null>(null);
+
+  // Dedicated Side-by-Side Comparison State
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
 
   // Inspector Modal
   const [inspectDocId, setInspectDocId] = useState<string | null>(null);
@@ -279,6 +284,15 @@ export default function NotebookLMWorkspace({
     }
   };
 
+  if (isComparisonOpen) {
+    return (
+      <DocumentComparisonWorkspace
+        documents={documents}
+        onClose={() => setIsComparisonOpen(false)}
+      />
+    );
+  }
+
   return (
     <div className="h-[calc(100vh-5.5rem)] grid grid-cols-1 lg:grid-cols-12 gap-3 pb-3">
       {/* 1. LEFT COLUMN: Kaynaklar OR Kaynak Okuyucu */}
@@ -334,7 +348,7 @@ export default function NotebookLMWorkspace({
                     <ChevronDown className="w-2.5 h-2.5 text-[#8e918f]" />
                   </button>
                   <button
-                    onClick={() => alert('Web araştırması yapılıyor...')}
+                    onClick={() => setIsAddSourceOpen(true)}
                     className="ml-auto p-1.5 rounded-full hover:bg-[#282a2c] text-[#8e918f] hover:text-white transition"
                   >
                     <Search className="w-3.5 h-3.5" />
@@ -359,12 +373,6 @@ export default function NotebookLMWorkspace({
                   <p className="text-[11px] text-[#8e918f] max-w-[200px]">
                     Dosya, web sitesi veya başka kaynaklar ekleyin. Ardından bu kaynaklara dayalı olarak soru sorun veya içerik oluşturun.
                   </p>
-                  <button
-                    onClick={() => setIsAddSourceOpen(true)}
-                    className="text-xs text-[#a8c7fa] hover:underline font-medium"
-                  >
-                    Dosyaları buraya bırakın veya kaynak ekleyin
-                  </button>
                 </div>
               ) : (
                 documents.map((doc) => {
@@ -372,10 +380,10 @@ export default function NotebookLMWorkspace({
                   return (
                     <div
                       key={doc.id}
-                      className={`p-3 rounded-2xl border transition flex items-start gap-2.5 cursor-pointer group ${
+                      className={`p-3 rounded-xl flex items-start gap-3 cursor-pointer transition group border ${
                         isChecked
                           ? 'bg-[#282a2c] border-[#37393b]'
-                          : 'bg-transparent border-[#282a2c]/50 opacity-60 hover:opacity-100'
+                          : 'bg-[#131314]/40 border-transparent hover:bg-[#282a2c]/50'
                       }`}
                       onClick={() => handleOpenSource(doc)}
                     >
@@ -423,9 +431,19 @@ export default function NotebookLMWorkspace({
               </span>
             )}
           </div>
-          <button className="text-[#8e918f] hover:text-white transition">
-            <MoreVertical className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsComparisonOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 hover:bg-blue-500/25 text-[#a8c7fa] border border-blue-500/40 text-xs font-semibold shadow-sm transition"
+              title="İki dokümanı yan yana tam ekran aç ve kalite farklarını incele"
+            >
+              <Columns2 className="w-3.5 h-3.5" />
+              <span>Yan Yana Karşılaştır</span>
+            </button>
+            <button className="text-[#8e918f] hover:text-white transition">
+              <MoreVertical className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Conversation Stream */}
@@ -448,6 +466,14 @@ export default function NotebookLMWorkspace({
                 </span>
 
                 <div className="space-y-2">
+                  <button
+                    onClick={() => setIsComparisonOpen(true)}
+                    className="w-full text-left py-2.5 px-4 rounded-full bg-blue-500/15 hover:bg-blue-500/25 text-xs text-[#a8c7fa] font-semibold transition border border-blue-500/30 flex items-center justify-between group shadow-sm"
+                  >
+                    <span>⚡ İki Kalite / Test Belgesini Yan Yana Karşılaştır (Hataları & Farkları Gör)</span>
+                    <Columns2 className="w-3.5 h-3.5 group-hover:scale-110 transition" />
+                  </button>
+
                   <button
                     onClick={() => handleSend('Selnikel endüstriyel kazanları ve kapasiteleri hakkında genel bilgi ver.')}
                     className="w-full text-left py-2.5 px-4 rounded-full bg-[#282a2c] hover:bg-[#333537] text-xs text-[#e3e3e3] transition border border-transparent hover:border-[#37393b]"
