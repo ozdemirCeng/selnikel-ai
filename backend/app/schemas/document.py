@@ -49,3 +49,37 @@ class ChunkResponse(BaseModel):
 class MessageResponse(BaseModel):
     message: str
     success: bool = True
+
+
+class WebSearchRequest(BaseModel):
+    query: str
+    max_results: int = Field(5, ge=1, le=10)
+
+
+class WebSearchResult(BaseModel):
+    title: str
+    href: str
+    body: str
+
+
+class WebSearchResponse(BaseModel):
+    query: str
+    results: List[WebSearchResult]
+    total: int
+
+
+class WebUrlIngestRequest(BaseModel):
+    url: str
+    department: str = "engineering"
+    document_type: str = "technical_specification"
+    language: str = "tr"
+    custom_title: Optional[str] = None
+
+
+class RawTextIngestRequest(BaseModel):
+    title: str
+    content: str
+    department: str = "engineering"
+    document_type: str = "technical_specification"
+    language: str = "tr"
+

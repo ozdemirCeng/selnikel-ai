@@ -42,7 +42,8 @@ class PromptContract(BaseModel):
     def format_user_prompt(self, query: str, context_chunks: List[str]) -> str:
         """Format retrieval context chunks into the strictly bounded user prompt."""
         formatted_context = "\n\n---\n\n".join(context_chunks) if context_chunks else "[HİÇBİR TEKNİK DOKÜMAN BAĞLAMI BULUNAMADI]"
-        return f"### DOKÜMAN BAĞLAMI (AŞAĞIDAKİ VERİLERİ VE TABLOLARI KULLAN):\n{formatted_context}\n\n### KULLANICI TALEBİ:\n{query}\n\nLütfen yukarıdaki doküman bağlamındaki verileri analiz ederek yanıtla:"
+        return f"### DOKÜMAN BAĞLAMI (AŞAĞIDAKİ VERİLERİ VE TABLOLARI KULLAN):\n{formatted_context}\n\n### KULLANICI SORUSU / TALEBİ:\n{query}\n\nLütfen yukarıdaki doküman bağlamındaki verileri analiz ederek yanıtla:"
 
 
 current_prompt_contract = PromptContract()
+

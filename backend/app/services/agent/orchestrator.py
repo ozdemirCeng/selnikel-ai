@@ -16,6 +16,7 @@ from app.services.agent.tools.safety_valve_calc import SafetyValveSizingTool
 from app.services.agent.tools.fan_calc import FanAirflowTool
 from app.services.agent.tools.report_gen import ReportGeneratorTool
 from app.services.agent.tools.search_docs import SearchDocumentsTool
+from app.services.agent.tools.web_search import WebSearchTool, WebScrapeTool
 from app.services.llm.base import BaseLLMProvider
 from app.services.llm.factory import llm_provider
 
@@ -35,6 +36,8 @@ class EngineeringAgentOrchestrator:
             "calculate_safety_valve_sizing": SafetyValveSizingTool,
             "calculate_fan_airflow": FanAirflowTool,
             "generate_engineering_report": ReportGeneratorTool,
+            "web_search": WebSearchTool,
+            "web_scrape": WebScrapeTool,
         }
 
     def get_tool_definitions(self) -> List[ToolDefinition]:

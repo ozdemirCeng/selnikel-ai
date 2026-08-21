@@ -12,12 +12,142 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentUploadResponse,
     MessageResponse,
+    RawTextIngestRequest,
+    WebSearchRequest,
+    WebSearchResponse,
+    WebSearchResult,
+    WebUrlIngestRequest,
 )
 from app.services.ingestion.pipeline import ingestion_pipeline
 from app.api.dependencies import get_current_user, require_permission
 from app.domain.identity.models import User
 
 router = APIRouter()
+
+
+@router.post(
+    "/search-web",
+    response_model=WebSearchResponse,
+    summary="Search the live internet for documents and engineering data",
+)
+async def search_web(
+    request: WebSearchRequest,
+    user: User = Depends(require_permission("document.read")),
+) -> WebSearchResponse:
+    """Perform live internet search via DuckDuckGo."""
+    try:
+        from ddgs import DDGS
+        ddg = DDGS()
+        raw_results = list(ddg.text(request.query, max_results=request.max_results))
+        results = [
+            WebSearchResult(
+                title=r.get("title", "Başlıksız"),
+                href=r.get("href", ""),
+                body=r.get("body", ""),
+            )
+            for r in raw_results
+        ]
+        return WebSearchResponse(
+            query=request.query,
+            results=results,
+            total=len(results),
+        )
+    except Exception as e:
+        logger.error(f"Web search error for '{request.query}': {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Web search failed: {str(e)}",
+        )
+
+
+@router.post(
+    "/ingest-url",
+    response_model=DocumentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Scrape and ingest a web URL directly into the workspace",
+)
+async def ingest_web_url(
+    request: WebUrlIngestRequest,
+    user: User = Depends(require_permission("document.upload")),
+    db: AsyncSession = Depends(get_db),
+) -> DocumentUploadResponse:
+    """Scrape public web page, clean HTML, extract markdown and tables, and index into workspace."""
+    try:
+        from app.services.ingestion.web_scraper import web_scraper_service
+        title, markdown_content, metadata = await web_scraper_service.fetch_and_clean_url(request.url)
+        clean_title = request.custom_title or title or "Web Kaynağı"
+        safe_title = "".join(c for c in clean_title if c.isalnum() or c in (" ", "_", "-"))[:40].strip()
+        filename = f"Web_{safe_title.replace(' ', '_')}.md"
+
+        file_bytes = markdown_content.encode("utf-8")
+        doc, chunks, is_dup = await ingestion_pipeline.ingest_document(
+            session=db,
+            filename=filename,
+            content=file_bytes,
+            content_type="text/markdown",
+            department=request.department,
+            document_type=request.document_type,
+            language=request.language,
+            allow_duplicate=True,
+        )
+
+        return DocumentUploadResponse(
+            document=DocumentResponse.model_validate(doc),
+            chunk_count=len(chunks),
+            is_duplicate=is_dup,
+            message=f"Web URL başarıyla ayrıştırıldı ve {len(chunks)} parçaya ayrılarak deftere eklendi.",
+        )
+    except Exception as e:
+        logger.error(f"Web URL ingestion failed for '{request.url}': {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to ingest URL: {str(e)}",
+        )
+
+
+@router.post(
+    "/ingest-raw-text",
+    response_model=DocumentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest raw copied/pasted text into workspace",
+)
+async def ingest_raw_text(
+    request: RawTextIngestRequest,
+    user: User = Depends(require_permission("document.upload")),
+    db: AsyncSession = Depends(get_db),
+) -> DocumentUploadResponse:
+    """Ingest raw pasted text or snippets into workspace."""
+    try:
+        clean_title = request.title.strip() or "Kopyalanan_Not"
+        safe_title = "".join(c for c in clean_title if c.isalnum() or c in (" ", "_", "-"))[:40].strip()
+        filename = f"{safe_title.replace(' ', '_')}.md"
+        file_bytes = request.content.encode("utf-8")
+
+        doc, chunks, is_dup = await ingestion_pipeline.ingest_document(
+            session=db,
+            filename=filename,
+            content=file_bytes,
+            content_type="text/markdown",
+            department=request.department,
+            document_type=request.document_type,
+            language=request.language,
+            allow_duplicate=True,
+        )
+
+        return DocumentUploadResponse(
+            document=DocumentResponse.model_validate(doc),
+            chunk_count=len(chunks),
+            is_duplicate=is_dup,
+            message=f"Metin başarıyla {len(chunks)} parça olarak kaydedildi ve deftere eklendi.",
+        )
+    except Exception as e:
+        logger.error(f"Raw text ingestion failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to ingest raw text: {str(e)}",
+        )
+
+
 
 
 @router.post(

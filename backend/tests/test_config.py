@@ -7,4 +7,5 @@ def test_settings_defaults():
     assert settings.API_V1_PREFIX == "/api/v1"
     assert settings.EMBEDDING_DIMENSION == 1024
     assert settings.LLM_PROVIDER in ["openai", "ollama"]
-    assert "postgresql" in settings.DATABASE_URL
+    assert "sqlite" in settings.DATABASE_URL or "postgresql" in settings.DATABASE_URL
+

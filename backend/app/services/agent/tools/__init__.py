@@ -5,6 +5,7 @@ from app.services.agent.tools.economizer_calc import EconomizerHeatRecoveryTool
 from app.services.agent.tools.safety_valve_calc import SafetyValveSizingTool
 from app.services.agent.tools.fan_calc import FanAirflowTool
 from app.services.agent.tools.report_gen import ReportGeneratorTool
+from app.services.agent.tools.web_search import WebSearchTool, WebScrapeTool
 
 __all__ = [
     "SearchDocumentsTool",
@@ -14,4 +15,7 @@ __all__ = [
     "SafetyValveSizingTool",
     "FanAirflowTool",
     "ReportGeneratorTool",
+    "WebSearchTool",
+    "WebScrapeTool",
 ]
+
