@@ -17,11 +17,14 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     API_V1_PREFIX: str = "/api/v1"
     BACKEND_HOST: str = "0.0.0.0"
+    BACKEND_PORT: int = 8080
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3005",
         "http://127.0.0.1:3005",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
         "http://localhost:8000",
     ]
 
