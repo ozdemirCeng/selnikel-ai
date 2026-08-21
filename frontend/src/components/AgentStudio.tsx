@@ -52,16 +52,28 @@ const PRESET_AGENT_TASKS = [
       'Selnikel SB-100 kazanının 1000 kg/h buhar debisi ve 16 bar işletme basıncında doğal gaz tüketimini ve termal verimini hesapla, teknik rapor oluştur.',
   },
   {
+    icon: '💨',
+    title: 'Brülör Yanma & Baca Gazı Kaybı',
+    query:
+      'Doğal gaz yakan bir brülör için saatte 250 Nm3/h yakıt tüketiminde, %3.0 artık O2 ve 160 °C baca gazı sıcaklığında Siegert formülüyle baca kaybını ve yanma verimini hesapla.',
+  },
+  {
+    icon: '♻️',
+    title: 'Ekonomizer Atık Isı Geri Kazanımı',
+    query:
+      '5000 kg/h buhar kapasiteli kazanda baca gazı sıcaklığını 220 °C den 130 °C ye düşüren ekonomizerin geri kazandığı ısıl gücü (kW) ve yıllık doğal gaz tasarrufunu hesapla.',
+  },
+  {
+    icon: '🛡️',
+    title: 'Emniyet Ventili Boyutlandırma',
+    query:
+      '5000 kg/h buhar kapasiteli ve 16 bar_g işletme basınçlı buhar kazanı için EN ISO 4126-1 standardına göre minimum emniyet ventili orifis alanını ve önerilen DN anma çapını hesapla.',
+  },
+  {
     icon: '🌪️',
     title: '600 mm Fan Debi & Motor Gücü',
     query:
       '600 mm kanal çapı ve 20 m/s hava hızında çalışan 1500 Pa basınçlı endüstriyel fanın debisini (m3/h) ve tavsiye edilen motor gücünü (kW) hesapla.',
-  },
-  {
-    icon: '🛡️',
-    title: 'Kazan Emniyet Şartnamesi',
-    query:
-      'Dokümanlarda kazan tasarımı ve emniyet ventilleriyle ilgili teknik şartnameleri ara ve yönetici özeti içeren bir teknik rapor hazırla.',
   },
   {
     icon: '📊',
