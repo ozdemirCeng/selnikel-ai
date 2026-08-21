@@ -247,6 +247,35 @@ export default function NotebookLMWorkspace({
     }
   };
 
+  // Audio Speech Synthesis state
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  const toggleSpeechAudio = (textToSpeak: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('Tarayıcınız sesli okuma özelliğini desteklemiyor.');
+      return;
+    }
+    if (isPlayingAudio) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const plainText = textToSpeak
+        .replace(/#+\s+/g, '')
+        .replace(/[\*_`\|\[\]\(\)]/g, '')
+        .replace(/---/g, '')
+        .trim();
+
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      utterance.lang = 'tr-TR';
+      utterance.rate = 1.0;
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+      window.speechSynthesis.speak(utterance);
+      setIsPlayingAudio(true);
+    }
+  };
+
   const handleExport = async (format: 'pdf' | 'excel' | 'word' | 'pptx') => {
     setIsExporting(format);
     try {
@@ -268,24 +297,31 @@ export default function NotebookLMWorkspace({
   };
 
   const handleStudioCardClick = async (cardType: string) => {
-    setStudioView('artifact');
-    if (cardType === 'slide') {
-      handleExport('pptx');
+    const activeDocs = documents.filter((d) => selectedDocIds[d.id]);
+    const docNames = activeDocs.map((d) => d.filename).join(', ');
+    const targetScope = docNames || 'kütüphanedeki tüm aktif teknik kılavuzlar ve şartnameler';
+
+    let prompt = '';
+    if (cardType === 'audio') {
+      prompt = `Seçili kaynaklara (${targetScope}) dayanarak, mühendislik yöneticilerine yönelik 2 dakikalık profesyonel bir sesli brifing / özet metni hazırla. Tüm temel sayısal değerleri, verimleri ve standart uygunluk durumlarını akıcı ve konuşma diline uygun şekilde özetle.`;
+    } else if (cardType === 'slide') {
+      prompt = `Seçili kaynaklara (${targetScope}) dayanarak, 5 slaytlık profesyonel bir teknik sunum taslağı hazırla. Her slayt için Başlık, Maddeler ve Teknik Parametre Tablosu ekle.`;
     } else if (cardType === 'table') {
-      handleExport('excel');
+      prompt = `Seçili kaynaklardaki (${targetScope}) tüm sayısal teknik verileri, işletme basınçlarını, verim oranlarını, emisyon değerlerini ve test ölçümlerini tam kapsamlı bir Markdown karşılaştırma ve veri tablosu olarak derle.`;
     } else if (cardType === 'report') {
-      handleExport('word');
-    } else if (cardType === 'audio') {
-      handleSend('Bu not defterindeki kaynakların kapsamlı bir sesli brifing / özet metnini oluştur.');
+      prompt = `Seçili kaynaklara (${targetScope}) dayanarak; Yönetici Özeti, Tasarım Parametreleri, Standart & Kalite Uygunluk Denetimi ve Mühendislik Tavsiyelerini içeren resmi bir Selnikel Teknik Şartname & Değerlendirme Raporu oluştur.`;
     } else if (cardType === 'flashcard') {
-      handleSend('Bu dokümanlardan mühendisler için 5 adet soru-cevap bilgi kartı (flashcard) oluştur.');
+      prompt = `Seçili kaynaklardan (${targetScope}) mühendisler ve teknik denetçiler için 5 adet kritik teknik Soru-Cevap bilgi kartı (Flashcard) oluştur. Format:\n### Kart 1: [Soru]\n**Cevap:** [Ayrıntılı Teknik Yanıt]\n**Kaynak:** [Doküman ve Sayfa]`;
     } else if (cardType === 'test') {
-      handleSend('Dokümanlardaki şartnamelere göre 5 soruluk teknik uygunluk test ve doğrulama maddeleri hazırla.');
+      prompt = `Seçili kaynaklardaki (${targetScope}) standart ve kalite kriterlerine göre 5 maddelik Saha Kabul ve Test Doğrulama Listesi (Checklist) hazırla. Her madde için kabul toleransını ve kontrol yöntemini belirt.`;
     } else if (cardType === 'mindmap') {
-      handleSend('Bu konunun hiyerarşik zihin haritasını (mindmap) markdown liste formatında çıkar.');
+      prompt = `Seçili kaynakların (${targetScope}) mimarisini, ana bileşenlerini ve standart ilişkilerini hiyerarşik bir zihin haritası (Mindmap) olarak detaylandır.`;
     } else if (cardType === 'infographic') {
-      handleSend('Bu sistemin çalışma prensiplerini ve sayısal verilerini infografik metin şeması olarak hazırla.');
+      prompt = `Seçili kaynaklara (${targetScope}) dayanarak, endüstriyel bir tanıtım ve eğitim videosu için 4 sahnelik video senaryosu ve seslendirme metni hazırla.`;
     }
+
+    setStudioView('artifact');
+    await handleSend(prompt);
   };
 
   if (isComparisonOpen) {
@@ -1004,6 +1040,19 @@ export default function NotebookLMWorkspace({
 
               {/* Exporters & Actions */}
               <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => toggleSpeechAudio(studioArtifact)}
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex items-center gap-1 transition border ${
+                    isPlayingAudio
+                      ? 'bg-purple-500 text-white border-purple-400 animate-pulse'
+                      : 'bg-[#282a2c] hover:bg-purple-600/20 text-purple-300 border-[#37393b]'
+                  }`}
+                  title={isPlayingAudio ? 'Sesli Okumayı Durdur' : 'Metni Sesli Oku'}
+                >
+                  <Mic className="w-3 h-3" />
+                  <span>{isPlayingAudio ? 'Durdur' : 'Sesli Dinle'}</span>
+                </button>
+
                 <button
                   onClick={() => handleExport('excel')}
                   disabled={!!isExporting}
