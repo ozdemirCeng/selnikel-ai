@@ -231,7 +231,15 @@ class QdrantVectorRepository:
         qdrant_filter = self._build_filter(effective_filter)
         try:
             search_result = []
-            if hasattr(self.client, "query_points"):
+            if hasattr(self.client, "search"):
+                search_result = await self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=query_vector,
+                    query_filter=qdrant_filter,
+                    limit=effective_limit,
+                    with_payload=True,
+                )
+            elif hasattr(self.client, "query_points"):
                 res = await self.client.query_points(
                     collection_name=self.collection_name,
                     query=query_vector,
@@ -240,14 +248,6 @@ class QdrantVectorRepository:
                     with_payload=True,
                 )
                 search_result = getattr(res, "points", res)
-            elif hasattr(self.client, "search"):
-                search_result = await self.client.search(
-                    collection_name=self.collection_name,
-                    query_vector=query_vector,
-                    query_filter=qdrant_filter,
-                    limit=effective_limit,
-                    with_payload=True,
-                )
             elif hasattr(self.client, "search_points"):
                 search_result = await self.client.search_points(
                     collection_name=self.collection_name,

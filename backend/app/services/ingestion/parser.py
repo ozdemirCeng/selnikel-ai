@@ -34,7 +34,7 @@ class FastFallbackParser(BaseDocumentParser):
     Guarantees structured table extraction, section hierarchy, and page provenance.
     """
 
-    SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log", ".pdf", ".docx"}
+    SUPPORTED_EXTENSIONS = {".txt", ".md", ".csv", ".json", ".log", ".pdf", ".docx", ".xlsx", ".xls"}
 
     def supports(self, file_path: str, content_type: Optional[str] = None) -> bool:
         ext = Path(file_path).suffix.lower()
@@ -42,7 +42,7 @@ class FastFallbackParser(BaseDocumentParser):
             return True
         if content_type and any(
             t in content_type.lower()
-            for t in ["text/plain", "text/markdown", "text/csv", "application/pdf", "wordprocessingml"]
+            for t in ["text/plain", "text/markdown", "text/csv", "application/pdf", "wordprocessingml", "spreadsheetml", "excel"]
         ):
             return True
         return False
@@ -59,6 +59,8 @@ class FastFallbackParser(BaseDocumentParser):
             return self._parse_pdf(path)
         elif ext == ".docx" or (content_type and "word" in content_type.lower()):
             return self._parse_docx(path)
+        elif ext in {".xlsx", ".xls"} or (content_type and any(s in content_type.lower() for s in ["spreadsheetml", "excel"])):
+            return self._parse_excel(path)
         else:
             return self._parse_text(path)
 
@@ -468,6 +470,123 @@ class FastFallbackParser(BaseDocumentParser):
             )
         except Exception as e:
             logger.error(f"FastFallbackParser DOCX extraction failed: {e}")
+            raise
+
+    def _parse_excel(self, path: Path) -> ParsedDocument:
+        """Parses Excel (.xlsx, .xls) files into structured Markdown tables and sheets."""
+        try:
+            import openpyxl
+
+            wb = openpyxl.load_workbook(filename=str(path), data_only=True)
+            pages: List[ParsedPage] = []
+            blocks: List[ParsedBlock] = []
+            all_tables: List[ParsedTable] = []
+            full_markdown_parts: List[str] = []
+
+            for page_num, sheet_name in enumerate(wb.sheetnames, start=1):
+                ws = wb[sheet_name]
+                raw_rows: List[List[str]] = []
+
+                for row in ws.iter_rows(values_only=True):
+                    # Filter out completely empty rows
+                    if any(cell is not None and str(cell).strip() != "" for cell in row):
+                        row_vals = [
+                            str(cell).strip().replace("\n", " ").replace("|", "\\|")
+                            if cell is not None else ""
+                            for cell in row
+                        ]
+                        raw_rows.append(row_vals)
+
+                if not raw_rows:
+                    continue
+
+                # Normalize column count to max row length
+                max_cols = max(len(r) for r in raw_rows)
+                normalized_rows = [r + [""] * (max_cols - len(r)) for r in raw_rows]
+
+                # Extract header row
+                headers = normalized_rows[0]
+                # Replace empty headers with descriptive column names
+                headers = [h if h else f"Sütun {idx+1}" for idx, h in enumerate(headers)]
+
+                body_rows = normalized_rows[1:] if len(normalized_rows) > 1 else []
+
+                # Build clean Markdown table
+                header_line = "| " + " | ".join(headers) + " |"
+                sep_line = "| " + " | ".join(["---"] * max_cols) + " |"
+                body_lines = ["| " + " | ".join(r) + " |" for r in body_rows]
+                table_md = "\n".join([header_line, sep_line] + body_lines)
+
+                sheet_heading = f"## Çalışma Sayfası: {sheet_name}"
+                sheet_content = f"{sheet_heading}\n\n{table_md}"
+                full_markdown_parts.append(sheet_content)
+
+                parsed_tab = ParsedTable(
+                    table_id=f"xlsx_tab_{len(all_tables)+1:02d}",
+                    page_number=page_num,
+                    markdown_table=table_md,
+                    num_rows=len(body_rows),
+                    num_cols=max_cols,
+                    headers=headers,
+                    caption=f"Tablo: {sheet_name}",
+                )
+                all_tables.append(parsed_tab)
+
+                blocks.append(
+                    ParsedBlock(
+                        content=sheet_heading,
+                        block_type=ParsedBlockType.HEADING,
+                        page_number=page_num,
+                    )
+                )
+                blocks.append(
+                    ParsedBlock(
+                        content=table_md,
+                        block_type=ParsedBlockType.TABLE,
+                        page_number=page_num,
+                    )
+                )
+
+                pages.append(
+                    ParsedPage(
+                        page_number=page_num,
+                        text_content=sheet_content,
+                        tables=[parsed_tab],
+                        section_headers=[sheet_heading],
+                    )
+                )
+
+            if not pages:
+                # Handle empty workbook
+                pages.append(
+                    ParsedPage(
+                        page_number=1,
+                        text_content="# Boş Excel Çalışma Kitabı",
+                        tables=[],
+                        section_headers=[],
+                    )
+                )
+                full_markdown_parts.append("# Boş Excel Çalışma Kitabı")
+
+            full_markdown = "\n\n---\n\n".join(full_markdown_parts)
+
+            return ParsedDocument(
+                filename=path.name,
+                total_pages=len(pages),
+                full_markdown=full_markdown,
+                pages=pages,
+                tables=all_tables,
+                blocks=blocks,
+                metadata={
+                    "file_size_bytes": path.stat().st_size,
+                    "ocr_applied": False,
+                    "parser_name": "fast_fallback_openpyxl",
+                    "sheet_count": len(wb.sheetnames),
+                },
+                parser_name="fast_fallback_openpyxl",
+            )
+        except Exception as e:
+            logger.error(f"FastFallbackParser Excel extraction failed: {e}")
             raise
 
     def _parse_text(self, path: Path) -> ParsedDocument:
