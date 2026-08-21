@@ -92,6 +92,10 @@ export default function NotebookLMWorkspace({
   // Dedicated Side-by-Side Comparison State
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
 
+  // Panel Collapse States
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+
   // Inspector Modal
   const [inspectDocId, setInspectDocId] = useState<string | null>(null);
   const [inspectDocName, setInspectDocName] = useState('');
@@ -293,10 +297,39 @@ export default function NotebookLMWorkspace({
     );
   }
 
+  // Dynamic Responsive Column Calculations
+  let leftColClass = isLeftCollapsed ? 'w-14 shrink-0' : 'lg:col-span-3 xl:col-span-2';
+  let centerColClass = 'lg:col-span-6 xl:col-span-7';
+  let rightColClass = isRightCollapsed ? 'w-14 shrink-0' : 'lg:col-span-3 xl:col-span-3';
+
+  if (activeReaderDoc) {
+    // When reading a document, expand document view and chat half-and-half!
+    leftColClass = 'lg:col-span-6 xl:col-span-6';
+    centerColClass = 'lg:col-span-6 xl:col-span-6';
+    rightColClass = 'hidden';
+  } else if (studioView === 'artifact') {
+    // When editing artifact report, expand artifact view!
+    leftColClass = 'hidden xl:block xl:col-span-2';
+    centerColClass = 'lg:col-span-5 xl:col-span-4';
+    rightColClass = 'lg:col-span-7 xl:col-span-6';
+  } else if (isLeftCollapsed && isRightCollapsed) {
+    leftColClass = 'w-14 shrink-0';
+    centerColClass = 'flex-1';
+    rightColClass = 'w-14 shrink-0';
+  } else if (isLeftCollapsed) {
+    leftColClass = 'w-14 shrink-0';
+    centerColClass = 'lg:col-span-9 xl:col-span-9';
+    rightColClass = 'lg:col-span-3 xl:col-span-3';
+  } else if (isRightCollapsed) {
+    leftColClass = 'lg:col-span-3 xl:col-span-2';
+    centerColClass = 'lg:col-span-9 xl:col-span-10';
+    rightColClass = 'w-14 shrink-0';
+  }
+
   return (
-    <div className="h-[calc(100vh-5.5rem)] grid grid-cols-1 lg:grid-cols-12 gap-3 pb-3">
+    <div className="h-[calc(100vh-5.5rem)] flex lg:grid lg:grid-cols-12 gap-3 pb-3">
       {/* 1. LEFT COLUMN: Kaynaklar OR Kaynak Okuyucu */}
-      <div className="lg:col-span-4 xl:col-span-3 h-full overflow-hidden">
+      <div className={`${leftColClass} h-full overflow-hidden transition-all duration-200`}>
         {activeReaderDoc ? (
           <NotebookLMSourceReader
             documentId={activeReaderDoc.id}
@@ -307,17 +340,42 @@ export default function NotebookLMWorkspace({
             onClose={() => setActiveReaderDoc(null)}
             onAskAboutDoc={(query) => handleSend(query)}
           />
+        ) : isLeftCollapsed ? (
+          /* Collapsed Mini Rail */
+          <div className="h-full bg-[#1e1f20] rounded-2xl flex flex-col items-center py-4 border border-[#2d2f31] gap-3">
+            <button
+              onClick={() => setIsLeftCollapsed(false)}
+              className="p-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white transition"
+              title="Kaynaklar Panelini Aç"
+            >
+              <FolderOpen className="w-4 h-4" />
+            </button>
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#131314] text-[#a8c7fa] border border-[#2d2f31]">
+              {selectedCount}
+            </span>
+            <button
+              onClick={() => setIsAddSourceOpen(true)}
+              className="p-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-white transition mt-auto"
+              title="Kaynak Ekle"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         ) : (
           <div className="h-full bg-[#1e1f20] rounded-2xl flex flex-col overflow-hidden border border-[#2d2f31]">
             {/* Header */}
-            <div className="p-4 flex items-center justify-between border-b border-[#282a2c]">
+            <div className="p-3.5 flex items-center justify-between border-b border-[#282a2c]">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[#e3e3e3]">Kaynaklar</span>
+                <span className="text-xs font-semibold text-[#e3e3e3]">Kaynaklar</span>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#282a2c] text-[#a8c7fa] border border-[#37393b]">
                   {selectedCount}/{documents.length}
                 </span>
               </div>
-              <button className="text-[#8e918f] hover:text-white transition">
+              <button
+                onClick={() => setIsLeftCollapsed(true)}
+                className="text-[#8e918f] hover:text-white p-1 rounded-lg hover:bg-[#282a2c] transition"
+                title="Paneli Daralt"
+              >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
             </div>
@@ -420,9 +478,9 @@ export default function NotebookLMWorkspace({
       </div>
 
       {/* 2. CENTER COLUMN: Sohbet */}
-      <div className="lg:col-span-4 xl:col-span-4 h-full bg-[#1e1f20] rounded-2xl flex flex-col overflow-hidden border border-[#2d2f31]">
+      <div className={`${centerColClass} h-full bg-[#1e1f20] rounded-2xl flex flex-col overflow-hidden border border-[#2d2f31] transition-all duration-200`}>
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-[#282a2c]">
+        <div className="p-3.5 sm:p-4 flex items-center justify-between border-b border-[#282a2c]">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-[#e3e3e3]">Sohbet</span>
             {activeReaderDoc && (
@@ -643,29 +701,59 @@ export default function NotebookLMWorkspace({
       </div>
 
       {/* 3. RIGHT COLUMN: Studio Hub (8 Production Cards OR Active Document Editor) */}
-      <div className="lg:col-span-4 xl:col-span-5 h-full bg-[#1e1f20] rounded-2xl flex flex-col overflow-hidden border border-[#2d2f31]">
-        {studioView === 'cards' ? (
+      <div className={`${rightColClass} h-full bg-[#1e1f20] rounded-2xl flex flex-col overflow-hidden border border-[#2d2f31] transition-all duration-200`}>
+        {isRightCollapsed ? (
+          /* Collapsed Mini Rail */
+          <div className="h-full bg-[#1e1f20] rounded-2xl flex flex-col items-center py-4 border border-[#2d2f31] gap-3">
+            <button
+              onClick={() => setIsRightCollapsed(false)}
+              className="p-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-[#a8c7fa] hover:text-white transition"
+              title="Studio Panelini Aç"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+            {studioArtifact && (
+              <button
+                onClick={() => {
+                  setIsRightCollapsed(false);
+                  setStudioView('artifact');
+                }}
+                className="p-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-emerald-400 transition"
+                title="Açık Raporu Düzenle"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ) : studioView === 'cards' ? (
           /* ─── A. STUDIO PRODUCTION TOOLS GRID (8 CARDS) ─── */
           <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="p-4 flex items-center justify-between border-b border-[#282a2c]">
+            <div className="p-3.5 flex items-center justify-between border-b border-[#282a2c]">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[#e3e3e3]">Studio</span>
+                <span className="text-xs font-semibold text-[#e3e3e3]">Studio</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#282a2c] text-[#a8c7fa] border border-[#37393b]">
-                  8 Üretim Aracı
+                  8 Araç
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {studioArtifact && (
                   <button
                     onClick={() => setStudioView('artifact')}
-                    className="px-3 py-1 bg-[#282a2c] hover:bg-[#333537] text-xs text-[#a8c7fa] font-medium rounded-full flex items-center gap-1.5 transition border border-[#37393b]"
+                    className="px-2.5 py-1 bg-[#282a2c] hover:bg-[#333537] text-[11px] text-[#a8c7fa] font-medium rounded-full flex items-center gap-1 transition border border-[#37393b]"
                   >
-                    <span>Açık Raporu Gör</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span>Raporu Aç</span>
+                    <ChevronRight className="w-3 h-3" />
                   </button>
                 )}
+                <button
+                  onClick={() => setIsRightCollapsed(true)}
+                  className="text-[#8e918f] hover:text-white p-1 rounded-lg hover:bg-[#282a2c] transition"
+                  title="Paneli Daralt"
+                >
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
