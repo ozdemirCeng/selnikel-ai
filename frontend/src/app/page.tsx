@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Share2,
@@ -20,6 +20,8 @@ import {
   X,
   ChevronRight,
   ShieldCheck,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import NotebookLMWorkspace from '@/components/NotebookLMWorkspace';
 import NotebookLMDashboard from '@/components/NotebookLMDashboard';
@@ -32,6 +34,34 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'workspace' | 'dashboard' | 'agent' | 'catalog' | 'status'>('workspace');
   const [activeNotebookTitle, setActiveNotebookTitle] = useState('Adsız not defteri');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Theme state: 'dark' | 'light'
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    const savedTheme = (localStorage.getItem('selnikel_theme') as 'dark' | 'light') || 'dark';
+    setTheme(savedTheme);
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('selnikel_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  };
 
   const handleOpenNotebook = (id: string) => {
     setActiveNotebookTitle(
@@ -178,6 +208,25 @@ export default function HomePage() {
             <Settings className="w-4 h-4" />
           </button>
 
+          {/* Theme Switcher Button */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#282a2c] hover:bg-[#333537] text-xs font-semibold transition border border-[#37393b]"
+            title={theme === 'dark' ? 'Beyaz Temaya Geç' : 'Koyu Temaya Geç'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-white hidden sm:inline">Beyaz Tema</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="text-slate-800 hidden sm:inline">Koyu Tema</span>
+              </>
+            )}
+          </button>
+
           <span className="hidden sm:inline px-2 py-0.5 rounded-md bg-[#282a2c] text-[10px] font-semibold text-[#a8c7fa] border border-[#37393b]">
             PRO
           </span>
@@ -201,6 +250,22 @@ export default function HomePage() {
               </div>
 
               <div className="py-1 space-y-0.5">
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center justify-between transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+                    <span>Görünüm Teması</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#131314] text-[#a8c7fa] border border-[#37393b]">
+                    {theme === 'dark' ? 'Koyu Tema' : 'Beyaz Tema'}
+                  </span>
+                </button>
+
                 <button
                   onClick={() => {
                     alert('Selnikel AI yardım kılavuzu.');
