@@ -194,9 +194,27 @@ export default function NotebookLMWorkspace({
     }, 100);
   };
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsStreaming(false);
+  };
+
   const handleSend = async (queryText?: string) => {
     const query = (queryText || inputQuery).trim();
-    if (!query || isStreaming) return;
+    if (!query) return;
+
+    // If an existing stream was running, abort it cleanly so the new question takes over immediately!
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setInputQuery('');
     const userMsgId = Date.now().toString();
@@ -209,12 +227,22 @@ export default function NotebookLMWorkspace({
     ]);
     setIsStreaming(true);
 
+    // Build context-aware prompt if this is a follow-up in the ongoing thread
+    let contextualQuery = query;
+    if (messages.length > 0) {
+      const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+      const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant' && m.content);
+      if (lastUserMsg && lastAssistantMsg) {
+        contextualQuery = `[Önceki Soru: ${lastUserMsg.content}]\n[Önceki Cevap Özeti: ${lastAssistantMsg.content.slice(0, 300)}...]\n\nKullanıcının Yeni / Takip Eden Sorusu: ${query}`;
+      }
+    }
+
     try {
       let accumulated = '';
       let streamCitations: CitationItem[] = [];
 
       await streamRAGQuery(
-        { query: query, top_k: 5 },
+        { query: contextualQuery, top_k: 5 },
         (token) => {
           accumulated += token;
           setMessages((prev) =>
@@ -223,7 +251,8 @@ export default function NotebookLMWorkspace({
         },
         (citations) => {
           streamCitations = citations;
-        }
+        },
+        controller.signal
       );
 
       setMessages((prev) =>
@@ -237,6 +266,9 @@ export default function NotebookLMWorkspace({
         localStorage.setItem(`selnikel_studio_${notebookTitle}`, accumulated);
       }
     } catch (e: any) {
+      if (e.name === 'AbortError' || controller.signal.aborted) {
+        return;
+      }
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId ? { ...m, content: `Hata: ${e.message || 'Yanıt alınamadı.'}` } : m
@@ -244,6 +276,7 @@ export default function NotebookLMWorkspace({
       );
     } finally {
       setIsStreaming(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -708,28 +741,36 @@ export default function NotebookLMWorkspace({
           >
             <input
               type="text"
-              placeholder="Soru sorun veya içerik oluşturun"
+              placeholder={isStreaming ? "Yeni bir soru yazın (istediğiniz an Enter ile sorun)..." : "Soru sorun veya içerik oluşturun"}
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
-              disabled={isStreaming}
               className="flex-1 bg-transparent text-xs text-white placeholder-[#8e918f] focus:outline-none"
             />
 
-            <div className="flex items-center gap-3 ml-2">
+            <div className="flex items-center gap-2.5 ml-2">
               <span className="text-[11px] text-[#8e918f]">
                 {selectedCount} kaynak
               </span>
 
+              {isStreaming && (
+                <button
+                  type="button"
+                  onClick={handleStopGeneration}
+                  className="px-2.5 py-1 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-[10px] font-bold flex items-center gap-1 transition"
+                  title="Yanıt Üretimini Durdur"
+                >
+                  <span className="w-2 h-2 rounded-sm bg-rose-400" />
+                  <span>Durdur</span>
+                </button>
+              )}
+
               <button
                 type="submit"
-                disabled={!inputQuery.trim() || isStreaming}
+                disabled={!inputQuery.trim()}
                 className="w-7 h-7 rounded-full bg-[#282a2c] hover:bg-[#333537] disabled:opacity-40 text-white flex items-center justify-center transition shrink-0"
+                title="Gönder"
               >
-                {isStreaming ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#a8c7fa]" />
-                ) : (
-                  <ArrowRight className="w-4 h-4" />
-                )}
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </form>
@@ -803,10 +844,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 1: Sesli Özet */}
                   <button
                     onClick={() => handleStudioCardClick('audio')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-audio"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 studio-icon-audio flex items-center justify-center">
                         <Mic className="w-4 h-4" />
                       </div>
                       <div>
@@ -820,10 +861,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 2: Slayt Sunusu */}
                   <button
                     onClick={() => handleStudioCardClick('slide')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-slide"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 studio-icon-slide flex items-center justify-center">
                         <Presentation className="w-4 h-4" />
                       </div>
                       <div>
@@ -837,10 +878,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 3: Videolu Özet */}
                   <button
                     onClick={() => handleStudioCardClick('audio')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-video"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 studio-icon-video flex items-center justify-center">
                         <Video className="w-4 h-4" />
                       </div>
                       <div>
@@ -854,10 +895,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 4: Zihin Haritası */}
                   <button
                     onClick={() => handleStudioCardClick('mindmap')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-mindmap"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-400 studio-icon-mindmap flex items-center justify-center">
                         <Network className="w-4 h-4" />
                       </div>
                       <div>
@@ -871,10 +912,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 5: Raporlar */}
                   <button
                     onClick={() => handleStudioCardClick('report')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-report"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 studio-icon-report flex items-center justify-center">
                         <FileText className="w-4 h-4" />
                       </div>
                       <div>
@@ -888,10 +929,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 6: Bilgi Kartları */}
                   <button
                     onClick={() => handleStudioCardClick('flashcard')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-flashcard"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 studio-icon-flashcard flex items-center justify-center">
                         <CreditCard className="w-4 h-4" />
                       </div>
                       <div>
@@ -905,10 +946,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 7: Test */}
                   <button
                     onClick={() => handleStudioCardClick('test')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-test"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-400 studio-icon-test flex items-center justify-center">
                         <FileCheck className="w-4 h-4" />
                       </div>
                       <div>
@@ -922,10 +963,10 @@ export default function NotebookLMWorkspace({
                   {/* Card 8: Veri Tablosu */}
                   <button
                     onClick={() => handleStudioCardClick('table')}
-                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30"
+                    className="p-3 rounded-2xl bg-[#282a2c] hover:bg-[#333537] text-left transition flex items-center justify-between group border border-[#37393b]/40 hover:border-[#a8c7fa]/30 studio-card-table"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 studio-icon-table flex items-center justify-center">
                         <FileSpreadsheet className="w-4 h-4" />
                       </div>
                       <div>
