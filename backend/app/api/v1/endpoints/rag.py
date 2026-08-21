@@ -34,7 +34,7 @@ async def query_rag(
     """Execute end-to-end deterministic RAG query with citations and strict departmental ACL enforcement."""
     start_time = time.perf_counter()
 
-    allowed_depts = None if "admin" in user.role_codes else user.department_ids
+    allowed_depts = None if ("admin" in user.role_codes or "super_admin" in user.role_codes or "*" in user.permissions) else user.department_ids
 
     filter_criteria = RetrievalFilter(
         department=request.department,
@@ -91,7 +91,7 @@ async def stream_rag(
     db: AsyncSession = Depends(get_db),
 ):
     """Server-Sent Events (SSE) streaming endpoint for RAG query with ACL enforcement."""
-    allowed_depts = None if "admin" in user.role_codes else user.department_ids
+    allowed_depts = None if ("admin" in user.role_codes or "super_admin" in user.role_codes or "*" in user.permissions) else user.department_ids
 
     filter_criteria = RetrievalFilter(
         department=request.department,

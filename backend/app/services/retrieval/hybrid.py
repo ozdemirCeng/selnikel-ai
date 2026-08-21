@@ -102,26 +102,34 @@ class QdrantHybridRetriever(BaseRetriever):
                 query_lower = query.lower()
                 clean_terms = [t for t in re.findall(r"\w+", query_lower) if len(t) > 2 and t not in {"dokümanının", "dokümanı", "dokuman", "teknik", "özetini", "çıkar", "listele", "nedir", "nelerdir", "hakkında", "için", "olan"}]
 
-                # Check if exact filename is mentioned in query
+                # Check if exact filenames are mentioned in query
                 filename_matches = re.findall(r'[\w\-\.]+\.(?:pdf|docx|xlsx|xls|md|txt)', query, flags=re.IGNORECASE)
-                conditions = []
+                chunks = []
                 if filename_matches:
                     for fn in filename_matches:
-                        conditions.append(DocumentModel.filename.ilike(f"%{fn}%"))
-                
-                if clean_terms:
-                    term_conditions = []
-                    for term in clean_terms[:5]:
-                        term_conditions.append(DocumentChunkModel.content.ilike(f"%{term}%"))
-                    if term_conditions:
-                        conditions.append(or_(*term_conditions))
+                        fn_stmt = select(DocumentChunkModel).join(DocumentModel, DocumentChunkModel.document_id == DocumentModel.id).where(DocumentModel.filename.ilike(f"%{fn}%"))
+                        if filter_criteria and filter_criteria.allowed_departments is not None:
+                            allowed = filter_criteria.allowed_departments + [d.replace("dept-", "") for d in filter_criteria.allowed_departments]
+                            fn_stmt = fn_stmt.where(DocumentModel.department.in_(list(set(allowed))))
+                        fn_stmt = fn_stmt.order_by(DocumentChunkModel.chunk_index.asc()).limit(max(4, top_k))
+                        fn_res = await session.execute(fn_stmt)
+                        chunks.extend(fn_res.scalars().all())
 
-                if conditions:
-                    stmt = stmt.where(or_(*conditions))
+                if not chunks:
+                    conditions = []
+                    if clean_terms:
+                        term_conditions = []
+                        for term in clean_terms[:5]:
+                            term_conditions.append(DocumentChunkModel.content.ilike(f"%{term}%"))
+                        if term_conditions:
+                            conditions.append(or_(*term_conditions))
 
-                stmt = stmt.order_by(DocumentChunkModel.created_at.desc()).limit(top_k * 3)
-                res = await session.execute(stmt)
-                chunks = res.scalars().all()
+                    if conditions:
+                        stmt = stmt.where(or_(*conditions))
+
+                    stmt = stmt.order_by(DocumentChunkModel.created_at.desc()).limit(top_k * 3)
+                    res = await session.execute(stmt)
+                    chunks = list(res.scalars().all())
 
                 if not chunks:
                     # Final fallback: retrieve most recent chunks in allowed departments
@@ -131,23 +139,36 @@ class QdrantHybridRetriever(BaseRetriever):
                         fallback_stmt = fallback_stmt.where(DocumentModel.department.in_(list(set(allowed))))
                     fallback_stmt = fallback_stmt.order_by(DocumentChunkModel.created_at.desc()).limit(top_k)
                     fallback_res = await session.execute(fallback_stmt)
-                    chunks = fallback_res.scalars().all()
+                    chunks = list(fallback_res.scalars().all())
 
                 # Hydrate results with parent document
                 doc_ids = list(set(c.document_id for c in chunks))
                 docs_map = {}
+                rev_map = {}
                 if doc_ids:
+                    from app.db.models.revision import DocumentRevisionModel
                     doc_stmt = select(DocumentModel).where(DocumentModel.id.in_(doc_ids))
                     doc_res = await session.execute(doc_stmt)
                     docs_map = {d.id: d for d in doc_res.scalars().all()}
 
+                    rev_stmt = select(DocumentRevisionModel).where(
+                        DocumentRevisionModel.document_id.in_(doc_ids),
+                        DocumentRevisionModel.approval_status == "approved",
+                    )
+                    rev_res = await session.execute(rev_stmt)
+                    rev_map = {r.document_id: r for r in rev_res.scalars().all()}
+
                 results: List[RetrievalResult] = []
                 for chunk in chunks:
                     parent_doc = docs_map.get(chunk.document_id)
+                    approved_rev = rev_map.get(chunk.document_id)
                     meta = ChunkMetadata(
                         chunk_id=chunk.id,
                         document_id=chunk.document_id,
                         document_version=parent_doc.version if parent_doc else 1,
+                        revision_id=approved_rev.id if approved_rev else None,
+                        revision_code=approved_rev.revision_code if approved_rev else None,
+                        revision_number=approved_rev.revision_number if approved_rev else None,
                         filename=parent_doc.filename if parent_doc else "",
                         page_number=chunk.page_number or 1,
                         section=chunk.section,
@@ -165,7 +186,7 @@ class QdrantHybridRetriever(BaseRetriever):
                             score=0.85,
                         )
                     )
-                return results[:top_k]
+                return results[:max(top_k, len(results))]
         except Exception as e:
             logger.warning(f"Relational fallback retrieval error: {e}")
             return []
