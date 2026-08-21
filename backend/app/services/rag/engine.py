@@ -422,8 +422,12 @@ class DeterministicRAGEngine:
                 llm_provider=getattr(self.llm, "provider_name", "openai"),
                 llm_model=getattr(self.llm, "model_name", "gpt-4o-mini"),
             )
-            session.add(log_record)
-            await session.commit()
+            add_res = session.add(log_record)
+            if hasattr(add_res, "__await__"):
+                await add_res
+            commit_res = session.commit()
+            if hasattr(commit_res, "__await__"):
+                await commit_res
         except Exception as e:
             logger.warning(f"Failed to log query telemetry to database: {e}")
 

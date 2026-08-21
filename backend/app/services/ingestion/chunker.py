@@ -215,8 +215,6 @@ class TableAwareChunker:
             )
         return chunks
 
-        return chunks
-
     def _chunk_table_atomic(
         self,
         table: ParsedTable,

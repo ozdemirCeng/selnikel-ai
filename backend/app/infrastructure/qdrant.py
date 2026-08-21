@@ -222,15 +222,19 @@ class QdrantVectorRepository:
         query_vector: List[float],
         filter_spec: Optional[RetrievalFilter] = None,
         limit: int = 5,
+        filter_criteria: Optional[RetrievalFilter] = None,
+        top_k: Optional[int] = None,
     ) -> List[RetrievalResult]:
         """Search vector database and return domain RetrievalResult instances."""
-        qdrant_filter = self._build_filter(filter_spec)
+        effective_filter = filter_criteria or filter_spec
+        effective_limit = top_k or limit
+        qdrant_filter = self._build_filter(effective_filter)
         try:
             search_result = await self.client.search(
                 collection_name=self.collection_name,
                 query_vector=query_vector,
                 query_filter=qdrant_filter,
-                limit=limit,
+                limit=effective_limit,
                 with_payload=True,
             )
 
