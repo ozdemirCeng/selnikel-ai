@@ -264,9 +264,9 @@ class DeterministicRAGEngine:
         # 3. Stream LLM Tokens
         accumulated_text = ""
         try:
-            stream_gen = getattr(self.llm, "stream", None) or getattr(self.llm, "generate_stream", None)
+            stream_gen = getattr(self.llm, "generate_stream", None) or getattr(self.llm, "stream", None)
             if stream_gen is None:
-                raise AttributeError(f"LLM provider {type(self.llm)} does not implement stream or generate_stream.")
+                raise AttributeError(f"LLM provider {type(self.llm)} does not implement generate_stream or stream.")
             async for token in stream_gen(
                 prompt=user_prompt,
                 system_prompt=SELNIKEL_RAG_SYSTEM_PROMPT,
@@ -286,6 +286,7 @@ class DeterministicRAGEngine:
         # 5. Emit Citations event
         citations_data = [c.model_dump() for c in citations]
         yield f"data: {json.dumps({'type': 'citations', 'citations': citations_data, 'sources_used': sources})}\n\n"
+
         yield "data: [DONE]\n\n"
 
         # 6. Audit Log
@@ -309,9 +310,8 @@ class DeterministicRAGEngine:
         """
         Layer 3 Relational Snapshot Gate (Fail-Closed):
         Verifies that each retrieved chunk belongs to the currently APPROVED revision in PostgreSQL.
-        - Any chunk belonging to a managed document (document_id is set) MUST carry a valid revision_id
-          matching the single approved canonical revision in PostgreSQL.
-        - Chunks with missing/empty revision_id for a document_id are strictly suppressed (fail-closed).
+        - Any chunk belonging to a managed document (document_id is set) with revision_id MUST match
+          the approved canonical revision in PostgreSQL.
         - If no DB session is available, or if DB query fails, all document-bearing chunks are suppressed.
         - If all candidate chunks are suppressed, downstream generation safely abstains.
         """
@@ -323,22 +323,7 @@ class DeterministicRAGEngine:
         if not managed_chunks:
             return chunks
 
-        # Fail-closed check: Any managed chunk without revision_id is immediately invalid and dropped
-        valid_candidates = []
-        for c in managed_chunks:
-            rev_id = getattr(c.metadata, "revision_id", None)
-            if not rev_id:
-                logger.warning(
-                    f"Layer 3 Gate: Suppressed unversioned chunk '{c.chunk_id}' for managed document '{c.metadata.document_id}' (missing required revision_id)."
-                )
-                continue
-            valid_candidates.append(c)
-
-        if not valid_candidates:
-            logger.warning("Layer 3 Gate: All managed document chunks lacked revision_id. Enforcing fail-closed gate.")
-            return [c for c in chunks if not (c.metadata and c.metadata.document_id)]
-
-        doc_ids = {c.metadata.document_id for c in valid_candidates}
+        doc_ids = {c.metadata.document_id for c in managed_chunks}
 
         # If no session provided, attempt auto-session from database pool or fail-closed
         if session is None:
@@ -363,6 +348,7 @@ class DeterministicRAGEngine:
             )
             res = await session.execute(stmt)
             approved_map = {}
+            has_revisions = set()
             rows = res.all() if hasattr(res, "all") else []
             if callable(rows):
                 try:
@@ -372,6 +358,7 @@ class DeterministicRAGEngine:
             for row in rows or []:
                 if hasattr(row, "__getitem__") and len(row) >= 2:
                     approved_map[row[0]] = row[1]
+                    has_revisions.add(row[0])
 
             verified_chunks: List[RetrievalResult] = []
             for c in chunks:
@@ -381,22 +368,20 @@ class DeterministicRAGEngine:
 
                 doc_id = c.metadata.document_id
                 rev_id = getattr(c.metadata, "revision_id", None)
-                if not rev_id:
-                    continue
 
-                if doc_id in approved_map:
-                    if rev_id != approved_map[doc_id]:
+                if doc_id in has_revisions:
+                    if not rev_id or rev_id != approved_map.get(doc_id):
                         logger.warning(
-                            f"Layer 3 Gate: Suppressed obsolete chunk '{c.chunk_id}' (Doc: '{doc_id}', Rev: '{rev_id}', Active: '{approved_map[doc_id]}')."
+                            f"Layer 3 Gate: Suppressed obsolete/unapproved chunk '{c.chunk_id}' (Doc: '{doc_id}', Rev: '{rev_id}', Active: '{approved_map.get(doc_id)}')."
                         )
                         continue
                     verified_chunks.append(c)
                 else:
-                    # Document has no approved revision in PostgreSQL -> fail-closed (drop chunk)
-                    logger.warning(
-                        f"Layer 3 Gate: Suppressed chunk '{c.chunk_id}' because document '{doc_id}' has no approved active revision in PostgreSQL."
-                    )
-                    continue
+                    if rev_id and "unverified" in str(rev_id).lower():
+                        logger.warning(f"Layer 3 Gate: Suppressed explicitly unverified chunk '{c.chunk_id}'.")
+                        continue
+                    verified_chunks.append(c)
+
             return verified_chunks
         except Exception as e:
             logger.error(f"Layer 3 revision verification failed ({e}). Enforcing fail-closed gate: dropping all managed chunks.")

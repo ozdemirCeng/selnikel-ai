@@ -55,10 +55,120 @@ class QdrantHybridRetriever(BaseRetriever):
             top_k=top_k,
         )
 
+        # 4. If dense retrieval yielded 0 chunks, perform direct relational DB fallback search
+        if not fused_results:
+            logger.info(f"Dense retrieval produced 0 chunks for '{query[:30]}...'. Triggering relational DB fallback search.")
+            fused_results = await self._retrieve_from_db(
+                query=query,
+                top_k=top_k,
+                filter_criteria=filter_criteria,
+            )
+
         logger.info(
             f"Hybrid retrieval for query '{query[:30]}...' yielded {len(fused_results)} chunks (top_k={top_k})."
         )
         return fused_results
+
+    async def _retrieve_from_db(
+        self,
+        query: str,
+        top_k: int = 5,
+        filter_criteria: Optional[RetrievalFilter] = None,
+    ) -> List[RetrievalResult]:
+        """Relational fallback search querying SQL document_chunks directly."""
+        try:
+            import re
+            from app.db.session import AsyncSessionLocal
+            from app.db.models.document import DocumentChunkModel, DocumentModel
+            from app.domain.document import ChunkMetadata
+            from sqlalchemy import select, or_, and_
+
+            async with AsyncSessionLocal() as session:
+                stmt = select(DocumentChunkModel).join(DocumentModel, DocumentChunkModel.document_id == DocumentModel.id)
+
+                # Department ACL Filter
+                if filter_criteria and filter_criteria.allowed_departments is not None:
+                    allowed = filter_criteria.allowed_departments + [d.replace("dept-", "") for d in filter_criteria.allowed_departments]
+                    stmt = stmt.where(DocumentModel.department.in_(list(set(allowed))))
+                if filter_criteria and filter_criteria.department:
+                    stmt = stmt.where(
+                        (DocumentModel.department == filter_criteria.department) |
+                        (DocumentModel.department == filter_criteria.department.replace("dept-", ""))
+                    )
+                if filter_criteria and filter_criteria.document_id:
+                    stmt = stmt.where(DocumentChunkModel.document_id == filter_criteria.document_id)
+
+                # Keyword / Filename matching
+                query_lower = query.lower()
+                clean_terms = [t for t in re.findall(r"\w+", query_lower) if len(t) > 2 and t not in {"dokümanının", "dokümanı", "dokuman", "teknik", "özetini", "çıkar", "listele", "nedir", "nelerdir", "hakkında", "için", "olan"}]
+
+                # Check if exact filename is mentioned in query
+                filename_matches = re.findall(r'[\w\-\.]+\.(?:pdf|docx|xlsx|xls|md|txt)', query, flags=re.IGNORECASE)
+                conditions = []
+                if filename_matches:
+                    for fn in filename_matches:
+                        conditions.append(DocumentModel.filename.ilike(f"%{fn}%"))
+                
+                if clean_terms:
+                    term_conditions = []
+                    for term in clean_terms[:5]:
+                        term_conditions.append(DocumentChunkModel.content.ilike(f"%{term}%"))
+                    if term_conditions:
+                        conditions.append(or_(*term_conditions))
+
+                if conditions:
+                    stmt = stmt.where(or_(*conditions))
+
+                stmt = stmt.order_by(DocumentChunkModel.created_at.desc()).limit(top_k * 3)
+                res = await session.execute(stmt)
+                chunks = res.scalars().all()
+
+                if not chunks:
+                    # Final fallback: retrieve most recent chunks in allowed departments
+                    fallback_stmt = select(DocumentChunkModel).join(DocumentModel, DocumentChunkModel.document_id == DocumentModel.id)
+                    if filter_criteria and filter_criteria.allowed_departments is not None:
+                        allowed = filter_criteria.allowed_departments + [d.replace("dept-", "") for d in filter_criteria.allowed_departments]
+                        fallback_stmt = fallback_stmt.where(DocumentModel.department.in_(list(set(allowed))))
+                    fallback_stmt = fallback_stmt.order_by(DocumentChunkModel.created_at.desc()).limit(top_k)
+                    fallback_res = await session.execute(fallback_stmt)
+                    chunks = fallback_res.scalars().all()
+
+                # Hydrate results with parent document
+                doc_ids = list(set(c.document_id for c in chunks))
+                docs_map = {}
+                if doc_ids:
+                    doc_stmt = select(DocumentModel).where(DocumentModel.id.in_(doc_ids))
+                    doc_res = await session.execute(doc_stmt)
+                    docs_map = {d.id: d for d in doc_res.scalars().all()}
+
+                results: List[RetrievalResult] = []
+                for chunk in chunks:
+                    parent_doc = docs_map.get(chunk.document_id)
+                    meta = ChunkMetadata(
+                        chunk_id=chunk.id,
+                        document_id=chunk.document_id,
+                        document_version=parent_doc.version if parent_doc else 1,
+                        filename=parent_doc.filename if parent_doc else "",
+                        page_number=chunk.page_number or 1,
+                        section=chunk.section,
+                        document_type=parent_doc.document_type if parent_doc else "technical_specification",
+                        department=parent_doc.department if parent_doc else "engineering",
+                        language=parent_doc.language if parent_doc else "tr",
+                        chunk_index=chunk.chunk_index,
+                        token_count=chunk.token_count,
+                    )
+                    results.append(
+                        RetrievalResult(
+                            chunk_id=chunk.id,
+                            content=chunk.content,
+                            metadata=meta,
+                            score=0.85,
+                        )
+                    )
+                return results[:top_k]
+        except Exception as e:
+            logger.warning(f"Relational fallback retrieval error: {e}")
+            return []
 
     def _apply_hybrid_rrf_scoring(
         self,

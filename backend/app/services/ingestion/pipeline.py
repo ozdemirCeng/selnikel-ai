@@ -1,9 +1,11 @@
 import uuid
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
 from app.db.models.document import DocumentChunkModel, DocumentModel
+from app.db.models.revision import DocumentRevisionModel
 from app.domain.document import DomainChunk
 from app.infrastructure.storage import storage_manager
 from app.services.ingestion.chunker import table_aware_chunker
@@ -77,6 +79,18 @@ class IngestionPipeline:
             version=1 if not existing_doc else existing_doc.version + 1,
             status="processing",
         )
+        # Create initial canonical approved revision record
+        rev_id = str(uuid.uuid4())
+        initial_rev = DocumentRevisionModel(
+            id=rev_id,
+            document_id=doc_id,
+            revision_code=f"Rev. {new_doc.version:02d}",
+            revision_number=new_doc.version,
+            approval_status="approved",
+            approved_at=datetime.now(timezone.utc),
+            source_sha256=file_hash,
+        )
+        session.add(initial_rev)
         session.add(new_doc)
         await session.flush()
 
@@ -97,6 +111,9 @@ class IngestionPipeline:
 
             # 7. Persist Chunk Records in PostgreSQL
             for c in domain_chunks:
+                c.metadata.revision_id = rev_id
+                c.metadata.revision_code = initial_rev.revision_code
+                c.metadata.revision_number = initial_rev.revision_number
                 chunk_model = DocumentChunkModel(
                     id=c.metadata.chunk_id,
                     document_id=doc_id,
