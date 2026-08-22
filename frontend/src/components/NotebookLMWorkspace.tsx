@@ -109,7 +109,7 @@ export default function NotebookLMWorkspace({
   // Studio View State: 'cards' (Production Tools) vs 'artifact' (Document Editor)
   const [studioView, setStudioView] = useState<'cards' | 'artifact'>('cards');
   const [studioArtifact, setStudioArtifact] = useState<string>(
-    `# Selnikel Teknik Mühendislik Raporu\n\n## 1. Yönetici Özeti\nBu çalışma kılavuzu ve teknik şartname çıktısı, seçili kaynaklardan otomatik derlenmiştir. Dilerseniz yukarıdaki **"Görsel Sayfa"** sekmesine geçerek doğrudan Word gibi yazıya tıklayıp değiştirebilir veya **"Düzenle"** sekmesinden değerleri doğrudan güncelleyebilirsiniz.\n\n## 2. Teknik Parametreler & Hesaplama Tablosu\n| Parametre Adı | Nominal Değer | Birim | Durum |\n|---|---|---|---|\n| Buhar Üretim Debisi | 1000 | kg/h | Nominal |\n| İşletme Basıncı | 16 | bar | Güvenli |\n| Termal Verim (ASME) | 91.5 | % | Yüksek |\n| Doğal Gaz Tüketimi | 75.4 | Nm3/h | Optimum |\n\n## 3. Mühendislik Notları & Tavsiyeler\n- Emniyet ventili yıllık periyodik bakım kontrolü yapılmalıdır.\n- Brülör hava/yakıt oranı O2 trim sistemiyle izlenmelidir.`
+    `# ${notebookTitle}\n\nBu alanda seçtiğiniz teknik kaynaklara göre üretilen raporları, veri tablolarını ve sunum taslaklarını canlı olarak görüntüleyebilir, Word / Excel gibi düzenleyebilir ve indirebilirsiniz.\n\n*İpucu:* Sağdaki **Studio Araçları**'na (Sesli Özet, Slayt Sunusu, Veri Tablosu, Rapor) tıklayarak veya sohbete bir soru sorarak yeni bir çıktı oluşturabilirsiniz.`
   );
   const [studioMode, setStudioMode] = useState<'preview' | 'visual' | 'edit'>('visual');
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -118,6 +118,7 @@ export default function NotebookLMWorkspace({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const editorTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     loadSources();
@@ -194,8 +195,6 @@ export default function NotebookLMWorkspace({
     }, 100);
   };
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-
   const handleStopGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -237,12 +236,18 @@ export default function NotebookLMWorkspace({
       }
     }
 
+    const activeDocIds = Object.keys(selectedDocIds).filter((id) => selectedDocIds[id]);
+
     try {
       let accumulated = '';
       let streamCitations: CitationItem[] = [];
 
       await streamRAGQuery(
-        { query: contextualQuery, top_k: 5 },
+        {
+          query: contextualQuery,
+          document_ids: activeDocIds.length > 0 ? activeDocIds : undefined,
+          top_k: 5,
+        },
         (token) => {
           accumulated += token;
           setMessages((prev) =>

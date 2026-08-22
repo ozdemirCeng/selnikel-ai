@@ -115,6 +115,13 @@ class QdrantVectorRepository:
                     match=rest_models.MatchValue(value=filter_spec.document_id),
                 )
             )
+        if filter_spec.document_ids:
+            must_conditions.append(
+                rest_models.FieldCondition(
+                    key="document_id",
+                    match=rest_models.MatchAny(any=filter_spec.document_ids),
+                )
+            )
         if filter_spec.equipment_ids:
             must_conditions.append(
                 rest_models.FieldCondition(

@@ -17,6 +17,7 @@ class RAGQueryRequest(BaseModel):
     department: Optional[str] = Field(default=None, description="Filter by department (e.g. engineering)")
     document_type: Optional[str] = Field(default=None, description="Filter by doc type")
     document_id: Optional[str] = Field(default=None, description="Filter by specific document")
+    document_ids: Optional[List[str]] = Field(default=None, description="Filter by list of specific document IDs")
     language: Optional[str] = Field(default=None, description="Filter by language code")
     top_k: int = Field(default=4, ge=1, le=20, description="Number of retrieved chunks")
 

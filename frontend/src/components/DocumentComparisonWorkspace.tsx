@@ -150,7 +150,11 @@ export default function DocumentComparisonWorkspace({
 
     try {
       await streamRAGQuery(
-        { query: fullPrompt },
+        {
+          query: fullPrompt,
+          document_ids: [docAId, docBId].filter(Boolean),
+          top_k: 8,
+        },
         (token) => {
           setAiAnswer((prev) => (prev || '') + token);
           answerBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,15 +205,19 @@ export default function DocumentComparisonWorkspace({
     return lines.join('\n\n');
   };
 
+  const errorChunksCount = chunksB.filter((c) =>
+    /uygunsuz|tolerans dışı|limit aşımı|hata|red|kusur|süreksizlik/i.test(c.content) ||
+    c.content.includes('❌') ||
+    c.content.includes('RED')
+  ).length;
+
   // Render Table / Chunk Content
   const renderChunk = (chunk: DocumentChunkItem, isTestDoc: boolean = false) => {
     const content = chunk.content;
     const isError =
-      content.includes('UYGUNSUZ') ||
-      content.includes('FARK') ||
-      content.includes('Süreksizlik') ||
-      content.includes('134.0') ||
-      content.includes('FGR');
+      /uygunsuz|tolerans dışı|limit aşımı|hata|red|kusur|süreksizlik/i.test(content) ||
+      content.includes('❌') ||
+      content.includes('RED');
 
     if (activeFilter === 'errors' && !isError) return null;
     if (activeFilter === 'compliant' && isError) return null;
@@ -271,11 +279,12 @@ export default function DocumentComparisonWorkspace({
               td: ({ node, ...props }) => {
                 const cellText = String(props.children);
                 const isCellError =
-                  cellText.includes('UYGUNSUZ') ||
-                  cellText.includes('134.0') ||
-                  cellText.includes('Süreksizlik') ||
-                  cellText.includes('12 mm');
-                const isCellSuccess = cellText.includes('UYGUN') || cellText.includes('Sıfır sızıntı');
+                  /uygunsuz|tolerans dışı|limit aşımı|hata|red|kusur|süreksizlik/i.test(cellText) ||
+                  cellText.includes('❌');
+                const isCellSuccess =
+                  /uygun|kabul|nominal|güvenli|geçti/i.test(cellText) ||
+                  cellText.includes('✓') ||
+                  cellText.includes('✔');
 
                 return (
                   <td
@@ -300,23 +309,24 @@ export default function DocumentComparisonWorkspace({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#101112] text-[#e3e3e3] select-text">
-      {/* ─── 1. ULTRA-COMPACT SLIM HEADER (48px) ─── */}
-      <header className="h-12 border-b border-[#2d2f31] bg-[#181a1b] px-3 sm:px-4 flex items-center justify-between gap-3 shrink-0">
+    <div className="fixed inset-0 z-50 bg-[#131314] text-[#e3e3e3] flex flex-col font-sans select-none animate-in fade-in duration-200">
+      {/* ─── 1. COMPACT ENTERPRISE HEADER ─── */}
+      <header className="h-13 bg-[#1e1f20] border-b border-[#2d2f31] px-3 sm:px-4 py-2 flex items-center justify-between gap-2 shrink-0">
         {/* Left: Back & Document Selectors */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#282a2c] hover:bg-[#333537] text-xs font-semibold text-white transition shrink-0"
-            title="Geri dön"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#282a2c] hover:bg-[#333537] text-white text-xs font-semibold transition border border-[#37393b]"
+            title="Sohbete Geri Dön"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Geri</span>
+            <span className="hidden sm:inline">Kapat</span>
           </button>
 
-          {/* Doc A Selector */}
-          <div className="flex items-center gap-1 bg-[#131314] px-2 py-0.5 rounded-lg border border-[#2d2f31] shrink-0">
-            <span className="text-[10px] font-bold text-blue-400">A:</span>
+          {/* Doc A Picker */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141517] border border-blue-500/40">
+            <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+            <span className="text-[11px] text-blue-300 font-bold hidden sm:inline">STANDART:</span>
             <select
               value={docAId}
               onChange={(e) => setDocAId(e.target.value)}
@@ -330,11 +340,12 @@ export default function DocumentComparisonWorkspace({
             </select>
           </div>
 
-          <span className="text-[#8e918f] text-xs shrink-0">↔</span>
+          <span className="text-[#8e918f] font-bold text-xs">VS</span>
 
-          {/* Doc B Selector */}
-          <div className="flex items-center gap-1 bg-[#131314] px-2 py-0.5 rounded-lg border border-[#2d2f31] shrink-0">
-            <span className="text-[10px] font-bold text-emerald-400">B:</span>
+          {/* Doc B Picker */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#141517] border border-emerald-500/40">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+            <span className="text-[11px] text-emerald-300 font-bold hidden sm:inline">NUMUNE:</span>
             <select
               value={docBId}
               onChange={(e) => setDocBId(e.target.value)}
@@ -351,13 +362,19 @@ export default function DocumentComparisonWorkspace({
 
         {/* Center: Live Stats Summary Badges */}
         <div className="hidden lg:flex items-center gap-2 shrink-0">
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-            <span>2 Uygunsuzluk (NOx 134 & W-04 Kaynak)</span>
-          </span>
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>12 Standarta Uygun</span>
+          {errorChunksCount > 0 ? (
+            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+              <span>{errorChunksCount} Uygunsuzluk / Limit Aşımı</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Tam Standart Uygunluğu</span>
+            </span>
+          )}
+          <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#282a2c] border border-[#37393b] text-[#c4c7c5] text-xs font-medium">
+            <span>{chunksB.length} Toplam Parça</span>
           </span>
         </div>
 

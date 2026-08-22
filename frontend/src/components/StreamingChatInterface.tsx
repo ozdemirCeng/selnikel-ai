@@ -106,66 +106,28 @@ export default function StreamingChatInterface({
     setRetrievalStatus('Qdrant hibrit indeksleri ve BGE-M3 taranıyor...');
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiBase}/rag/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { streamRAGQuery } = await import('@/lib/api');
+      let accumulatedText = '';
+      let streamCitations: CitationItem[] = [];
+
+      await streamRAGQuery(
+        {
           query: query,
           top_k: 4,
           department: department === 'all' ? undefined : department,
-        }),
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error(`Stream request failed: ${response.statusText}`);
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let accumulatedText = '';
-      let streamCitations: CitationItem[] = [];
-      let streamSources: string[] = [];
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.replace('data: ', '').trim();
-            if (dataStr === '[DONE]') {
-              break;
-            }
-
-            try {
-              const eventData = JSON.parse(dataStr);
-              if (eventData.type === 'retrieval_status') {
-                setRetrievalStatus(
-                  `FlashRank ile ${eventData.count} teknik parça doğrulandı (${eventData.sources.join(', ')})`
-                );
-              } else if (eventData.type === 'token') {
-                accumulatedText += eventData.content;
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMsgId
-                      ? { ...msg, content: accumulatedText }
-                      : msg
-                  )
-                );
-              } else if (eventData.type === 'citations') {
-                streamCitations = eventData.citations || [];
-                streamSources = eventData.sources_used || [];
-              }
-            } catch (e) {
-              // Non-JSON SSE line
-            }
-          }
+        },
+        (token) => {
+          accumulatedText += token;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId ? { ...msg, content: accumulatedText } : msg
+            )
+          );
+        },
+        (citations) => {
+          streamCitations = citations;
         }
-      }
+      );
 
       // Finalize Message
       setMessages((prev) =>
@@ -175,7 +137,6 @@ export default function StreamingChatInterface({
                 ...msg,
                 content: accumulatedText,
                 citations: streamCitations,
-                sources_used: streamSources,
                 isStreaming: false,
               }
             : msg

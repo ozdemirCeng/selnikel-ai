@@ -97,6 +97,8 @@ class QdrantHybridRetriever(BaseRetriever):
                     )
                 if filter_criteria and filter_criteria.document_id:
                     stmt = stmt.where(DocumentChunkModel.document_id == filter_criteria.document_id)
+                if filter_criteria and filter_criteria.document_ids:
+                    stmt = stmt.where(DocumentChunkModel.document_id.in_(filter_criteria.document_ids))
 
                 # Keyword / Filename matching
                 query_lower = query.lower()

@@ -125,50 +125,28 @@ export default function NotebookLMStudio() {
     setIsStreaming(true);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiBase}/rag/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: query,
-          top_k: 5,
-        }),
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error('Stream failed');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
+      const { streamRAGQuery } = await import('@/lib/api');
       let accumulated = '';
       let streamCitations: CitationItem[] = [];
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      const activeDocIds = Object.keys(selectedDocIds).filter((id) => selectedDocIds[id]);
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.replace('data: ', '').trim();
-            if (dataStr === '[DONE]') break;
-            try {
-              const event = JSON.parse(dataStr);
-              if (event.type === 'token') {
-                accumulated += event.content;
-                setMessages((prev) =>
-                  prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m))
-                );
-              } else if (event.type === 'citations') {
-                streamCitations = event.citations || [];
-              }
-            } catch (err) {}
-          }
+      await streamRAGQuery(
+        {
+          query: query,
+          document_ids: activeDocIds.length > 0 ? activeDocIds : undefined,
+          top_k: 5,
+        },
+        (token) => {
+          accumulated += token;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m))
+          );
+        },
+        (citations) => {
+          streamCitations = citations;
         }
-      }
+      );
 
       setMessages((prev) =>
         prev.map((m) =>

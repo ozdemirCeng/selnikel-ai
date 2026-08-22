@@ -105,15 +105,16 @@ export default function VisualDocumentEditor({
 
   const handleInsertSignature = () => {
     const sigHtml = `
-      <div class="my-6 pt-4 border-t border-[#37393b] grid grid-cols-2 gap-4 text-xs text-[#8e918f]">
+      <div class="my-6 p-4 border border-[#37393b] rounded-xl bg-[#1e2022] grid grid-cols-2 gap-4 text-xs text-[#8e918f]">
         <div>
-          <p class="font-semibold text-white">Hazırlayan Mühendis:</p>
-          <p class="mt-0.5">Selnikel Ar-Ge Departmanı</p>
-          <p class="text-[10px] text-[#8e918f]">Tarih: ${new Date().toLocaleDateString('tr-TR')}</p>
+          <p class="font-semibold text-white">Hazırlayan Mühendis / Departman:</p>
+          <p class="mt-1 text-[#c4c7c5]">Selnikel Isı ve Enerji Ar-Ge Mühendisliği</p>
+          <p class="text-[10px] text-[#8e918f] mt-0.5">Tarih: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <div class="text-right">
-          <p class="font-semibold text-white">Onaylayan Başmühendis:</p>
-          <p class="mt-0.5 text-emerald-400 font-mono">✓ DİJİTAL İMZALI & ONAYLI</p>
+          <p class="font-semibold text-white">Kalite Güvence & Teknik Onay:</p>
+          <p class="mt-1 text-[#a8c7fa] font-mono">DENETLENDİ & UYGUN BULUNDU</p>
+          <p class="text-[10px] text-[#8e918f] mt-0.5">Standart: TS EN 12953 / ASME PTC 4.1</p>
         </div>
       </div>
       <p><br></p>
@@ -121,13 +122,34 @@ export default function VisualDocumentEditor({
     executeCmd('insertHTML', sigHtml);
   };
 
-  const handleAiPolish = () => {
+  const handleAiPolish = async () => {
+    if (!editorRef.current || isAiProcessing) return;
+    const currentMd = htmlToMarkdown(editorRef.current.innerHTML).trim();
+    if (!currentMd) return;
+
     setIsAiProcessing(true);
-    setTimeout(() => {
-      executeCmd('formatBlock', '<p>');
+    const polishPrompt = `Aşağıdaki Selnikel teknik mühendislik metnini profesyonel bir kurumsal şartname ve teknik rapor diline dönüştür. Yazım ve terminoloji hatalarını düzelt, tabloları ve mühendislik birimlerini (bar, kg/h, kW, °C vb.) eksiksiz koru. Sadece düzenlenmiş Markdown metnini döndür:\n\n${currentMd}`;
+
+    try {
+      let accumulated = '';
+      const { streamRAGQuery } = await import('@/lib/api');
+      await streamRAGQuery(
+        { query: polishPrompt, top_k: 2 },
+        (token) => {
+          accumulated += token;
+          if (editorRef.current) {
+            editorRef.current.innerHTML = markdownToHtml(accumulated);
+          }
+        }
+      );
+      if (accumulated && onSave) {
+        onSave(accumulated);
+      }
+    } catch (e) {
+      console.error('AI Polish failed', e);
+    } finally {
       setIsAiProcessing(false);
-      triggerChange();
-    }, 400);
+    }
   };
 
   return (

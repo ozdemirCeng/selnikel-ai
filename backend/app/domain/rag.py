@@ -18,6 +18,7 @@ class RetrievalFilter(BaseModel):
     allowed_departments: Optional[List[str]] = None
     document_type: Optional[str] = None
     document_id: Optional[str] = None
+    document_ids: Optional[List[str]] = None
     equipment_ids: Optional[List[str]] = None
     approval_status: Optional[str] = "approved"
     revision_policy: Optional[str] = "approved_latest"

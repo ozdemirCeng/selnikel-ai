@@ -40,6 +40,7 @@ async def query_rag(
         department=request.department,
         document_type=request.document_type,
         document_id=request.document_id,
+        document_ids=request.document_ids,
         language=request.language,
         allowed_departments=allowed_depts,
     )
@@ -97,6 +98,7 @@ async def stream_rag(
         department=request.department,
         document_type=request.document_type,
         document_id=request.document_id,
+        document_ids=request.document_ids,
         language=request.language,
         allowed_departments=allowed_depts,
     )

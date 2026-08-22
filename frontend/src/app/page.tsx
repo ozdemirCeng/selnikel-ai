@@ -63,38 +63,132 @@ export default function HomePage() {
     }
   };
 
-  const handleOpenNotebook = (id: string) => {
-    setActiveNotebookTitle(
-      id === 'nb-1'
-        ? 'Selnikel SB-100 Endüstriyel Buhar Kazanı'
-        : id === 'nb-2'
-        ? 'Brülör Bakım & Ayar Talimatları'
-        : 'Endüstriyel Fan Basınç Eğrileri'
-    );
+  // Modals & Notifications
+  const [activeModal, setActiveModal] = useState<'analytics' | 'share' | 'help' | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleOpenNotebook = (titleOrId: string) => {
+    // If passed a full title, use it; otherwise fallback to clean default
+    setActiveNotebookTitle(titleOrId);
     setCurrentView('workspace');
   };
 
   const handleCreateNotebook = () => {
-    setActiveNotebookTitle('Yeni Not Defteri');
+    const newTitle = `Yeni Teknik İnceleme ${new Date().toLocaleDateString('tr-TR')}`;
+    setActiveNotebookTitle(newTitle);
     setCurrentView('workspace');
+    showToast('Yeni not defteri oluşturuldu.');
+  };
+
+  const handleShareWorkspace = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('Sohbet & Not Defteri bağlantısı panoya kopyalandı.');
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#131314] text-[#e3e3e3]">
-      {/* 1. EXACT GOOGLE NOTEBOOKLM TOP APP BAR */}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#1e1f20] border border-blue-500/40 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <ShieldCheck className="w-4 h-4 text-blue-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Analytics Modal */}
+      {activeModal === 'analytics' && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1f20] border border-[#2d2f31] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#282a2c] pb-3">
+              <div className="flex items-center gap-2">
+                <LineChart className="w-5 h-5 text-[#a8c7fa]" />
+                <h3 className="font-semibold text-white text-sm">Sistem & RAG Analitikleri</h3>
+              </div>
+              <button onClick={() => setActiveModal(null)} className="text-[#8e918f] hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between p-2.5 rounded-xl bg-[#131314]">
+                <span className="text-[#8e918f]">Aktif LLM Sağlayıcı:</span>
+                <span className="font-mono text-emerald-400 font-semibold">Google Gemini 3.5 Flash</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-xl bg-[#131314]">
+                <span className="text-[#8e918f]">Vektör & Hibrit Arama:</span>
+                <span className="font-mono text-blue-400 font-semibold">Qdrant + SQLite BGE-M3</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-xl bg-[#131314]">
+                <span className="text-[#8e918f]">Kaynak Doğrulama Filtresi:</span>
+                <span className="text-white font-medium">Aktif Seçili Dokümanlar</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-xl bg-[#131314]">
+                <span className="text-[#8e918f]">Güvenlik & Departman İzni:</span>
+                <span className="text-emerald-400 font-semibold">Kurumsal ACL (Yönetici)</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-white text-xs font-semibold transition"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {activeModal === 'help' && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1f20] border border-[#2d2f31] rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#282a2c] pb-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-[#a8c7fa]" />
+                <h3 className="font-semibold text-white text-sm">Selnikel AI Kullanım Rehberi</h3>
+              </div>
+              <button onClick={() => setActiveModal(null)} className="text-[#8e918f] hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3 text-xs text-[#c4c7c5] leading-relaxed">
+              <p>• <strong>Kaynak Seçimi:</strong> Sol paneldeki dokümanların yanındaki kutucukları işaretleyerek veya kaldırarak sorularınızın sadece seçtiğiniz dokümanlar taranarak yanıtlanmasını sağlayabilirsiniz.</p>
+              <p>• <strong>Studio Araçları:</strong> Sağdaki 8 araç ile seçili dokümanlardan otomatik Sesli Brifing, Slayt Sunusu, Veri Tablosu veya Teknik Rapor üretebilir ve Word/Excel/PPTX formatında indirebilirsiniz.</p>
+              <p>• <strong>Yan Yana Karşılaştırma:</strong> "Yan Yana Karşılaştır" düğmesi ile referans standart ve fabrika test raporunu aynı ekranda açıp tolerans aşımlarını denetleyebilirsiniz.</p>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-2 rounded-xl bg-[#282a2c] hover:bg-[#333537] text-white text-xs font-semibold transition"
+            >
+              Anladım
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 1. TOP APP BAR */}
       <header className="h-14 border-b border-[#282a2c] px-4 flex items-center justify-between bg-[#131314] shrink-0">
-        {/* Left: Gemini Icon + Title */}
+        {/* Left: Brand Icon + Title */}
         <div className="flex items-center gap-3">
-          {/* Gemini Colored Curved Icon */}
           <div
             onClick={() => setCurrentView('dashboard')}
-            className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 via-indigo-400 to-teal-300 flex items-center justify-center text-[#041e49] font-black text-sm shadow-md cursor-pointer hover:opacity-90 transition"
+            className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md cursor-pointer hover:opacity-90 transition"
           >
-            ✦
+            S
           </div>
 
           <div className="flex items-center gap-2">
-            {currentView !== 'dashboard' ? (
+            {currentView !== 'workspace' ? (
+              <span className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
+                Selnikel AI Not Defteri
+                <span className="text-[11px] font-normal text-[#8e918f]">Mühendislik İstasyonu</span>
+              </span>
+            ) : (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentView('dashboard')}
@@ -110,11 +204,6 @@ export default function HomePage() {
                   className="bg-transparent text-sm font-medium text-white hover:bg-[#282a2c] px-2 py-1 rounded-lg focus:outline-none focus:bg-[#282a2c] transition max-w-sm truncate"
                 />
               </div>
-            ) : (
-              <span className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
-                Gemini Notebook
-                <span className="text-[11px] font-normal text-[#8e918f]">Selnikel Enerji</span>
-              </span>
             )}
           </div>
         </div>
@@ -185,15 +274,15 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => alert('Grounded RAG Doğruluk Skoru: %100')}
+            onClick={() => setActiveModal('analytics')}
             className="p-2 rounded-full text-[#c4c7c5] hover:text-white hover:bg-[#282a2c] transition"
-            title="Analiz"
+            title="Sistem Analitikleri"
           >
             <LineChart className="w-4 h-4" />
           </button>
 
           <button
-            onClick={() => alert('Paylaşım bağlantısı panoya kopyalandı.')}
+            onClick={handleShareWorkspace}
             className="p-2 rounded-full text-[#c4c7c5] hover:text-white hover:bg-[#282a2c] transition"
             title="Paylaş"
           >
@@ -237,11 +326,11 @@ export default function HomePage() {
             className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-rose-400 to-teal-400 flex items-center justify-center cursor-pointer ml-1"
           >
             <div className="w-full h-full rounded-full bg-[#282a2c] text-white flex items-center justify-center font-bold text-xs">
-              Ö
+              S
             </div>
           </div>
 
-          {/* EXACT SETTINGS DROPDOWN (From Screenshot 1) */}
+          {/* SETTINGS DROPDOWN */}
           {isSettingsOpen && (
             <div className="absolute top-12 right-0 z-50 w-64 bg-[#1e1f20] border border-[#2d2f31] rounded-2xl shadow-2xl p-2 text-xs text-[#e3e3e3] animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3 py-2 font-semibold text-white border-b border-[#282a2c] flex items-center justify-between">
@@ -268,95 +357,31 @@ export default function HomePage() {
 
                 <button
                   onClick={() => {
-                    alert('Selnikel AI yardım kılavuzu.');
+                    setActiveModal('help');
                     setIsSettingsOpen(false);
                   }}
                   className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
                 >
                   <HelpCircle className="w-4 h-4 text-[#8e918f]" />
-                  <span>Gemini Notebook yardımı</span>
+                  <span>Kullanım Rehberi & Yardım</span>
                 </button>
 
                 <button
                   onClick={() => {
-                    alert('Geri bildirim modülü açıldı.');
+                    setActiveModal('analytics');
                     setIsSettingsOpen(false);
                   }}
                   className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
                 >
-                  <MessageSquarePlus className="w-4 h-4 text-[#8e918f]" />
-                  <span>Geri bildirim gönder</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    window.open('https://discord.com', '_blank');
-                    setIsSettingsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
-                >
-                  <Globe className="w-4 h-4 text-[#8e918f]" />
-                  <span>Discord</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    alert('Hedef dil: Türkçe (TR)');
-                    setIsSettingsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
-                >
-                  <Globe className="w-4 h-4 text-[#8e918f]" />
-                  <span>Hedef dil</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    alert('Filigranlar kaldırıldı.');
-                    setIsSettingsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
-                >
-                  <Award className="w-4 h-4 text-[#8e918f]" />
-                  <span>Filigranları kaldır</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    alert('Lisans: Selnikel Enerji Enterprise');
-                    setIsSettingsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 transition"
-                >
-                  <Award className="w-4 h-4 text-[#8e918f]" />
-                  <span>Lisanslar</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    alert('Cihaz: Windows Workstation (Local Central Server)');
-                    setIsSettingsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center justify-between transition"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Monitor className="w-4 h-4 text-[#8e918f]" />
-                    <span>Cihaz</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-[#8e918f]" />
+                  <Activity className="w-4 h-4 text-[#8e918f]" />
+                  <span>Sistem Sağlığı & RAG Durumu</span>
                 </button>
 
                 <div className="pt-1 border-t border-[#282a2c]">
-                  <button
-                    onClick={() => {
-                      alert('Kurumsal Abonelik: Aktif');
-                      setIsSettingsOpen(false);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#282a2c] flex items-center gap-2.5 text-amber-300 transition"
-                  >
-                    <CreditCard className="w-4 h-4 text-amber-400" />
-                    <span>Aboneliği yönetin</span>
-                  </button>
+                  <div className="px-3 py-1.5 text-[11px] text-[#8e918f] flex items-center justify-between">
+                    <span>Lisans:</span>
+                    <span className="text-emerald-400 font-semibold">Selnikel Enterprise</span>
+                  </div>
                 </div>
               </div>
             </div>
