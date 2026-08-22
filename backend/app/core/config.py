@@ -42,10 +42,14 @@ class Settings(BaseSettings):
     QDRANT_PREFER_GRPC: bool = False
 
     # LLM Settings
-    LLM_PROVIDER: Literal["openai", "ollama"] = "ollama"
-    LLM_MODEL: str = "gpt-4o-mini"
+    LLM_PROVIDER: Literal["openai", "ollama", "gemini"] = "gemini"
+    LLM_MODEL: str = "gemini-3.5-flash"
     LLM_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_API_KEY: Optional[str] = None
+
+    # Gemini Settings
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.5-flash"
 
     # Ollama Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
